@@ -1,0 +1,2 @@
+rootProject.name='my_native_service'
+include ':app'

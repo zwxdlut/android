@@ -1,0 +1,4 @@
+rootProject.name='camera_demo'
+include ':app'
+include ':camera'
+project(':camera').projectDir = new File(settingsDir, '../')

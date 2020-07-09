@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.media.camera.demo.MainActivity">
+
+    <SurfaceView
+        android:id="@+id/view_preview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <ImageView
+        android:id="@+id/view_capture"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/view_preview"
+        android:contentDescription="@string/view_capture"
+        android:visibility="gone" />
+
+    <Button
+        android:id="@+id/btn_open_camera"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/btn_open_camera"
+        android:layout_below="@id/view_preview"/>
+
+    <Button
+        android:id="@+id/btn_close_camera"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/btn_close_camera"
+        android:layout_below="@id/btn_open_camera"/>
+
+    <Button
+        android:id="@+id/btn_start_preview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/btn_start_preview"
+        android:layout_below="@id/view_preview"
+        android:layout_toEndOf="@id/btn_open_camera"/>
+
+    <Button
+        android:id="@+id/btn_stop_preview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/btn_stop_preview"
+        android:layout_toEndOf="@id/btn_close_camera"
+        android:layout_below="@id/btn_start_preview"/>
+
+    <Button
+        android:id="@+id/btn_capture"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/btn_capture"
+        android:layout_below="@id/view_preview"
+        android:layout_toEndOf="@id/btn_start_preview"/>
+
+    <Button
+        android:id="@+id/btn_set_preview_surface"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/btn_set_preview_surface"
+        android:layout_below="@id/btn_capture"
+        android:layout_toEndOf="@id/btn_stop_preview"/>
+
+    <Button
+        android:id="@+id/btn_start_recording"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/btn_start_recording"
+        android:layout_below="@id/view_preview"
+        android:layout_toEndOf="@id/btn_capture"/>
+
+    <Button
+        android:id="@+id/btn_stop_recording"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/btn_stop_recording"
+        android:layout_below="@id/btn_start_recording"
+        android:layout_toEndOf="@id/btn_set_preview_surface"/>
+
+</RelativeLayout>
