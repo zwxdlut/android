@@ -34,7 +34,10 @@ import android.util.ArrayMap;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
+import android.view.OrientationEventListener;
 import android.view.Surface;
+import android.view.SurfaceHolder;
+import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -81,6 +84,7 @@ public class CameraHelper {
     private Context context = null;
     private CameraManager cameraManager = null;
     private ArrayMap<String, Integer> sensorOrientations = new ArrayMap<>();
+    private ArrayMap<String, Integer> facings = new ArrayMap<>();
     private ArrayMap<String, Surface> previewSurfaces = new ArrayMap<>();
     private ArrayMap<String, String> captureDirs = new ArrayMap<>();
     private ArrayMap<String, String> recordingDirs = new ArrayMap<>();
@@ -569,11 +573,27 @@ public class CameraHelper {
         return null;
     }
 
-    public Size[] getCaptureAvailableSizes(String cameraId) {
+    public Size[] getAvailablePreviewSizes(String cameraId) {
         try {
             StreamConfigurationMap map = cameraManager.getCameraCharacteristics(cameraId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             if (null == map) {
-                Log.e(TAG, "getCaptureAvailableSizes: camera no available size!");
+                Log.e(TAG, "getAvailablePreviewSizes: camera no available size!");
+                return null;
+            }
+
+            return map.getOutputSizes(SurfaceHolder.class);
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public Size[] getAvailableCaptureSizes(String cameraId) {
+        try {
+            StreamConfigurationMap map = cameraManager.getCameraCharacteristics(cameraId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            if (null == map) {
+                Log.e(TAG, "getAvailableCaptureSizes: camera no available size!");
                 return null;
             }
 
@@ -585,11 +605,11 @@ public class CameraHelper {
         return null;
     }
 
-    public Size[] getRecordingAvailableSizes(String cameraId) {
+    public Size[] getAvailableRecordingSizes(String cameraId) {
         try {
             StreamConfigurationMap map = cameraManager.getCameraCharacteristics(cameraId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             if (null == map) {
-                Log.e(TAG, "getRecordingAvailableSizes: camera no available size!");
+                Log.e(TAG, "getAvailableRecordingSizes: camera no available size!");
                 return null;
             }
 
@@ -711,30 +731,28 @@ public class CameraHelper {
 
         close(cameraId);
 
-        ImageReader imageReader = null;
-        CameraCharacteristics characteristics = null;
-        Integer sensorOrientation = null;
-        Integer level = null;
-        Size size = null;
-
         try {
-            characteristics = cameraManager.getCameraCharacteristics(cameraId);
-            sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+            CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(cameraId);
+            Integer sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
             sensorOrientations.put(cameraId, sensorOrientation);
-            Log.d(TAG, "CameraHelper: camera " + cameraId + " sensor orientation =  " + sensorOrientation);
+            Log.i(TAG, "open: camera " + cameraId + " sensor orientation =  " + sensorOrientation);
 
-            level = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
-            Log.d(TAG, "CameraHelper: camera " + cameraId + " supported level =  " + level);
+            Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
+            facings.put(cameraId, facing);
+            Log.i(TAG, "open: camera " + cameraId + " facing =  " + facing);
 
-            size = Collections.max(Arrays.asList(getCaptureAvailableSizes(cameraId)), new CompareSizesByArea());
-            imageReader = ImageReader.newInstance(size.getWidth(), size.getHeight(), ImageFormat.JPEG, 2);
+            Integer level = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
+            Log.i(TAG, "open: camera " + cameraId + " supported level =  " + level);
+
+            Size size = Collections.max(Arrays.asList(getAvailableCaptureSizes(cameraId)), new CompareSizesByArea());
+            ImageReader imageReader = ImageReader.newInstance(size.getWidth(), size.getHeight(), ImageFormat.JPEG, 2);
             imageReader.setOnImageAvailableListener(imageAvailableListener, handler);
             imageReaders.put(cameraId, imageReader);
-            Log.d(TAG, "CameraHelper: camera " + cameraId + " capture largest size = " + size);
+            Log.i(TAG, "open: camera " + cameraId + " capture largest size = " + size);
 
-            size = Collections.max(Arrays.asList(getRecordingAvailableSizes(cameraId)), new CompareSizesByArea());
+            size = Collections.max(Arrays.asList(getAvailableRecordingSizes(cameraId)), new CompareSizesByArea());
             videoSizes.put(cameraId, size);
-            Log.d(TAG, "CameraHelper: camera " + cameraId + " recording largest size = " + size);
+            Log.i(TAG, "open: camera " + cameraId + " recording largest size = " + size);
 
             cameraResults.put(cameraId, ResultCode.SUCCESS);
             cameraFlags.put(cameraId, false);
@@ -877,7 +895,7 @@ public class CameraHelper {
         try {
             final CaptureRequest.Builder captureBuilder = cameraDevices.get(cameraId).createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             Location location = new Location(LocationManager.PASSIVE_PROVIDER);
-            //int rotation = mActivity.getWindowManager().getDefaultDisplay().getRotation();
+            int rotation = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRotation();
 
             location.setLatitude(latitude);
             location.setLongitude(longitude);
@@ -885,7 +903,7 @@ public class CameraHelper {
             captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
             captureBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
             captureBuilder.set(CaptureRequest.JPEG_GPS_LOCATION, location);
-            //captureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(cameraId, rotation));
+            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(cameraId, rotation));
             cameraCaptureSessions.get(cameraId).capture(captureBuilder.build(), sessionCaptureCallback, handler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -1061,17 +1079,21 @@ public class CameraHelper {
         mediaRecorder.setOnInfoListener(recordingInfoListener);
         mediaRecorder.setOnErrorListener(recordingErrorListener);
 
-//        int rotation = mActivity.getWindowManager().getDefaultDisplay().getRotation();
-//        switch (sensorOrientations.get(cameraId)) {
-//            case SENSOR_ORIENTATION_DEGREES:
-//                mediaRecorder.setOrientationHint(ORIENTATIONS.get(rotation));
-//                break;
-//            case SENSOR_ORIENTATION_INVERSE_DEGREES:
-//                mediaRecorder.setOrientationHint(INVERSE_ORIENTATIONS.get(rotation));
-//                break;
-//            default:
-//                break;
-//        }
+        Integer sensorOrientation = sensorOrientations.get(cameraId);
+        if (null != sensorOrientation) {
+            int rotation = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRotation();
+
+            switch (sensorOrientation) {
+                case SENSOR_ORIENTATION_DEGREES:
+                    mediaRecorder.setOrientationHint(ORIENTATIONS.get(rotation));
+                    break;
+                case SENSOR_ORIENTATION_INVERSE_DEGREES:
+                    mediaRecorder.setOrientationHint(INVERSE_ORIENTATIONS.get(rotation));
+                    break;
+                default:
+                    break;
+            }
+        }
 
         try {
             mediaRecorder.prepare();
@@ -1097,11 +1119,41 @@ public class CameraHelper {
     }
 
     private int getOrientation(String cameraId, int rotation) {
+        Integer sensorOrientation = sensorOrientations.get(cameraId);
+
+        if (null == sensorOrientation) {
+            sensorOrientation = 0;
+        }
+
         // Sensor orientation is 90 for most devices, or 270 for some devices (eg. Nexus 5X)
         // We have to take that into account and rotate JPEG properly.
         // For devices with orientation of 90, we simply return our mapping from ORIENTATIONS.
         // For devices with orientation of 270, we need to rotate the JPEG 180 degrees.
-        return (ORIENTATIONS.get(rotation) + sensorOrientations.get(cameraId) + 270) % 360;
+        return (ORIENTATIONS.get(rotation) + sensorOrientation + 270) % 360;
+    }
+
+    private int getOrientation1(String cameraId, CameraCharacteristics c, int rotation) {
+        if (OrientationEventListener.ORIENTATION_UNKNOWN == rotation){
+            return 0;
+        }
+
+        // Round device orientation to a multiple of 90
+        rotation = (rotation + 45) / 90 * 90;
+
+        // Reverse device orientation for front-facing cameras
+        Integer facing = facings.get(cameraId);
+        if (null != facing && CameraCharacteristics.LENS_FACING_FRONT == facing) {
+            rotation = -rotation;
+        }
+
+        Integer sensorOrientation = sensorOrientations.get(cameraId);
+        if (null == sensorOrientation) {
+            sensorOrientation = 0;
+        }
+
+        // Calculate desired JPEG orientation relative to camera orientation to make
+        // the image upright relative to the device orientation
+        return (sensorOrientation + rotation + 360) % 360;
     }
 }
 

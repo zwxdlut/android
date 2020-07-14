@@ -224,12 +224,20 @@ public interface ICamera {
     public String[] getCameraIdList();
 
     /**
+     * Get the available preview sizes.
+     *
+     * @param cameraId The camera id.
+     * @return The available preview sizes.
+     */
+    public Size[] getAvailablePreviewSizes(String cameraId);
+
+    /**
      * Get the available capture sizes.
      *
      * @param cameraId The camera id.
      * @return The available capture sizes.
      */
-    public Size[] getCaptureAvailableSizes(String cameraId);
+    public Size[] getAvailableCaptureSizes(String cameraId);
 
     /**
      * Get the available recording sizes.
@@ -237,7 +245,7 @@ public interface ICamera {
      * @param cameraId The camera id.
      * @return The available recording sizes.
      */
-    public Size[] getRecordingAvailableSizes(String cameraId);
+    public Size[] getAvailableRecordingSizes(String cameraId);
 
     /**
      * Set the camera callback.

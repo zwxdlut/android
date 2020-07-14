@@ -1,8 +1,8 @@
 <resources>
     <string name="app_name">camera_demo</string>
     <string name="view_capture">Capture View</string>
-    <string name="btn_open_camera">Open Camera</string>
-    <string name="btn_close_camera">Close Camera</string>
+    <string name="btn_open_camera">Open</string>
+    <string name="btn_close_camera">Close</string>
     <string name="btn_start_preview">Start Preview</string>
     <string name="btn_stop_preview">Stop Preview</string>
     <string name="btn_capture">Capture</string>
