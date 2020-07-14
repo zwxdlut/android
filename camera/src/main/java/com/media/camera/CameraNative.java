@@ -375,6 +375,22 @@ public class CameraNative implements ICamera {
         String cameraIds[] = getCameraIdList();
         if (null != cameraIds) {
             for (String cameraId : cameraIds) {
+                try {
+                    CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(cameraId);
+                    Integer sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+                    sensorOrientations.put(cameraId, sensorOrientation);
+                    Log.i(TAG, "CameraNative: camera " + cameraId + " sensor orientation =  " + sensorOrientation);
+
+                    Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
+                    facings.put(cameraId, facing);
+                    Log.i(TAG, "CameraNative: camera " + cameraId + " facing =  " + facing);
+
+                    Integer level = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
+                    Log.i(TAG, "CameraNative: camera " + cameraId + " supported level =  " + level);
+                } catch (CameraAccessException e) {
+                    e.printStackTrace();
+                }
+
                 captureDirs.put(cameraId, captureDir.getPath());
                 recordingDirs.put(cameraId, recordingDir.getPath() + File.separator + "dummy.mp4");
                 thumbnailDirs.put(cameraId, thumbnailDir.getPath());
@@ -571,27 +587,16 @@ public class CameraNative implements ICamera {
         close(cameraId);
 
         try {
-            CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(cameraId);
-            Integer sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
-            sensorOrientations.put(cameraId, sensorOrientation);
-            Log.i(TAG, "open: camera " + cameraId + " sensor orientation =  " + sensorOrientation);
-
-            Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-            facings.put(cameraId, facing);
-            Log.i(TAG, "open: camera " + cameraId + " facing =  " + facing);
-
-            Integer level = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
-            Log.i(TAG, "open: camera " + cameraId + " supported level =  " + level);
-
             Size size = Collections.max(Arrays.asList(getAvailableCaptureSizes(cameraId)), new CompareSizesByArea());
             ImageReader imageReader = ImageReader.newInstance(size.getWidth(), size.getHeight(), ImageFormat.JPEG, 2);
+
             imageReader.setOnImageAvailableListener(imageAvailableListener, handler);
             imageReaders.put(cameraId, imageReader);
-            Log.i(TAG, "open: camera " + cameraId + " capture largest size = " + size);
+            Log.i(TAG, "open: camera " + cameraId + " capture size = " + size);
 
             size = Collections.max(Arrays.asList(getAvailableRecordingSizes(cameraId)), new CompareSizesByArea());
             videoSizes.put(cameraId, size);
-            Log.i(TAG, "open: camera " + cameraId + " recording largest size = " + size);
+            Log.i(TAG, "open: camera " + cameraId + " recording size = " + size);
 
             cameraFlags.put(cameraId, false);
             handlerThread = new HandlerThread("CameraHandlerThread");
