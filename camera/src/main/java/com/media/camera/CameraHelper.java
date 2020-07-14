@@ -753,11 +753,11 @@ public class CameraHelper {
 
             imageReader.setOnImageAvailableListener(imageAvailableListener, handler);
             imageReaders.put(cameraId, imageReader);
-            Log.i(TAG, "open: camera " + cameraId + " capture largest size = " + size);
+            Log.i(TAG, "open: camera " + cameraId + " capture size = " + size);
 
             size = Collections.max(Arrays.asList(getAvailableRecordingSizes(cameraId)), new CompareSizesByArea());
             videoSizes.put(cameraId, size);
-            Log.i(TAG, "open: camera " + cameraId + " recording largest size = " + size);
+            Log.i(TAG, "open: camera " + cameraId + " recording size = " + size);
 
             cameraResults.put(cameraId, ResultCode.SUCCESS);
             cameraFlags.put(cameraId, false);
