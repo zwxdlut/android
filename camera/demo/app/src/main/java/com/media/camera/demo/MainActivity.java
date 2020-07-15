@@ -69,8 +69,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //        public void onComplete(String cameraId, String filePath) {
 //            Log.i(TAG, "onComplete: capture cameraId = " + cameraId + ", filePath = " + filePath);
 //            final Bitmap bm = BitmapFactory.decodeFile(filePath);
+//            Rect rect = new Rect();
+//            getWindowManager().getDefaultDisplay().getRectSize(rect);
 //            Matrix matrix = new Matrix();
-//            matrix.postScale(((float) size.getWidth()) / bm.getWidth(), ((float) size.getHeight()) / bm.getHeight());
+//            float scale = ((float) (rect.width() - size.getWidth())) / bm.getWidth();
+//            matrix.postScale(scale, scale);
 //            final Bitmap bitmap = Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), matrix, true);
 //
 //            captureView.post(new Runnable() {
@@ -114,8 +117,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         public void onComplete(String cameraId, String filePath) {
             Log.i(TAG, "onComplete: capture cameraId = " + cameraId + ", filePath = " + filePath);
             final Bitmap bm = BitmapFactory.decodeFile(filePath);
+            Rect rect = new Rect();
+            getWindowManager().getDefaultDisplay().getRectSize(rect);
             Matrix matrix = new Matrix();
-            matrix.postScale(((float) size.getWidth()) / bm.getWidth(), ((float) size.getHeight()) / bm.getHeight());
+            float scale = ((float) (rect.width() - size.getWidth())) / bm.getWidth();
+            matrix.postScale(scale, scale);
             final Bitmap bitmap = Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), matrix, true);
 
             captureView.post(new Runnable() {
@@ -257,14 +263,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         Size size = new Size(rect.width() / 2, rect.height() / 2);
         Size sizes[] = camera.getAvailablePreviewSizes(cameraIds[0]);
+        boolean isFlip = false;
 
         if (null != sizes) {
             Log.i(TAG, "getMatchSize: available preview sizes = " + Arrays.toString(sizes));
-            int width = size.getWidth();
+            int line = 0;
             int diff = Integer.MAX_VALUE;
 
+            if (size.getWidth() < size.getHeight()) {
+                line = size.getHeight();
+                isFlip = true;
+            } else {
+                line = size.getWidth();
+            }
+
             for (Size s : sizes) {
-                int temp = Math.abs(width - s.getWidth());
+                int temp = Math.abs(line - s.getWidth());
                 if (diff > temp) {
                     diff = temp;
                     size = s;
@@ -272,6 +286,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
 
-        return size;
+        return (isFlip ? new Size(size.getHeight(), size.getWidth()) : size);
     }
 }

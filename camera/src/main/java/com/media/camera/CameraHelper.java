@@ -34,7 +34,6 @@ import android.util.ArrayMap;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
-import android.view.OrientationEventListener;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.WindowManager;
@@ -84,14 +83,13 @@ public class CameraHelper {
     private Context context = null;
     private CameraManager cameraManager = null;
     private ArrayMap<String, Integer> sensorOrientations = new ArrayMap<>();
-    private ArrayMap<String, Integer> facings = new ArrayMap<>();
     private ArrayMap<String, Surface> previewSurfaces = new ArrayMap<>();
     private ArrayMap<String, String> captureDirs = new ArrayMap<>();
     private ArrayMap<String, String> recordingDirs = new ArrayMap<>();
     private ArrayMap<String, String> thumbnailDirs = new ArrayMap<>();
     private ArrayMap<String, Size> videoSizes = new ArrayMap<>();
     private ArrayMap<String, Integer> videoBps = new ArrayMap<>();
-    private ArrayMap<String, Boolean> isRecording = new ArrayMap<>();
+    private ArrayMap<String, Boolean> isRecordings = new ArrayMap<>();
     private ArrayMap<String, ImageReader> imageReaders = new ArrayMap<>();
     private ArrayMap<String, MediaRecorder> mediaRecorders = new ArrayMap<>();
     private ArrayMap<String, CameraDevice> cameraDevices = new ArrayMap<>();
@@ -270,7 +268,7 @@ public class CameraHelper {
             for (String cameraId : mediaRecorders.keySet()) {
                 if (mr == mediaRecorders.get(cameraId)) {
                     Log.d(TAG, "onInfo: cameraId = " + cameraId + ", what = " + what + ", extra = " + extra);
-                    isRecording.put(cameraId, false);
+                    isRecordings.put(cameraId, false);
                     releaseRecorder(cameraId);
                     break;
                 }
@@ -360,14 +358,24 @@ public class CameraHelper {
         public static final int NO_PREVIEW_SURFACE = -10;
 
         /**
+         * The constant NO_IMAGE_READER.
+         */
+        public static final int NO_IMAGE_READER = -11;
+
+        /**
+         * The constant NO_MEDIA_RECORDER.
+         */
+        public static final int NO_MEDIA_RECORDER = -12;
+
+        /**
          * The constant FAILED_WHILE_RECORDING.
          */
-        public static final int FAILED_WHILE_RECORDING = -11;
+        public static final int FAILED_WHILE_RECORDING = -13;
 
         /**
          * The constant CREATE_DIRECTORY_FAILED.
          */
-        public static final int CREATE_DIRECTORY_FAILED = -12;
+        public static final int CREATE_DIRECTORY_FAILED = -14;
     }
 
     /**
@@ -557,7 +565,6 @@ public class CameraHelper {
                     Log.i(TAG, "CameraHelper: camera " + cameraId + " sensor orientation =  " + sensorOrientation);
 
                     Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-                    facings.put(cameraId, facing);
                     Log.i(TAG, "CameraHelper: camera " + cameraId + " facing =  " + facing);
 
                     Integer level = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
@@ -570,7 +577,7 @@ public class CameraHelper {
                 recordingDirs.put(cameraId, recordingDir.getPath() + File.separator + "dummy.mp4");
                 thumbnailDirs.put(cameraId, thumbnailDir.getPath());
                 videoBps.put(cameraId, 3000000);
-                isRecording.put(cameraId, false);
+                isRecordings.put(cameraId, false);
                 cameraFlags.put(cameraId, false);
                 cameraLocks.put(cameraId, new ReentrantLock());
                 cameraConditions.put(cameraId, cameraLocks.get(cameraId).newCondition());
@@ -650,17 +657,18 @@ public class CameraHelper {
 
     public int setCaptureSize(String cameraId, int width, int height) {
         Log.d(TAG, "setCaptureSize: cameraId = " + cameraId + ", width = " + width + ", height = " + height);
-        if (isRecording.get(cameraId)) {
+
+        Boolean  isRecording = isRecordings.get(cameraId);
+        if (null != isRecording && isRecording) {
             return ResultCode.FAILED_WHILE_RECORDING;
         }
 
         ImageReader imageReader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 2);
-
         imageReader.setOnImageAvailableListener(imageAvailableListener, handler);
         imageReaders.put(cameraId, imageReader);
         deleteCameraCaptureSession(cameraId);
 
-        return createCameraCaptureSession(cameraId, Collections.singletonList(imageReaders.get(cameraId).getSurface()));
+        return createCameraCaptureSession(cameraId, Collections.singletonList(imageReader.getSurface()));
     }
 
     public int setCaptureDir(String cameraId, String dir) {
@@ -749,7 +757,7 @@ public class CameraHelper {
 
         try {
             Size size = Collections.max(Arrays.asList(getAvailableCaptureSizes(cameraId)), new CompareSizesByArea());
-            ImageReader imageReader = ImageReader.newInstance(size.getWidth(), size.getHeight(), ImageFormat.JPEG, 2);
+            final ImageReader imageReader = ImageReader.newInstance(size.getWidth(), size.getHeight(), ImageFormat.JPEG, 2);
 
             imageReader.setOnImageAvailableListener(imageAvailableListener, handler);
             imageReaders.put(cameraId, imageReader);
@@ -770,7 +778,7 @@ public class CameraHelper {
                     String cameraId = camera.getId();
                     Log.d(TAG, "onOpened: cameraId = " + cameraId);
                     cameraDevices.put(cameraId, camera);
-                    int ret = createCameraCaptureSession(cameraId, Collections.singletonList(imageReaders.get(cameraId).getSurface()));
+                    int ret = createCameraCaptureSession(cameraId, Collections.singletonList(imageReader.getSurface()));
                     if (ResultCode.CAMERA_DEVICE_NULL == ret || ResultCode.CAMERA_EXCEPTION == ret) {
                         cameraResults.put(cameraId, ret);
                         notifyCamera(cameraId);
@@ -811,7 +819,12 @@ public class CameraHelper {
             return ResultCode.CAMERA_EXCEPTION;
         }
 
-        return cameraResults.get(cameraId);
+        Integer cameraResult = cameraResults.get(cameraId);
+        if (null == cameraResult) {
+            cameraResult = ResultCode.SUCCESS;
+        }
+
+        return cameraResult;
     }
 
     public int close(String cameraId) {
@@ -842,27 +855,45 @@ public class CameraHelper {
 
     public int startPreview(String cameraId) {
         Log.d(TAG, "startPreview: cameraId = " + cameraId);
-        if (null == previewSurfaces.get(cameraId) || null == imageReaders.get(cameraId)) {
+
+        Surface previewSurface = previewSurfaces.get(cameraId);
+        if (null == previewSurface) {
             return ResultCode.NO_PREVIEW_SURFACE;
         }
 
-        if (isRecording.get(cameraId)) {
+        ImageReader imageReader = imageReaders.get(cameraId);
+        if (null == imageReader) {
+            return ResultCode.NO_IMAGE_READER;
+        }
+
+        Boolean  isRecording = isRecordings.get(cameraId);
+        if (null != isRecording && isRecording) {
             return ResultCode.FAILED_WHILE_RECORDING;
         }
 
         deleteCameraCaptureSession(cameraId);
-        int ret = createCameraCaptureSession(cameraId, Arrays.asList(imageReaders.get(cameraId).getSurface(), previewSurfaces.get(cameraId)));
+        int ret = createCameraCaptureSession(cameraId, Arrays.asList(imageReader.getSurface(), previewSurfaces.get(cameraId)));
         if (ResultCode.SUCCESS != ret) {
             return ret;
         }
 
-        try {
-            final CaptureRequest.Builder captureBuilder = cameraDevices.get(cameraId).createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+        CameraDevice cameraDevice = cameraDevices.get(cameraId);
+        if (null == cameraDevice) {
+            return ResultCode.CAMERA_DEVICE_NULL;
+        }
 
-            captureBuilder.addTarget(previewSurfaces.get(cameraId));
+        CameraCaptureSession cameraCaptureSession = cameraCaptureSessions.get(cameraId);
+        if (null == cameraCaptureSession) {
+            return ResultCode.CAMERA_CAPTURE_SESSION_NULL;
+        }
+
+        try {
+            final CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+
+            captureBuilder.addTarget(previewSurface);
             captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
             captureBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
-            cameraCaptureSessions.get(cameraId).setRepeatingRequest(captureBuilder.build(), null, handler);
+            cameraCaptureSession.setRepeatingRequest(captureBuilder.build(), null, handler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -872,13 +903,16 @@ public class CameraHelper {
 
     public int stopPreview(String cameraId) {
         Log.d(TAG, "stopPreview: cameraId = " + cameraId);
-        if (isRecording.get(cameraId)) {
+
+        Boolean  isRecording = isRecordings.get(cameraId);
+        if (null != isRecording && isRecording) {
             return ResultCode.FAILED_WHILE_RECORDING;
         }
 
-        if (null != cameraCaptureSessions.get(cameraId)) {
+        CameraCaptureSession cameraCaptureSession = cameraCaptureSessions.get(cameraId);
+        if (null != cameraCaptureSession) {
             try {
-                cameraCaptureSessions.get(cameraId).stopRepeating();
+                cameraCaptureSession.stopRepeating();
             } catch (CameraAccessException e) {
                 e.printStackTrace();
             }
@@ -889,27 +923,38 @@ public class CameraHelper {
 
     public int capture(String cameraId, double latitude, double longitude) {
         Log.d(TAG, "capture: cameraId = " + cameraId + ", latitude = " + latitude + ", longitude = " + longitude);
-        if (null == cameraDevices.get(cameraId)) {
+
+        CameraDevice cameraDevice = cameraDevices.get(cameraId);
+        if (null == cameraDevice) {
             return ResultCode.CAMERA_DEVICE_NULL;
         }
 
-        if (null == cameraCaptureSessions.get(cameraId)) {
+        CameraCaptureSession cameraCaptureSession = cameraCaptureSessions.get(cameraId);
+        if (null == cameraCaptureSession) {
             return ResultCode.CAMERA_CAPTURE_SESSION_NULL;
         }
 
+        ImageReader imageReader = imageReaders.get(cameraId);
+        if (null == imageReader) {
+            return ResultCode.NO_IMAGE_READER;
+        }
+
         try {
-            final CaptureRequest.Builder captureBuilder = cameraDevices.get(cameraId).createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+            CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             Location location = new Location(LocationManager.PASSIVE_PROVIDER);
-            int rotation = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRotation();
+            WindowManager windowManager = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE));
+
+            if (null != windowManager) {
+                captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(cameraId, windowManager.getDefaultDisplay().getRotation()));
+            }
 
             location.setLatitude(latitude);
             location.setLongitude(longitude);
-            captureBuilder.addTarget(imageReaders.get(cameraId).getSurface());
+            captureBuilder.addTarget(imageReader.getSurface());
             captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
             captureBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
             captureBuilder.set(CaptureRequest.JPEG_GPS_LOCATION, location);
-            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(cameraId, rotation));
-            cameraCaptureSessions.get(cameraId).capture(captureBuilder.build(), sessionCaptureCallback, handler);
+            cameraCaptureSession.capture(captureBuilder.build(), sessionCaptureCallback, handler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -923,26 +968,41 @@ public class CameraHelper {
 
     public int startRecording(String cameraId, int duration) {
         Log.d(TAG, "startRecording: cameraId = " + cameraId + ", duration = " + duration);
-        if (null == cameraDevices.get(cameraId)) {
+
+        Boolean  isRecording = isRecordings.get(cameraId);
+        if (null != isRecording && isRecording) {
+            return ResultCode.FAILED_WHILE_RECORDING;
+        }
+
+        CameraDevice cameraDevice = cameraDevices.get(cameraId);
+        if (null == cameraDevice) {
             return ResultCode.CAMERA_DEVICE_NULL;
         }
 
-        if (isRecording.get(cameraId)) {
-            return ResultCode.FAILED_WHILE_RECORDING;
+        ImageReader imageReader = imageReaders.get(cameraId);
+        if (null == imageReader) {
+            return ResultCode.NO_IMAGE_READER;
         }
 
         prepareRecorder(cameraId, duration);
 
+        MediaRecorder mediaRecorder = mediaRecorders.get(cameraId);
+        if (null == mediaRecorder) {
+            return ResultCode.NO_MEDIA_RECORDER;
+        }
+
         try {
             List<Surface> surfaces = new ArrayList<>();
-            CaptureRequest.Builder captureBuilder = cameraDevices.get(cameraId).createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
+            CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
+            Surface previewSurface = previewSurfaces.get(cameraId);
 
-            surfaces.add(imageReaders.get(cameraId).getSurface());
-            surfaces.add(mediaRecorders.get(cameraId).getSurface());
-            if (null != previewSurfaces.get(cameraId)) {
-                surfaces.add(previewSurfaces.get(cameraId));
-                captureBuilder.addTarget(previewSurfaces.get(cameraId));
+            if (null != previewSurface) {
+                surfaces.add(previewSurface);
+                captureBuilder.addTarget(previewSurface);
             }
+
+            surfaces.add(imageReader.getSurface());
+            surfaces.add(mediaRecorder.getSurface());
 
             deleteCameraCaptureSession(cameraId);
             int ret = createCameraCaptureSession(cameraId, surfaces);
@@ -950,11 +1010,16 @@ public class CameraHelper {
                 return ret;
             }
 
-            captureBuilder.addTarget(mediaRecorders.get(cameraId).getSurface());
+            CameraCaptureSession cameraCaptureSession = cameraCaptureSessions.get(cameraId);
+            if (null == cameraCaptureSession) {
+                return ResultCode.CAMERA_CAPTURE_SESSION_NULL;
+            }
+
+            captureBuilder.addTarget(mediaRecorder.getSurface());
             captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
-            cameraCaptureSessions.get(cameraId).setRepeatingRequest(captureBuilder.build(), sessionRecordingCallback, handler);
-            mediaRecorders.get(cameraId).start();
-            isRecording.put(cameraId, true);
+            cameraCaptureSession.setRepeatingRequest(captureBuilder.build(), sessionRecordingCallback, handler);
+            mediaRecorder.start();
+            isRecordings.put(cameraId, true);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -964,45 +1029,64 @@ public class CameraHelper {
 
     public int stopRecording(String cameraId) {
         Log.d(TAG, "stopRecording: cameraId = " + cameraId);
-        if (null != mediaRecorders.get(cameraId)) {
-            mediaRecorders.get(cameraId).stop();
+
+        MediaRecorder mediaRecorder = mediaRecorders.get(cameraId);
+        if (null != mediaRecorder) {
+            mediaRecorder.stop();
         }
 
-        isRecording.put(cameraId, false);
+        isRecordings.put(cameraId, false);
         releaseRecorder(cameraId);
 
         return ResultCode.SUCCESS;
     }
 
     private void notifyCamera(String cameraId) {
-        cameraLocks.get(cameraId).lock();
+        Lock lock = cameraLocks.get(cameraId);
+        Condition condition = cameraConditions.get(cameraId);
+
+        if (null == lock || null == condition) {
+            return;
+        }
+
+        lock.lock();
         cameraFlags.put(cameraId, true);
-        cameraConditions.get(cameraId).signalAll();
-        cameraLocks.get(cameraId).unlock();
+        condition.signalAll();
+        lock.unlock();
     }
 
     private void waitCamera(String cameraId) {
+        Lock lock = cameraLocks.get(cameraId);
+        Condition condition = cameraConditions.get(cameraId);
+        Boolean cameraFlag = cameraFlags.get(cameraId);
+
+        if (null == lock || null == condition || null == cameraFlag) {
+            return;
+        }
+
         try {
-            cameraLocks.get(cameraId).lock();
-            if (!cameraFlags.get(cameraId)) {
-                cameraConditions.get(cameraId).await();
+            lock.lock();
+            if (!cameraFlag) {
+                condition.await();
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
-            cameraLocks.get(cameraId).unlock();
+            lock.unlock();
         }
     }
 
     private void closeDevice(String cameraId) {
-        if (null != cameraDevices.get(cameraId)) {
-            cameraDevices.get(cameraId).close();
+        CameraDevice cameraDevice = cameraDevices.get(cameraId);
+        if (null != cameraDevice) {
+            cameraDevice.close();
             cameraDevices.remove(cameraId);
         }
     }
 
     private int createCameraCaptureSession(final String cameraId, List<Surface> surfaces) {
-        if (null == cameraDevices.get(cameraId)) {
+        CameraDevice cameraDevice = cameraDevices.get(cameraId);
+        if (null == cameraDevice) {
             return ResultCode.CAMERA_DEVICE_NULL;
         }
 
@@ -1013,7 +1097,7 @@ public class CameraHelper {
             sessionHandlerThread.start();
             sessionHandler = new Handler(sessionHandlerThread.getLooper());
             cameraFlags.put(cameraId, false);
-            cameraDevices.get(cameraId).createCaptureSession(surfaces, new CameraCaptureSession.StateCallback() {
+            cameraDevice.createCaptureSession(surfaces, new CameraCaptureSession.StateCallback() {
                 @Override
                 public void onConfigured(@NonNull CameraCaptureSession session) {
                     String cameraId = session.getDevice().getId();
@@ -1041,14 +1125,15 @@ public class CameraHelper {
     }
 
     private void deleteCameraCaptureSession(String cameraId) {
-        if (null != cameraCaptureSessions.get(cameraId)) {
+        CameraCaptureSession cameraCaptureSession = cameraCaptureSessions.get(cameraId);
+        if (null != cameraCaptureSession) {
             try {
-                cameraCaptureSessions.get(cameraId).abortCaptures();
-                cameraCaptureSessions.get(cameraId).stopRepeating();
+                cameraCaptureSession.abortCaptures();
+                cameraCaptureSession.stopRepeating();
             } catch (CameraAccessException e) {
                 e.printStackTrace();
             } finally {
-                cameraCaptureSessions.get(cameraId).close();
+                cameraCaptureSession.close();
                 cameraCaptureSessions.remove(cameraId);
             }
         }
@@ -1085,8 +1170,9 @@ public class CameraHelper {
         mediaRecorder.setOnErrorListener(recordingErrorListener);
 
         Integer sensorOrientation = sensorOrientations.get(cameraId);
-        if (null != sensorOrientation) {
-            int rotation = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRotation();
+        WindowManager windowManager = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE));
+        if (null != sensorOrientation && null != windowManager) {
+            int rotation = windowManager.getDefaultDisplay().getRotation();
 
             switch (sensorOrientation) {
                 case SENSOR_ORIENTATION_DEGREES:
@@ -1112,11 +1198,13 @@ public class CameraHelper {
 
     private void releaseRecorder(String cameraId) {
         Log.d(TAG, "releaseRecorder: cameraId = " + cameraId);
-        if (null != mediaRecorders.get(cameraId)) {
-            synchronized (mediaRecorders.get(cameraId)) {
+
+        MediaRecorder mediaRecorder = mediaRecorders.get(cameraId);
+        if (null != mediaRecorder) {
+            synchronized (mediaRecorder) {
                 if (null != mediaRecorders.get(cameraId)) {
-                    mediaRecorders.get(cameraId).reset();
-                    mediaRecorders.get(cameraId).release();
+                    mediaRecorder.reset();
+                    mediaRecorder.release();
                     mediaRecorders.remove(cameraId);
                 }
             }
@@ -1137,28 +1225,22 @@ public class CameraHelper {
         return (ORIENTATIONS.get(rotation) + sensorOrientation + 270) % 360;
     }
 
-    private int getOrientation1(String cameraId, CameraCharacteristics c, int rotation) {
-        if (OrientationEventListener.ORIENTATION_UNKNOWN == rotation){
-            return 0;
-        }
+    private int getJpegOrientation(CameraCharacteristics c, int deviceOrientation) {
+        if (deviceOrientation == android.view.OrientationEventListener.ORIENTATION_UNKNOWN) return 0;
+        int sensorOrientation = c.get(CameraCharacteristics.SENSOR_ORIENTATION);
 
         // Round device orientation to a multiple of 90
-        rotation = (rotation + 45) / 90 * 90;
+        deviceOrientation = (deviceOrientation + 45) / 90 * 90;
 
         // Reverse device orientation for front-facing cameras
-        Integer facing = facings.get(cameraId);
-        if (null != facing && CameraCharacteristics.LENS_FACING_FRONT == facing) {
-            rotation = -rotation;
-        }
-
-        Integer sensorOrientation = sensorOrientations.get(cameraId);
-        if (null == sensorOrientation) {
-            sensorOrientation = 0;
-        }
+        boolean facingFront = c.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_FRONT;
+        if (facingFront) deviceOrientation = -deviceOrientation;
 
         // Calculate desired JPEG orientation relative to camera orientation to make
         // the image upright relative to the device orientation
-        return (sensorOrientation + rotation + 360) % 360;
+        int jpegOrientation = (sensorOrientation + deviceOrientation + 360) % 360;
+
+        return jpegOrientation;
     }
 }
 

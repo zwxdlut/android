@@ -69,14 +69,24 @@ public interface ICamera {
         public static final int NO_PREVIEW_SURFACE = -10;
 
         /**
+         * The constant NO_IMAGE_READER.
+         */
+        public static final int NO_IMAGE_READER = -11;
+
+        /**
+         * The constant NO_MEDIA_RECORDER.
+         */
+        public static final int NO_MEDIA_RECORDER = -12;
+
+        /**
          * The constant FAILED_WHILE_RECORDING.
          */
-        public static final int FAILED_WHILE_RECORDING = -11;
+        public static final int FAILED_WHILE_RECORDING = -13;
 
         /**
          * The constant CREATE_DIRECTORY_FAILED.
          */
-        public static final int CREATE_DIRECTORY_FAILED = -12;
+        public static final int CREATE_DIRECTORY_FAILED = -14;
     }
 
     /**
