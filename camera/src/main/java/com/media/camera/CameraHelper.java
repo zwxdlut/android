@@ -657,7 +657,6 @@ public class CameraHelper {
 
     public int setCaptureSize(String cameraId, int width, int height) {
         Log.d(TAG, "setCaptureSize: cameraId = " + cameraId + ", width = " + width + ", height = " + height);
-
         Boolean  isRecording = isRecordings.get(cameraId);
         if (null != isRecording && isRecording) {
             return ResultCode.FAILED_WHILE_RECORDING;
@@ -673,8 +672,8 @@ public class CameraHelper {
 
     public int setCaptureDir(String cameraId, String dir) {
         Log.d(TAG, "setCaptureDir: cameraId = " + cameraId + ", dir = " + dir);
-
         File file = new File(dir);
+
         if (!file.exists()) {
             if (file.mkdirs()) {
                 Log.d(TAG, "setCaptureDir: create directory " + dir);
@@ -707,7 +706,6 @@ public class CameraHelper {
 
     public int setRecordingDir(String cameraId, String dir) {
         Log.d(TAG, "setRecordingDir: cameraId = " + cameraId + ", dir = " + dir);
-
         File recordingDir = new File(dir);
         if (!recordingDir.exists()) {
             if (recordingDir.mkdirs()) {
@@ -716,7 +714,6 @@ public class CameraHelper {
                 return ResultCode.CREATE_DIRECTORY_FAILED;
             }
         }
-
         recordingDirs.put(cameraId, dir + File.separator + "dummy.mp4");
 
         File thumbnailDir = new File(recordingDir.getParentFile(), "thumbnails");
@@ -727,7 +724,6 @@ public class CameraHelper {
                 return ResultCode.CREATE_DIRECTORY_FAILED;
             }
         }
-
         thumbnailDirs.put(cameraId, thumbnailDir.getPath());
 
         return ResultCode.SUCCESS;
@@ -845,8 +841,9 @@ public class CameraHelper {
             }
         }
 
-        if (null != imageReaders.get(cameraId)) {
-            imageReaders.get(cameraId).close();
+        ImageReader imageReader = imageReaders.get(cameraId);
+        if (null != imageReader) {
+            imageReader.close();
             imageReaders.remove(cameraId);
         }
 
@@ -855,7 +852,6 @@ public class CameraHelper {
 
     public int startPreview(String cameraId) {
         Log.d(TAG, "startPreview: cameraId = " + cameraId);
-
         Surface previewSurface = previewSurfaces.get(cameraId);
         if (null == previewSurface) {
             return ResultCode.NO_PREVIEW_SURFACE;
@@ -903,7 +899,6 @@ public class CameraHelper {
 
     public int stopPreview(String cameraId) {
         Log.d(TAG, "stopPreview: cameraId = " + cameraId);
-
         Boolean  isRecording = isRecordings.get(cameraId);
         if (null != isRecording && isRecording) {
             return ResultCode.FAILED_WHILE_RECORDING;
@@ -923,7 +918,6 @@ public class CameraHelper {
 
     public int capture(String cameraId, double latitude, double longitude) {
         Log.d(TAG, "capture: cameraId = " + cameraId + ", latitude = " + latitude + ", longitude = " + longitude);
-
         CameraDevice cameraDevice = cameraDevices.get(cameraId);
         if (null == cameraDevice) {
             return ResultCode.CAMERA_DEVICE_NULL;
@@ -968,7 +962,6 @@ public class CameraHelper {
 
     public int startRecording(String cameraId, int duration) {
         Log.d(TAG, "startRecording: cameraId = " + cameraId + ", duration = " + duration);
-
         Boolean  isRecording = isRecordings.get(cameraId);
         if (null != isRecording && isRecording) {
             return ResultCode.FAILED_WHILE_RECORDING;
@@ -1029,8 +1022,8 @@ public class CameraHelper {
 
     public int stopRecording(String cameraId) {
         Log.d(TAG, "stopRecording: cameraId = " + cameraId);
-
         MediaRecorder mediaRecorder = mediaRecorders.get(cameraId);
+
         if (null != mediaRecorder) {
             mediaRecorder.stop();
         }
@@ -1078,6 +1071,7 @@ public class CameraHelper {
 
     private void closeDevice(String cameraId) {
         CameraDevice cameraDevice = cameraDevices.get(cameraId);
+
         if (null != cameraDevice) {
             cameraDevice.close();
             cameraDevices.remove(cameraId);
@@ -1126,6 +1120,7 @@ public class CameraHelper {
 
     private void deleteCameraCaptureSession(String cameraId) {
         CameraCaptureSession cameraCaptureSession = cameraCaptureSessions.get(cameraId);
+
         if (null != cameraCaptureSession) {
             try {
                 cameraCaptureSession.abortCaptures();
@@ -1198,8 +1193,8 @@ public class CameraHelper {
 
     private void releaseRecorder(String cameraId) {
         Log.d(TAG, "releaseRecorder: cameraId = " + cameraId);
-
         MediaRecorder mediaRecorder = mediaRecorders.get(cameraId);
+
         if (null != mediaRecorder) {
             synchronized (mediaRecorder) {
                 if (null != mediaRecorders.get(cameraId)) {
