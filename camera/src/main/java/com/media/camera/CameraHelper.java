@@ -152,6 +152,7 @@ public class CameraHelper {
                         mmr.setDataSource(filePath);
                         values.put(MediaStore.Video.Media.DURATION, mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
                         thumbnail = mmr.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
+                        Log.i(TAG, "onCaptureSequenceCompleted: the video thumbnail(MediaMetadataRetriever) = " + thumbnail);
                     } catch (RuntimeException e) {
                         e.printStackTrace();
                     }
@@ -163,11 +164,13 @@ public class CameraHelper {
                         values.put(MediaStore.Video.Media.HEIGHT, size.getHeight());
                     }
                     uri = context.getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
+                    Log.i(TAG, "onCaptureSequenceCompleted: insert the video to database, filePath = " + filePath + ", uri = " + uri);
 
                     /* Insert the thumbnail to MediaStore */
                     if (null != filePath) {
                         if (null == thumbnail) {
                             thumbnail = ThumbnailUtils.createVideoThumbnail(filePath, MediaStore.Video.Thumbnails.FULL_SCREEN_KIND);
+                            Log.i(TAG, "onCaptureSequenceCompleted: the video thumbnail(ThumbnailUtils) = " + thumbnail);
                         }
 
                         if (null != thumbnail && null != uri) {
@@ -184,7 +187,8 @@ public class CameraHelper {
                                 values.put(MediaStore.Video.Thumbnails.VIDEO_ID, ContentUris.parseId(uri));
                                 values.put(MediaStore.Video.Thumbnails.WIDTH, thumbnail.getWidth());
                                 values.put(MediaStore.Video.Thumbnails.HEIGHT, thumbnail.getHeight());
-                                context.getContentResolver().insert(MediaStore.Video.Thumbnails.EXTERNAL_CONTENT_URI, values);
+                                Uri thumbnailUri = context.getContentResolver().insert(MediaStore.Video.Thumbnails.EXTERNAL_CONTENT_URI, values);
+                                Log.i(TAG, "onCaptureSequenceCompleted: insert the video thumbnail to database, thumbnailPath = " + thumbnailPath + ", thumbnailUri = " + thumbnailUri);
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -242,7 +246,8 @@ public class CameraHelper {
                         values.put(MediaStore.Images.Media.DATA, filePath);
                         values.put(MediaStore.Images.Media.WIDTH, reader.getWidth());
                         values.put(MediaStore.Images.Media.HEIGHT, reader.getHeight());
-                        context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                        Uri uri = context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                        Log.i(TAG, "onImageAvailable: insert the image file to database, filePath = " + filePath + ", uri = " + uri);
                     } catch (IOException | InterruptedException e) {
                         e.printStackTrace();
                     } finally {
@@ -252,6 +257,7 @@ public class CameraHelper {
 
                         image.close();
                     }
+
                     break;
                 }
             }
