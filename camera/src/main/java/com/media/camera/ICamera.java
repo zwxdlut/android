@@ -309,7 +309,7 @@ public interface ICamera {
      * @param height   The recording video height.
      * @return {@link ResultCode}.
      */
-    public int setVideoSize(String cameraId, int width, int height);
+    public int setRecordingSize(String cameraId, int width, int height);
 
     /**
      * Set the video encoding bit rate.

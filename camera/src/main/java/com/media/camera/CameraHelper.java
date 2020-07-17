@@ -87,7 +87,7 @@ public class CameraHelper {
     private ArrayMap<String, String> captureDirs = new ArrayMap<>();
     private ArrayMap<String, String> recordingDirs = new ArrayMap<>();
     private ArrayMap<String, String> thumbnailDirs = new ArrayMap<>();
-    private ArrayMap<String, Size> videoSizes = new ArrayMap<>();
+    private ArrayMap<String, Size> recordingSizes = new ArrayMap<>();
     private ArrayMap<String, Integer> videoBps = new ArrayMap<>();
     private ArrayMap<String, Boolean> isRecordings = new ArrayMap<>();
     private ArrayMap<String, ImageReader> imageReaders = new ArrayMap<>();
@@ -141,7 +141,7 @@ public class CameraHelper {
                 if (session == cameraCaptureSessions.get(cameraId)) {
                     Log.d(TAG, "onCaptureSequenceCompleted: cameraId = " + cameraId + ", sequenceId = " + sequenceId + ", frameNumber = " + frameNumber);
                     String filePath = recordingDirs.get(cameraId);
-                    Size size = videoSizes.get(cameraId);
+                    Size size = recordingSizes.get(cameraId);
                     ContentValues values = new ContentValues();
                     MediaMetadataRetriever mmr = new MediaMetadataRetriever();
                     Bitmap thumbnail = null;
@@ -698,9 +698,9 @@ public class CameraHelper {
         return ResultCode.SUCCESS;
     }
 
-    public int setVideoSize(String cameraId, int width, int height) {
-        Log.d(TAG, "setVideoSize: cameraId = " + cameraId + ", width = " + width + ", height = " + height);
-        videoSizes.put(cameraId, new Size(width, height));
+    public int setRecordingSize(String cameraId, int width, int height) {
+        Log.d(TAG, "setRecordingSize: cameraId = " + cameraId + ", width = " + width + ", height = " + height);
+        recordingSizes.put(cameraId, new Size(width, height));
         return ResultCode.SUCCESS;
     }
 
@@ -766,7 +766,7 @@ public class CameraHelper {
             Log.i(TAG, "open: camera " + cameraId + " capture size = " + size);
 
             size = Collections.max(Arrays.asList(getAvailableRecordingSizes(cameraId)), new CompareSizesByArea());
-            videoSizes.put(cameraId, size);
+            recordingSizes.put(cameraId, size);
             Log.i(TAG, "open: camera " + cameraId + " recording size = " + size);
 
             cameraResults.put(cameraId, ResultCode.SUCCESS);
@@ -1163,7 +1163,7 @@ public class CameraHelper {
         mediaRecorder.setOutputFile(filePath);
         mediaRecorder.setVideoEncodingBitRate(videoBps.get(cameraId));
         mediaRecorder.setVideoFrameRate(30);
-        mediaRecorder.setVideoSize(videoSizes.get(cameraId).getWidth(), videoSizes.get(cameraId).getHeight());
+        mediaRecorder.setVideoSize(recordingSizes.get(cameraId).getWidth(), recordingSizes.get(cameraId).getHeight());
         mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
         mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
         mediaRecorder.setMaxDuration(duration);

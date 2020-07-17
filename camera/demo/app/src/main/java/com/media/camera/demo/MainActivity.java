@@ -184,6 +184,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Log.i(TAG, "onClick: stopPreview = " + camera.stopPreview(cameraIds[0]));
                 break;
             case R.id.btn_capture:
+                //camera.setCaptureSize(cameraIds[0], 1280, 720);
                 Log.i(TAG, "onClick: capture = " + camera.capture(cameraIds[0], 116.2353515625, 39.5379397452));
                 break;
             case R.id.btn_set_preview_surface:
@@ -194,7 +195,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.btn_start_recording:
-                camera.setVideoSize(cameraIds[0], 1280, 720);
+                camera.setRecordingSize(cameraIds[0], 1280, 720);
                 Log.i(TAG, "onClick: startRecording = " + camera.startRecording(cameraIds[0]));
                 break;
             case R.id.btn_stop_recording:
