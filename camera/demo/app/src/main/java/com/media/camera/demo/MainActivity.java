@@ -57,49 +57,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
-//    private CameraHelper.ICameraCallback cameraCallback = new CameraHelper.ICameraCallback() {
-//        @Override
-//        public void onError(String cameraId, int error) {
-//            Log.i(TAG, "onError: cameraId = " + cameraId + ", error = " + error);
-//        }
-//    };
-//
-//    private CameraHelper.ICaptureCallback captureCallback = new CameraHelper.ICaptureCallback() {
-//        @Override
-//        public void onComplete(String cameraId, String filePath) {
-//            Log.i(TAG, "onComplete: capture cameraId = " + cameraId + ", filePath = " + filePath);
-//            final Bitmap bm = BitmapFactory.decodeFile(filePath);
-//            Rect rect = new Rect();
-//            getWindowManager().getDefaultDisplay().getRectSize(rect);
-//            Matrix matrix = new Matrix();
-//            float scale = ((float) (rect.width() - size.getWidth())) / bm.getWidth();
-//            matrix.postScale(scale, scale);
-//            final Bitmap bitmap = Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), matrix, true);
-//
-//            captureView.post(new Runnable() {
-//                @Override
-//                public void run() {
-//                    captureView.setVisibility(View.VISIBLE);
-//                    if (bitmap != null) {
-//                        captureView.setImageBitmap(bitmap);
-//                    }
-//                }
-//            });
-//        }
-//    };
-//
-//    private CameraHelper.IRecordingCallback recordingCallback = new CameraHelper.IRecordingCallback() {
-//        @Override
-//        public void onComplete(String cameraId, String filePath) {
-//            Log.i(TAG, "onComplete: Recording cameraId = " + cameraId + ", filePath = " + filePath);
-//        }
-//
-//        @Override
-//        public void onError(String cameraId, int what, int extra) {
-//            Log.i(TAG, "onError: Recording cameraId = " + cameraId + ", what = " + what + ", extra = " + extra);
-//        }
-//    };
-
+    //private CameraHelper.ICameraCallback cameraCallback = new CameraHelper.ICameraCallback() {
     private ICamera.ICameraCallback cameraCallback = new ICamera.ICameraCallback() {
         @Override
         public void onState(String cameraId, int state) {
@@ -112,6 +70,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
+    //private CameraHelper.ICaptureCallback captureCallback = new CameraHelper.ICaptureCallback() {
     private ICamera.ICaptureCallback captureCallback = new ICamera.ICaptureCallback() {
         @Override
         public void onComplete(String cameraId, String filePath) {
@@ -136,6 +95,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
+    //private CameraHelper.IRecordingCallback recordingCallback = new CameraHelper.IRecordingCallback() {
     private ICamera.IRecordingCallback recordingCallback = new ICamera.IRecordingCallback() {
         @Override
         public void onComplete(String cameraId, String filePath) {
@@ -184,7 +144,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Log.i(TAG, "onClick: stopPreview = " + camera.stopPreview(cameraIds[0]));
                 break;
             case R.id.btn_capture:
-                //camera.setCaptureSize(cameraIds[0], 1280, 720);
                 Log.i(TAG, "onClick: capture = " + camera.capture(cameraIds[0], 116.2353515625, 39.5379397452));
                 break;
             case R.id.btn_set_preview_surface:

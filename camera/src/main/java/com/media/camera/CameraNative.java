@@ -53,6 +53,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -82,18 +83,18 @@ public class CameraNative implements ICamera {
     private static CameraNative instance = null;
     private Context context = null;
     private CameraManager cameraManager = null;
-    private ArrayMap<String, Integer> sensorOrientations = new ArrayMap<>();
-    private ArrayMap<String, Surface> previewSurfaces = new ArrayMap<>();
-    private ArrayMap<String, String> captureDirs = new ArrayMap<>();
-    private ArrayMap<String, String> recordingDirs = new ArrayMap<>();
-    private ArrayMap<String, String> thumbnailDirs = new ArrayMap<>();
-    private ArrayMap<String, Size> recordingSizes = new ArrayMap<>();
-    private ArrayMap<String, Integer> videoBps = new ArrayMap<>();
-    private ArrayMap<String, Boolean> isRecordings = new ArrayMap<>();
-    private ArrayMap<String, ImageReader> imageReaders = new ArrayMap<>();
-    private ArrayMap<String, MediaRecorder> mediaRecorders = new ArrayMap<>();
-    private ArrayMap<String, CameraDevice> cameraDevices = new ArrayMap<>();
-    private ArrayMap<String, CameraCaptureSession> cameraCaptureSessions = new ArrayMap<>();
+    private Map<String, Integer> sensorOrientations = new ArrayMap<>();
+    private Map<String, Surface> previewSurfaces = new ArrayMap<>();
+    private Map<String, String> captureDirs = new ArrayMap<>();
+    private Map<String, String> recordingDirs = new ArrayMap<>();
+    private Map<String, String> thumbnailDirs = new ArrayMap<>();
+    private Map<String, Size> recordingSizes = new ArrayMap<>();
+    private Map<String, Integer> videoBps = new ArrayMap<>();
+    private Map<String, Boolean> isRecordings = new ArrayMap<>();
+    private Map<String, ImageReader> imageReaders = new ArrayMap<>();
+    private Map<String, MediaRecorder> mediaRecorders = new ArrayMap<>();
+    private Map<String, CameraDevice> cameraDevices = new ArrayMap<>();
+    private Map<String, CameraCaptureSession> cameraCaptureSessions = new ArrayMap<>();
     private ICameraCallback cameraCallback = null;
     private ICaptureCallback captureCallback = null;
     private IRecordingCallback recordingCallback = null;
@@ -102,28 +103,37 @@ public class CameraNative implements ICamera {
     private Handler handler = null;
     private HandlerThread sessionHandlerThread = null;
     private Handler sessionHandler = null;
-    private ArrayMap<String, Boolean> cameraFlags = new ArrayMap<>();
-    private ArrayMap<String, Lock> cameraLocks = new ArrayMap<>();
-    private ArrayMap<String, Condition> cameraConditions = new ArrayMap<>();
-    private ArrayMap<String, LinkedBlockingDeque<CaptureResult>> captureResults = new ArrayMap<>();
+    private Map<String, Boolean> cameraFlags = new ArrayMap<>();
+    private Map<String, Lock> cameraLocks = new ArrayMap<>();
+    private Map<String, Condition> cameraConditions = new ArrayMap<>();
+    private Map<String, LinkedBlockingDeque<CaptureResult>> captureResults = new ArrayMap<>();
 
     private CameraCaptureSession.CaptureCallback sessionCaptureCallback = new CameraCaptureSession.CaptureCallback() {
         @Override
         public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
             super.onCaptureCompleted(session, request, result);
-            Log.i(TAG, "onCaptureCompleted");
-            if (!cameraCaptureSessions.containsValue(session)) {
+            String cameraId = null;
+
+            for (Map.Entry<String, CameraCaptureSession> entry : cameraCaptureSessions.entrySet()) {
+                if(session.equals(entry.getValue())){
+                    cameraId = entry.getKey();
+                    break;
+                }
+            }
+
+            if(null == cameraId) {
                 return;
             }
 
-            for (String cameraId : cameraCaptureSessions.keySet()) {
-                if (session == cameraCaptureSessions.get(cameraId)) {
-                    try {
-                        captureResults.get(cameraId).put(result);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+            Log.i(TAG, "onCaptureCompleted: cameraId = " + cameraId);
+
+            try {
+                LinkedBlockingDeque<CaptureResult> captureResult = captureResults.get(cameraId);
+                if (null != captureResult) {
+                    captureResult.put(result);
                 }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     };
@@ -132,93 +142,112 @@ public class CameraNative implements ICamera {
         @Override
         public void onCaptureSequenceCompleted(@NonNull CameraCaptureSession session, int sequenceId, long frameNumber) {
             super.onCaptureSequenceCompleted(session, sequenceId, frameNumber);
-            if (!cameraCaptureSessions.containsValue(session)) {
+            String cameraId = null;
+
+            for (Map.Entry<String, CameraCaptureSession> entry : cameraCaptureSessions.entrySet()) {
+                if(session.equals(entry.getValue())){
+                    cameraId = entry.getKey();
+                    break;
+                }
+            }
+
+            if(null == cameraId) {
                 return;
             }
 
-            for (String cameraId : cameraCaptureSessions.keySet()) {
-                if (session == cameraCaptureSessions.get(cameraId)) {
-                    Log.i(TAG, "onCaptureSequenceCompleted: cameraId = " + cameraId + ", sequenceId = " + sequenceId + ", frameNumber = " + frameNumber);
-                    String filePath = recordingDirs.get(cameraId);
-                    Size size = recordingSizes.get(cameraId);
-                    ContentValues values = new ContentValues();
-                    MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-                    Bitmap thumbnail = null;
-                    Uri uri = null;
+            String filePath = recordingDirs.get(cameraId);
+            Size size = recordingSizes.get(cameraId);
+            ContentValues values = new ContentValues();
+            MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+            Bitmap thumbnail = null;
+            Uri uri = null;
 
-                    releaseRecorder(cameraId);
+            Log.i(TAG, "onCaptureSequenceCompleted: cameraId = " + cameraId + ", sequenceId = " + sequenceId + ", frameNumber = " + frameNumber);
+            releaseRecorder(cameraId);
+
+            try {
+                mmr.setDataSource(filePath);
+                values.put(MediaStore.Video.Media.DURATION, mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+                thumbnail = mmr.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
+                Log.i(TAG, "onCaptureSequenceCompleted: the video thumbnail(MediaMetadataRetriever) = " + thumbnail);
+            } catch (RuntimeException e) {
+                e.printStackTrace();
+            }
+
+            /* Insert the video to MediaStore */
+            values.put(MediaStore.Video.Media.DATA, filePath);
+            if (null != size) {
+                values.put(MediaStore.Video.Media.WIDTH, size.getWidth());
+                values.put(MediaStore.Video.Media.HEIGHT, size.getHeight());
+            }
+            uri = context.getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
+            Log.i(TAG, "onCaptureSequenceCompleted: insert the video to database, filePath = " + filePath + ", uri = " + uri);
+
+            /* Insert the thumbnail to MediaStore */
+            if (null != filePath) {
+                if (null == thumbnail) {
+                    thumbnail = ThumbnailUtils.createVideoThumbnail(filePath, MediaStore.Video.Thumbnails.FULL_SCREEN_KIND);
+                    Log.i(TAG, "onCaptureSequenceCompleted: the video thumbnail(ThumbnailUtils) = " + thumbnail);
+                }
+
+                if (null != thumbnail && null != uri) {
                     try {
-                        mmr.setDataSource(filePath);
-                        values.put(MediaStore.Video.Media.DURATION, mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
-                        thumbnail = mmr.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
-                        Log.i(TAG, "onCaptureSequenceCompleted: the video thumbnail(MediaMetadataRetriever) = " + thumbnail);
-                    } catch (RuntimeException e) {
+                        String thumbnailPath = thumbnailDirs.get(cameraId) + filePath.substring(filePath.lastIndexOf(File.separator), filePath.lastIndexOf(".")) + ".jpg";
+                        FileOutputStream fos = new FileOutputStream(thumbnailPath);
+
+                        thumbnail.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+                        fos.flush();
+                        fos.close();
+
+                        values.clear();
+                        values.put(MediaStore.Video.Thumbnails.DATA, thumbnailPath);
+                        values.put(MediaStore.Video.Thumbnails.VIDEO_ID, ContentUris.parseId(uri));
+                        values.put(MediaStore.Video.Thumbnails.WIDTH, thumbnail.getWidth());
+                        values.put(MediaStore.Video.Thumbnails.HEIGHT, thumbnail.getHeight());
+                        Uri thumbnailUri = context.getContentResolver().insert(MediaStore.Video.Thumbnails.EXTERNAL_CONTENT_URI, values);
+                        Log.i(TAG, "onCaptureSequenceCompleted: insert the video thumbnail to database, thumbnailPath = " + thumbnailPath + ", thumbnailUri = " + thumbnailUri);
+                    } catch (IOException e) {
                         e.printStackTrace();
-                    }
-
-                    /* Insert the video to MediaStore */
-                    values.put(MediaStore.Video.Media.DATA, filePath);
-                    if (null != size) {
-                        values.put(MediaStore.Video.Media.WIDTH, size.getWidth());
-                        values.put(MediaStore.Video.Media.HEIGHT, size.getHeight());
-                    }
-                    uri = context.getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
-                    Log.i(TAG, "onCaptureSequenceCompleted: insert the video to database, filePath = " + filePath + ", uri = " + uri);
-
-                    /* Insert the thumbnail to MediaStore */
-                    if (null != filePath) {
-                        if (null == thumbnail) {
-                            thumbnail = ThumbnailUtils.createVideoThumbnail(filePath, MediaStore.Video.Thumbnails.FULL_SCREEN_KIND);
-                            Log.i(TAG, "onCaptureSequenceCompleted: the video thumbnail(ThumbnailUtils) = " + thumbnail);
-                        }
-
-                        if (null != thumbnail && null != uri) {
-                            try {
-                                String thumbnailPath = thumbnailDirs.get(cameraId) + filePath.substring(filePath.lastIndexOf(File.separator), filePath.lastIndexOf(".")) + ".jpg";
-                                FileOutputStream fos = new FileOutputStream(thumbnailPath);
-
-                                thumbnail.compress(Bitmap.CompressFormat.JPEG, 100, fos);
-                                fos.flush();
-                                fos.close();
-
-                                values.clear();
-                                values.put(MediaStore.Video.Thumbnails.DATA, thumbnailPath);
-                                values.put(MediaStore.Video.Thumbnails.VIDEO_ID, ContentUris.parseId(uri));
-                                values.put(MediaStore.Video.Thumbnails.WIDTH, thumbnail.getWidth());
-                                values.put(MediaStore.Video.Thumbnails.HEIGHT, thumbnail.getHeight());
-                                Uri thumbnailUri = context.getContentResolver().insert(MediaStore.Video.Thumbnails.EXTERNAL_CONTENT_URI, values);
-                                Log.i(TAG, "onCaptureSequenceCompleted: insert the video thumbnail to database, thumbnailPath = " + thumbnailPath + ", thumbnailUri = " + thumbnailUri);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-
-                    if (null != recordingCallback) {
-                        recordingCallback.onComplete(cameraId, filePath);
                     }
                 }
             }
+
+            if (null != recordingCallback) {
+                recordingCallback.onComplete(cameraId, filePath);
+            }
+
         }
     };
 
     private ImageReader.OnImageAvailableListener imageAvailableListener = new ImageReader.OnImageAvailableListener() {
         @Override
         public void onImageAvailable(ImageReader reader) {
-            if (!imageReaders.containsValue(reader)) {
+            String key = null;
+
+            for (Map.Entry<String, ImageReader> entry : imageReaders.entrySet()) {
+                if(reader.equals(entry.getValue())){
+                    key = entry.getKey();
+                    break;
+                }
+            }
+
+            if(null == key) {
                 return;
             }
 
-            /* Lookup the camera id */
-            for (String cameraId : imageReaders.keySet()) {
-                if (reader == imageReaders.get(cameraId)) {
-                    Log.i(TAG, "onImageAvailable: cameraId = " + cameraId + " width = " + reader.getWidth() + ", height = " + reader.getHeight());
-                    Image image = reader.acquireNextImage();
-                    ByteBuffer buffer = image.getPlanes()[0].getBuffer();
-                    byte bytes[] = new byte[buffer.remaining()];
-                    buffer.get(bytes);
-                    String filePath = captureDirs.get(cameraId) + File.separator + dateFormat.format(new Date()) + ".jpg";
+            Image image = reader.acquireNextImage();
+            ByteBuffer buffer = image.getPlanes()[0].getBuffer();
+            final byte bytes[] = new byte[buffer.remaining()];
+            final int width = reader.getWidth();
+            final int height = reader.getHeight();
+            final String cameraId = key;
+            final String filePath = captureDirs.get(cameraId) + File.separator + dateFormat.format(new Date()) + ".jpg";
 
+            buffer.get(bytes);
+            Log.i(TAG, "onImageAvailable: cameraId = " + cameraId + " width = " + width + ", height = " + height);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
                     try {
                         /* Write the image data to the file */
                         FileOutputStream fos = new FileOutputStream(filePath);
@@ -243,63 +272,68 @@ public class CameraNative implements ICamera {
 
                         /* Insert the image to MediaStore */
                         values.put(MediaStore.Images.Media.DATA, filePath);
-                        values.put(MediaStore.Images.Media.WIDTH, reader.getWidth());
-                        values.put(MediaStore.Images.Media.HEIGHT, reader.getHeight());
+                        values.put(MediaStore.Images.Media.WIDTH, width);
+                        values.put(MediaStore.Images.Media.HEIGHT, height);
                         Uri uri = context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-                        Log.i(TAG, "onImageAvailable: insert the image file to database, filePath = " + filePath + ", uri = " + uri);
+                        Log.i(TAG, "run(onImageAvailable): insert the image file to database, filePath = " + filePath + ", uri = " + uri);
                     } catch (IOException | InterruptedException e) {
                         e.printStackTrace();
-                    } finally {
-                        if (null != captureCallback) {
-                            captureCallback.onComplete(cameraId, filePath);
-                        }
-
-                        image.close();
                     }
 
-                    break;
+                    if (null != captureCallback) {
+                        captureCallback.onComplete(cameraId, filePath);
+                    }
                 }
-            }
+            }, "ImageReader.OnImageAvailableListener.onImageAvailable").start();
+            image.close();
         }
     };
 
     private MediaRecorder.OnInfoListener recordingInfoListener = new MediaRecorder.OnInfoListener() {
         @Override
         public void onInfo(MediaRecorder mr, int what, int extra) {
-            if (!mediaRecorders.containsValue(mr)) {
-                return;
-            }
+            String cameraId = null;
 
-            for (String cameraId : mediaRecorders.keySet()) {
-                if (mr == mediaRecorders.get(cameraId)) {
-                    Log.i(TAG, "onInfo: cameraId = " + cameraId + ", what = " + what + ", extra = " + extra);
-                    isRecordings.put(cameraId, false);
-                    releaseRecorder(cameraId);
+            for (Map.Entry<String, MediaRecorder> entry : mediaRecorders.entrySet()) {
+                if(mr.equals(entry.getValue())){
+                    cameraId = entry.getKey();
                     break;
                 }
             }
+
+            if(null == cameraId) {
+                return;
+            }
+
+            Log.i(TAG, "onInfo: cameraId = " + cameraId + ", what = " + what + ", extra = " + extra);
+            isRecordings.put(cameraId, false);
+            releaseRecorder(cameraId);
         }
     };
 
     private MediaRecorder.OnErrorListener recordingErrorListener = new MediaRecorder.OnErrorListener() {
         @Override
         public void onError(MediaRecorder mr, int what, int extra) {
-            if (!mediaRecorders.containsValue(mr)) {
-                return;
-            }
+            String cameraId = null;
 
-            for (String cameraId : mediaRecorders.keySet()) {
-                if (mr == mediaRecorders.get(cameraId)) {
-                    Log.e(TAG, "onError: cameraId = " + cameraId + ", what = " + what + ", extra = " + extra);
-                    stopRecording(cameraId);
-
-                    if (null != recordingCallback) {
-                        recordingCallback.onError(cameraId, what, extra);
-                    }
-
+            for (Map.Entry<String, MediaRecorder> entry : mediaRecorders.entrySet()) {
+                if(mr.equals(entry.getValue())){
+                    cameraId = entry.getKey();
                     break;
                 }
             }
+
+            if(null == cameraId) {
+                return;
+            }
+
+            Log.e(TAG, "onError: cameraId = " + cameraId + ", what = " + what + ", extra = " + extra);
+            stopRecording(cameraId);
+
+            if (null != recordingCallback) {
+                recordingCallback.onError(cameraId, what, extra);
+            }
+
         }
     };
 
