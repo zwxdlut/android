@@ -128,9 +128,9 @@ public class CameraHelper {
             Log.i(TAG, "onCaptureCompleted: cameraId = " + cameraId);
 
             try {
-                LinkedBlockingDeque<CaptureResult> captureResult = captureResults.get(cameraId);
-                if (null != captureResult) {
-                    captureResult.put(result);
+                LinkedBlockingDeque<CaptureResult> captureResultQueue = captureResults.get(cameraId);
+                if (null != captureResultQueue) {
+                    captureResultQueue.put(result);
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -255,19 +255,23 @@ public class CameraHelper {
                         fos.close();
 
                         ContentValues values = new ContentValues();
-                        CaptureResult captureResult = captureResults.get(cameraId).take();
-                        Location location = captureResult.get(CaptureResult.JPEG_GPS_LOCATION);
+                        LinkedBlockingDeque<CaptureResult> captureResultQueue = captureResults.get(cameraId);
 
-                        /* Write the location to the image */
-                        if (null != location) {
-                            double latitude = location.getLatitude();
-                            double longitude = location.getLongitude();
-                            ExifInterface exif = new ExifInterface(filePath);
-                            exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE_REF, ConvertUtils.convertToDegree(latitude));
-                            exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF, ConvertUtils.convertToDegree(longitude));
-                            exif.saveAttributes();
-                            values.put(MediaStore.Images.Media.LATITUDE, latitude);
-                            values.put(MediaStore.Images.Media.LONGITUDE, longitude);
+                        if (null != captureResultQueue) {
+                            CaptureResult captureResult = captureResultQueue.take();
+                            Location location = captureResult.get(CaptureResult.JPEG_GPS_LOCATION);
+
+                            /* Write the location to the image */
+                            if (null != location) {
+                                double latitude = location.getLatitude();
+                                double longitude = location.getLongitude();
+                                ExifInterface exif = new ExifInterface(filePath);
+                                exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE_REF, ConvertUtils.convertToDegree(latitude));
+                                exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF, ConvertUtils.convertToDegree(longitude));
+                                exif.saveAttributes();
+                                values.put(MediaStore.Images.Media.LATITUDE, latitude);
+                                values.put(MediaStore.Images.Media.LONGITUDE, longitude);
+                            }
                         }
 
                         /* Insert the image to MediaStore */
