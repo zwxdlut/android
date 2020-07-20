@@ -594,7 +594,6 @@ public class CameraHelper {
     private CameraHelper(Context context) {
         this.context = context.getApplicationContext();
         cameraManager = (CameraManager) this.context.getSystemService(Context.CAMERA_SERVICE);
-        assert null != cameraManager;
 
         File captureDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         if (null == captureDir) {
