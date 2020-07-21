@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA)
-                ||PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                || PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 || PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECORD_AUDIO)) {
             ActivityCompat.requestPermissions(MainActivity.this,
                     new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO},
@@ -176,7 +176,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         && PackageManager.PERMISSION_GRANTED == grantResults[1]
                         && PackageManager.PERMISSION_GRANTED == grantResults[2]) {
                     Log.i(TAG, "onRequestPermissionsResult: permission granted requestCode = " + requestCode);
-                    init();
                 } else {
                     Log.w(TAG, "onRequestPermissionsResult: permission denied requestCode = " + requestCode);
                 }
