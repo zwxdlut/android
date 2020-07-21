@@ -192,7 +192,7 @@ public class CameraHelper {
 
                 if (null != thumbnail && null != uri) {
                     try {
-                        String thumbnailPath = thumbnailDirs.get(cameraId) + filePath.substring(filePath.lastIndexOf(File.separator), filePath.lastIndexOf(".")) + ".jpg";
+                        String thumbnailPath = thumbnailDirs.get(cameraId) + filePath.substring(filePath.lastIndexOf(File.separator), filePath.lastIndexOf('.')) + ".jpg";
                         FileOutputStream fos = new FileOutputStream(thumbnailPath);
 
                         thumbnail.compress(Bitmap.CompressFormat.JPEG, 100, fos);
@@ -252,6 +252,7 @@ public class CameraHelper {
                         /* Write the image data to the file */
                         FileOutputStream fos = new FileOutputStream(filePath);
                         fos.write(bytes);
+                        fos.flush();
                         fos.close();
 
                         ContentValues values = new ContentValues();
