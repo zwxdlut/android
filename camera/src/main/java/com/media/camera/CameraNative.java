@@ -387,7 +387,7 @@ public class CameraNative implements ICamera {
                     if (captureDir.mkdirs()) {
                         Log.i(TAG, "CameraNative: make directory " + captureDir.getPath());
                     } else {
-                        Log.e(TAG, "CameraNative: can't make directory " + captureDir.getPath());
+                        Log.e(TAG, "CameraNative: make directory " + captureDir.getPath() + " failed!");
                     }
                 }
             }
@@ -400,7 +400,7 @@ public class CameraNative implements ICamera {
                 if (recordingDir.mkdirs()) {
                     Log.i(TAG, "CameraNative: make directory " + recordingDir.getPath());
                 } else {
-                    Log.e(TAG, "CameraNative: can't make directory " + recordingDir.getPath());
+                    Log.e(TAG, "CameraNative: make directory " + recordingDir.getPath() + " failed!");
                 }
             }
         }
@@ -410,7 +410,7 @@ public class CameraNative implements ICamera {
             if (thumbnailDir.mkdirs()) {
                 Log.i(TAG, "CameraNative: make directory " + thumbnailDir.getPath());
             } else {
-                Log.e(TAG, "CameraNative: can't make directory " + thumbnailDir.getPath());
+                Log.e(TAG, "CameraNative: make directory " + thumbnailDir.getPath() + " failed!");
             }
         }
 

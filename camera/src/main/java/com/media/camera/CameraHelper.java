@@ -604,7 +604,7 @@ public class CameraHelper {
                     if (captureDir.mkdirs()) {
                         Log.i(TAG, "CameraHelper: make directory " + captureDir.getPath());
                     } else {
-                        Log.e(TAG, "CameraHelper: can't make directory " + captureDir.getPath());
+                        Log.e(TAG, "CameraHelper: make directory " + captureDir.getPath() + " failed!");
                     }
                 }
             }
@@ -617,7 +617,7 @@ public class CameraHelper {
                 if (recordingDir.mkdirs()) {
                     Log.i(TAG, "CameraHelper: make directory " + recordingDir.getPath());
                 } else {
-                    Log.e(TAG, "CameraHelper: can't make directory " + recordingDir.getPath());
+                    Log.e(TAG, "CameraHelper: make directory " + recordingDir.getPath() + " failed!");
                 }
             }
         }
@@ -627,7 +627,7 @@ public class CameraHelper {
             if (thumbnailDir.mkdirs()) {
                 Log.i(TAG, "CameraHelper: make directory " + thumbnailDir.getPath());
             } else {
-                Log.e(TAG, "CameraHelper: can't make directory " + thumbnailDir.getPath());
+                Log.e(TAG, "CameraHelper: make directory " + thumbnailDir.getPath() + " failed!");
             }
         }
 
