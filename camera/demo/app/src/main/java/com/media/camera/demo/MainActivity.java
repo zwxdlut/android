@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
             int rotation = getWindowManager().getDefaultDisplay().getRotation();
+
             Log.i(TAG, "surfaceCreated: holder = " + holder + ", rotation = " + rotation);
             MainActivity.this.holder = holder;
         }
@@ -75,6 +76,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void onComplete(String cameraId, String filePath) {
             Log.i(TAG, "onComplete: capture cameraId = " + cameraId + ", filePath = " + filePath);
+
             final Bitmap bm = BitmapFactory.decodeFile(filePath);
             Rect rect = new Rect();
             getWindowManager().getDefaultDisplay().getRectSize(rect);
@@ -95,16 +97,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
-    //private CameraHelper.IRecordingCallback recordingCallback = new CameraHelper.IRecordingCallback() {
-    private ICamera.IRecordingCallback recordingCallback = new ICamera.IRecordingCallback() {
+    //private CameraHelper.IRecordCallback recordCallback = new CameraHelper.IRecordCallback() {
+    private ICamera.IRecordCallback recordCallback = new ICamera.IRecordCallback() {
         @Override
         public void onComplete(String cameraId, String filePath) {
-            Log.i(TAG, "onComplete: Recording cameraId = " + cameraId + ", filePath = " + filePath);
+            Log.i(TAG, "onComplete: record cameraId = " + cameraId + ", filePath = " + filePath);
         }
 
         @Override
         public void onError(String cameraId, int what, int extra) {
-            Log.i(TAG, "onError: Recording cameraId = " + cameraId + ", what = " + what + ", extra = " + extra);
+            Log.i(TAG, "onError: record cameraId = " + cameraId + ", what = " + what + ", extra = " + extra);
         }
     };
 
@@ -153,12 +155,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Log.w(TAG, "onClick: setPreviewSurface surface holder is null");
                 }
                 break;
-            case R.id.btn_start_recording:
-                camera.setRecordingSize(cameraIds[0], 1280, 720);
-                Log.i(TAG, "onClick: startRecording = " + camera.startRecording(cameraIds[0]));
+            case R.id.btn_start_record:
+                camera.setRecordSize(cameraIds[0], 1280, 720);
+                Log.i(TAG, "onClick: startRecord = " + camera.startRecord(cameraIds[0]));
                 break;
-            case R.id.btn_stop_recording:
-                Log.i(TAG, "onClick: stopRecording = " + camera.stopRecording(cameraIds[0]));
+            case R.id.btn_stop_record:
+                Log.i(TAG, "onClick: stopRecord = " + camera.stopRecord(cameraIds[0]));
                 break;
             default:
                 break;
@@ -166,10 +168,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         Log.i(TAG, "onRequestPermissionsResult: requestCode = " + requestCode + ", permissions = " + Arrays.asList(permissions)
                 + ", grantResults = " + Arrays.stream(grantResults).boxed().collect(Collectors.toList()));
+
         switch (requestCode) {
             case PERMISSION_REQUEST:
                 if (PackageManager.PERMISSION_GRANTED == grantResults[0]
@@ -193,7 +195,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         cameraIds = camera.getCameraIdList();
         camera.setStateCallback(cameraCallback);
         camera.setCaptureCallback(captureCallback);
-        camera.setRecordingCallback(recordingCallback);
+        camera.setRecordCallback(recordCallback);
         Log.i(TAG, "init: camera count = " + cameraIds.length);
 
         /* Initialize display */
@@ -211,12 +213,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.btn_stop_preview).setOnClickListener(this);
         findViewById(R.id.btn_capture).setOnClickListener(this);
         findViewById(R.id.btn_set_preview_surface).setOnClickListener(this);
-        findViewById(R.id.btn_start_recording).setOnClickListener(this);
-        findViewById(R.id.btn_stop_recording).setOnClickListener(this);
+        findViewById(R.id.btn_start_record).setOnClickListener(this);
+        findViewById(R.id.btn_stop_record).setOnClickListener(this);
     }
 
     private Size getMatchSize() {
         Rect rect = new Rect();
+
         getWindowManager().getDefaultDisplay().getRectSize(rect);
         Log.i(TAG, "getMatchSize: display rect = " + rect);
 

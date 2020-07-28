@@ -67,19 +67,19 @@
             android:layout_toEndOf="@id/btn_set_preview_surface"/>
 
         <Button
-            android:id="@+id/btn_start_recording"
+            android:id="@+id/btn_start_record"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/btn_start_recording"
+            android:text="@string/btn_start_record"
             android:layout_below="@id/view_preview"
             android:layout_toEndOf="@id/btn_start_preview"/>
 
         <Button
-            android:id="@+id/btn_stop_recording"
+            android:id="@+id/btn_stop_record"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/btn_stop_recording"
-            android:layout_below="@id/btn_start_recording"
+            android:text="@string/btn_stop_record"
+            android:layout_below="@id/btn_start_record"
             android:layout_toEndOf="@id/btn_stop_preview"/>
     </RelativeLayout>
 </ScrollView>

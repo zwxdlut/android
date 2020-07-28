@@ -7,6 +7,6 @@
     <string name="btn_stop_preview">Stop Preview</string>
     <string name="btn_capture">Capture</string>
     <string name="btn_set_preview_surface">Set Preview</string>
-    <string name="btn_start_recording">Start Recording</string>
-    <string name="btn_stop_recording">Stop Recording</string>
+    <string name="btn_start_record">Start Record</string>
+    <string name="btn_stop_record">Stop Record</string>
 </resources>

@@ -186,11 +186,11 @@ public interface ICamera {
     }
 
     /**
-     * The interface recording callback.
+     * The interface record callback.
      */
-    public interface IRecordingCallback {
+    public interface IRecordCallback {
         /**
-         * The error code during the recording.
+         * The error code while recording.
          */
         public interface ErrorCode {
             /**
@@ -205,15 +205,15 @@ public interface ICamera {
         }
 
         /**
-         * Called when the recording complete.
+         * Called when the record complete.
          *
          * @param cameraId The camera id.
-         * @param filePath The recording file full path.
+         * @param filePath The record file full path.
          */
         public void onComplete(String cameraId, String filePath);
 
         /**
-         * Called when error occurred during the recording.
+         * Called when error occurred while recording.
          *
          * @param cameraId The camera id.
          * @param what     The type of error that has occurred:
@@ -250,12 +250,12 @@ public interface ICamera {
     public Size[] getAvailableCaptureSizes(String cameraId);
 
     /**
-     * Get the available recording sizes.
+     * Get the available record sizes.
      *
      * @param cameraId The camera id.
-     * @return The available recording sizes.
+     * @return The available record sizes.
      */
-    public Size[] getAvailableRecordingSizes(String cameraId);
+    public Size[] getAvailableRecordSizes(String cameraId);
 
     /**
      * Set the camera callback.
@@ -302,14 +302,14 @@ public interface ICamera {
     public int setCaptureCallback(ICaptureCallback callback);
 
     /**
-     * Set the recording video size.
+     * Set the record video size.
      *
      * @param cameraId The camera id.
-     * @param width    The recording video width.
-     * @param height   The recording video height.
+     * @param width    The record video width.
+     * @param height   The record video height.
      * @return {@link ResultCode}.
      */
-    public int setRecordingSize(String cameraId, int width, int height);
+    public int setRecordSize(String cameraId, int width, int height);
 
     /**
      * Set the video encoding bit rate.
@@ -321,21 +321,21 @@ public interface ICamera {
     public int setVideoEncodingBps(String cameraId, int bps);
 
     /**
-     * Set the recording storage directory.
+     * Set the record storage directory.
      *
      * @param cameraId The camera id.
-     * @param dir      The recording storage directory.
+     * @param dir      The record storage directory.
      * @return {@link ResultCode}.
      */
-    public int setRecordingDir(String cameraId, String dir);
+    public int setRecordDir(String cameraId, String dir);
 
     /**
-     * Set the recording callback.
+     * Set the record callback.
      *
-     * @param callback The recording callback.
+     * @param callback The record callback.
      * @return {@link ResultCode}.
      */
-    public int setRecordingCallback(IRecordingCallback callback);
+    public int setRecordCallback(IRecordCallback callback);
 
     /**
      * Open the camera by id.
@@ -380,27 +380,27 @@ public interface ICamera {
     public int capture(String cameraId, double latitude, double longitude);
 
     /**
-     * Start recording.
+     * Start record.
      *
      * @param cameraId The camera id.
      * @return {@link ResultCode}.
      */
-    public int startRecording(String cameraId);
+    public int startRecord(String cameraId);
 
     /**
-     * Start recording with max duration.
+     * Start record with max duration.
      *
      * @param cameraId The camera id.
-     * @param duration The recording max duration in ms.
+     * @param duration The record max duration in ms.
      * @return {@link ResultCode}.
      */
-    public int startRecording(String cameraId, int duration);
+    public int startRecord(String cameraId, int duration);
 
     /**
-     * Stop recording.
+     * Stop record.
      *
      * @param cameraId The camera id.
      * @return {@link ResultCode}.
      */
-    public int stopRecording(String cameraId);
+    public int stopRecord(String cameraId);
 }
