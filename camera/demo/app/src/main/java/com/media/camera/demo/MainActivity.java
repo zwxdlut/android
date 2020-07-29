@@ -172,21 +172,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Log.i(TAG, "onRequestPermissionsResult: requestCode = " + requestCode + ", permissions = " + Arrays.asList(permissions)
                 + ", grantResults = " + Arrays.stream(grantResults).boxed().collect(Collectors.toList()));
 
-        switch (requestCode) {
-            case PERMISSION_REQUEST:
-                if (PackageManager.PERMISSION_GRANTED == grantResults[0]
-                        && PackageManager.PERMISSION_GRANTED == grantResults[1]
-                        && PackageManager.PERMISSION_GRANTED == grantResults[2]) {
-                    Log.i(TAG, "onRequestPermissionsResult: permission granted requestCode = " + requestCode);
-                    init();
-                } else {
-                    Log.w(TAG, "onRequestPermissionsResult: permission denied requestCode = " + requestCode);
-                    finish();
-                }
-                break;
-            default:
-                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-                break;
+        if (requestCode == PERMISSION_REQUEST) {
+            if (PackageManager.PERMISSION_GRANTED == grantResults[0]
+                    && PackageManager.PERMISSION_GRANTED == grantResults[1]
+                    && PackageManager.PERMISSION_GRANTED == grantResults[2]) {
+                Log.i(TAG, "onRequestPermissionsResult: permission granted requestCode = " + requestCode);
+                init();
+            } else {
+                Log.w(TAG, "onRequestPermissionsResult: permission denied requestCode = " + requestCode);
+                finish();
+            }
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
     }
 
