@@ -188,7 +188,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void init() {
-        /* Initialize camera */
+        // Initialize camera
         //camera = CameraHelper.getInstance(this);
         camera = new CameraNativeFactory().getCamera(this);
         cameraIds = camera.getCameraIdList();
@@ -197,7 +197,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         camera.setRecordCallback(recordCallback);
         Log.i(TAG, "init: camera count = " + cameraIds.length);
 
-        /* Initialize display */
+        // Initialize display
         size = getMatchSize();
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(size.getWidth(), size.getHeight());
         params.leftMargin = 0;

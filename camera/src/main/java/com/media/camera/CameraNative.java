@@ -177,7 +177,7 @@ public class CameraNative implements ICamera {
                 e.printStackTrace();
             }
 
-            /* Insert the video to MediaStore */
+            // Insert the video to MediaStore
             values.put(MediaStore.Video.Media.DATA, filePath);
             if (null != size) {
                 values.put(MediaStore.Video.Media.WIDTH, size.getWidth());
@@ -186,7 +186,7 @@ public class CameraNative implements ICamera {
             uri = context.getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
             Log.i(TAG, "onCaptureSequenceCompleted: insert the video to database, filePath = " + filePath + ", uri = " + uri);
 
-            /* Insert the thumbnail to MediaStore */
+            // Insert the thumbnail to MediaStore
             if (null != filePath) {
                 if (null == thumbnail) {
                     thumbnail = ThumbnailUtils.createVideoThumbnail(filePath, MediaStore.Video.Thumbnails.FULL_SCREEN_KIND);
@@ -253,7 +253,7 @@ public class CameraNative implements ICamera {
                 @Override
                 public void run() {
                     try {
-                        /* Write the image data to the file */
+                        // Write the image data to the file
                         FileOutputStream fos = new FileOutputStream(filePath);
                         fos.write(bytes);
                         fos.flush();
@@ -266,7 +266,7 @@ public class CameraNative implements ICamera {
                             CaptureResult captureResult = captureResultQueue.take();
                             Location location = captureResult.get(CaptureResult.JPEG_GPS_LOCATION);
 
-                            /* Write the location to the image */
+                            // Write the location to the image
                             if (null != location) {
                                 double latitude = location.getLatitude();
                                 double longitude = location.getLongitude();
@@ -279,7 +279,7 @@ public class CameraNative implements ICamera {
                             }
                         }
 
-                        /* Insert the image to MediaStore */
+                        // Insert the image to MediaStore
                         values.put(MediaStore.Images.Media.DATA, filePath);
                         values.put(MediaStore.Images.Media.WIDTH, width);
                         values.put(MediaStore.Images.Media.HEIGHT, height);
