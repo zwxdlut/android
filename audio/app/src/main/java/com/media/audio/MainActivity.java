@@ -216,10 +216,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         isRecording = false;
 
-        try {
-            recordThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if (null != recordThread) {
+            try {
+                recordThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            recordThread = null;
         }
     }
 
@@ -245,10 +249,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         isPlaying = false;
 
-        try {
-            playThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if (null != playThread) {
+            try {
+                playThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            playThread = null;
         }
     }
 }
