@@ -33,7 +33,69 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private int oBufSize = 0;
     private boolean isRecording = false;
     private boolean isPlaying = false;
+    private Thread recordThread = null;
+    private Thread playThread = null;
     private File pcmFile = null;
+
+    private class RecordThread extends Thread {
+        @Override
+        public void run() {
+            recorder.startRecording();
+
+            try {
+                FileOutputStream fos = new FileOutputStream(pcmFile);
+                byte[] buf = new byte[iBufSize];
+
+                while (isRecording) {
+                    int count = recorder.read(buf, 0, buf.length);
+
+                    Log.i(TAG, "run(record_thread): read " + count + " bytes from recorder");
+                    fos.write(buf, 0, count);
+                    fos.flush();
+                }
+
+                fos.flush();
+                fos.close();
+            } catch (IOException e) {
+                isRecording = false;
+                e.printStackTrace();
+            }
+
+            recorder.stop();
+        }
+    }
+
+    private class PlayThread extends Thread {
+        @Override
+        public void run() {
+            track.play();
+
+            try {
+                FileInputStream fis = new FileInputStream(pcmFile);
+                byte[] buf = new byte[oBufSize];
+
+                while(isPlaying) {
+                    int count = fis.read(buf, 0, buf.length);
+
+                    if (0 >= count) {
+                        Log.i(TAG, "run(play_thread): reach the end of the file");
+                        isPlaying = false;
+                        break;
+                    }
+
+                    count = track.write(buf, 0, count);
+                    Log.i(TAG, "run(play_thread): write " + count + " bytes to track");
+                }
+
+                fis.close();
+            } catch (IOException e) {
+                isPlaying = false;
+                e.printStackTrace();
+            }
+
+            track.stop();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,10 +117,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onDestroy() {
         super.onDestroy();
 
+        stopRecord();
+        stopPlay();
+
         if (null != recorder) {
             recorder.stop();
             recorder.release();
             recorder = null;
+        }
+
+        if (null != track) {
+            track.stop();
+            track.release();
+            track = null;
         }
     }
 
@@ -125,8 +196,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return;
         }
 
-        isRecording = true;
-
         if (pcmFile.exists()) {
             pcmFile.delete();
             try {
@@ -137,38 +206,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                recorder.startRecording();
-
-                try {
-                    FileOutputStream fos = new FileOutputStream(pcmFile);
-                    byte[] buf = new byte[iBufSize];
-
-                    while (isRecording) {
-                        int count = recorder.read(buf, 0, buf.length);
-
-                        Log.i(TAG, "run(record_thread): read " + count + " bytes from recorder");
-                        fos.write(buf, 0, count);
-                        fos.flush();
-                    }
-
-                    fos.flush();
-                    fos.close();
-                } catch (IOException e) {
-                    isRecording = false;
-                    e.printStackTrace();
-                }
-
-                recorder.stop();
-            }
-        }, "record_thread").start();
+        isRecording = true;
+        recordThread = new RecordThread();
+        recordThread.start();
     }
 
     private void stopRecord() {
         Log.i(TAG, "stopRecord: isRecording = " + isRecording + ", isPlaying = " + isPlaying);
+
         isRecording = false;
+
+        try {
+            recordThread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     private void startPlay() {
@@ -178,47 +230,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return;
         }
 
-        isPlaying = true;
-
         if (!pcmFile.exists()) {
             Log.w(TAG, "startPlay: pcm file is not exit");
         }
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                track.play();
+        isPlaying = true;
+        playThread = new PlayThread();
+        playThread.start();
 
-                try {
-                    FileInputStream fis = new FileInputStream(pcmFile);
-                    byte[] buf = new byte[oBufSize];
-
-                    while(isPlaying) {
-                        int count = fis.read(buf, 0, buf.length);
-
-                        if (0 >= count) {
-                            Log.i(TAG, "run(play_thread): reach the end of the file");
-                            isPlaying = false;
-                            break;
-                        }
-
-                        count = track.write(buf, 0, count);
-                        Log.i(TAG, "run(play_thread): write " + count + " bytes to track");
-                    }
-
-                    fis.close();
-                } catch (IOException e) {
-                    isPlaying = false;
-                    e.printStackTrace();
-                }
-
-                track.stop();
-            }
-        }, "play_thread").start();
     }
 
     private void stopPlay() {
         Log.i(TAG, "stopPlay: isRecording = " + isRecording + ", isPlaying = " + isPlaying);
+
         isPlaying = false;
+
+        try {
+            playThread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
