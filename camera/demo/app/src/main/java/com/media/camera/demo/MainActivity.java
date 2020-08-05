@@ -187,7 +187,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //camera = CameraHelper.getInstance(this);
         camera = new CameraNativeFactory().getCamera(this);
         cameraIds = camera.getCameraIdList();
-        camera.setStateCallback(cameraCallback);
+        camera.setCameraCallback(cameraCallback);
         camera.setCaptureCallback(captureCallback);
         camera.setRecordCallback(recordCallback);
         Log.i(TAG, "init: camera count = " + cameraIds.length);

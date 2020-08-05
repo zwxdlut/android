@@ -144,7 +144,7 @@ public interface ICamera {
         }
 
         /**
-         * Called when open the camera.
+         * Called when the camera state changed.
          *
          * @param cameraId The camera id.
          * @param state    The state:
@@ -263,7 +263,7 @@ public interface ICamera {
      * @param callback The camera callback.
      * @return {@link ResultCode}.
      */
-    public int setStateCallback(ICameraCallback callback);
+    public int setCameraCallback(ICameraCallback callback);
 
     /**
      * Set the preview surface.

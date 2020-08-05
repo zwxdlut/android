@@ -481,7 +481,7 @@ public class CameraHelper {
         }
 
         /**
-         * Called when open the camera.
+         * Called when the camera state changed.
          *
          * @param cameraId The camera id.
          * @param state    The state:
@@ -725,7 +725,7 @@ public class CameraHelper {
         return null;
     }
 
-    public int setStateCallback(ICameraCallback callback) {
+    public int setCameraCallback(ICameraCallback callback) {
         cameraCallback = callback;
         return ResultCode.SUCCESS;
     }

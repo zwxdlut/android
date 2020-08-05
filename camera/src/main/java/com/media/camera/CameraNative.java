@@ -513,7 +513,7 @@ public class CameraNative implements ICamera {
     }
 
     @Override
-    public int setStateCallback(ICameraCallback callback) {
+    public int setCameraCallback(ICameraCallback callback) {
         cameraCallback = callback;
         return ResultCode.SUCCESS;
     }
