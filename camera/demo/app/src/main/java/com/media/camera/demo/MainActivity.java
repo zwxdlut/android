@@ -122,6 +122,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        Log.i(TAG, "onRequestPermissionsResult: requestCode = " + requestCode + ", permissions = " + Arrays.asList(permissions)
+                + ", grantResults = " + Arrays.stream(grantResults).boxed().collect(Collectors.toList()));
+
+        if (requestCode == PERMISSION_REQUEST) {
+            if (PackageManager.PERMISSION_GRANTED == grantResults[0]
+                    && PackageManager.PERMISSION_GRANTED == grantResults[1]
+                    && PackageManager.PERMISSION_GRANTED == grantResults[2]) {
+                Log.i(TAG, "onRequestPermissionsResult: permission granted requestCode = " + requestCode);
+            } else {
+                Log.w(TAG, "onRequestPermissionsResult: permission denied requestCode = " + requestCode);
+                finish();
+            }
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+    }
+
+    @Override
     public void onClick(View v) {
         if (null == cameraIds || 0 >= cameraIds.length) {
             Log.w(TAG, "onClick: no camera");
@@ -160,25 +179,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             default:
                 break;
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        Log.i(TAG, "onRequestPermissionsResult: requestCode = " + requestCode + ", permissions = " + Arrays.asList(permissions)
-                + ", grantResults = " + Arrays.stream(grantResults).boxed().collect(Collectors.toList()));
-
-        if (requestCode == PERMISSION_REQUEST) {
-            if (PackageManager.PERMISSION_GRANTED == grantResults[0]
-                    && PackageManager.PERMISSION_GRANTED == grantResults[1]
-                    && PackageManager.PERMISSION_GRANTED == grantResults[2]) {
-                Log.i(TAG, "onRequestPermissionsResult: permission granted requestCode = " + requestCode);
-            } else {
-                Log.w(TAG, "onRequestPermissionsResult: permission denied requestCode = " + requestCode);
-                finish();
-            }
-        } else {
-            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
     }
 
