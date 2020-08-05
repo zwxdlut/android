@@ -622,10 +622,12 @@ public class CameraNative implements ICamera {
             Log.w(TAG, "open: camera permission denied!");
             return ResultCode.PERMISSION_CAMERA_DENIED;
         }
+
         if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
             Log.w(TAG, "open: write external permission denied!");
             return ResultCode.PERMISSION_WRITE_EXTERNAL_STORAGE_DENIED;
         }
+
         if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)) {
             Log.w(TAG, "open: record audio permission denied!");
             return ResultCode.PERMISSION_RECORD_AUDIO_DENIED;
