@@ -356,19 +356,19 @@ public class CameraHelper {
         public static final int SUCCESS = 0;
 
         /**
-         * The constant PERMISSION_CAMERA_DENIED.
+         * The constant NO_CAMERA_PERMISSION.
          */
-        public static final int PERMISSION_CAMERA_DENIED = -1;
+        public static final int NO_CAMERA_PERMISSION = -1;
 
         /**
-         * The constant PERMISSION_WRITE_EXTERNAL_STORAGE_DENIED.
+         * The constant NO_WRITE_EXTERNAL_STORAGE_PERMISSION.
          */
-        public static final int PERMISSION_WRITE_EXTERNAL_STORAGE_DENIED = -2;
+        public static final int NO_WRITE_EXTERNAL_STORAGE_PERMISSION = -2;
 
         /**
-         * The constant PERMISSION_RECORD_AUDIO_DENIED.
+         * The constant NO_RECORD_AUDIO_PERMISSION.
          */
-        public static final int PERMISSION_RECORD_AUDIO_DENIED = -3;
+        public static final int NO_RECORD_AUDIO_PERMISSION = -3;
 
         /**
          * The constant CAMERA_DISCONNECTED.
@@ -822,18 +822,18 @@ public class CameraHelper {
         Log.i(TAG, "open: cameraId = " + cameraId);
 
         if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)) {
-            Log.w(TAG, "open: camera permission denied!");
-            return ResultCode.PERMISSION_CAMERA_DENIED;
+            Log.w(TAG, "open: no camera permission!");
+            return ResultCode.NO_CAMERA_PERMISSION;
         }
 
         if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-            Log.w(TAG, "open: write external permission denied!");
-            return ResultCode.PERMISSION_WRITE_EXTERNAL_STORAGE_DENIED;
+            Log.w(TAG, "open: no write external storage permission!");
+            return ResultCode.NO_WRITE_EXTERNAL_STORAGE_PERMISSION;
         }
 
         if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)) {
-            Log.w(TAG, "open: record audio permission denied!");
-            return ResultCode.PERMISSION_RECORD_AUDIO_DENIED;
+            Log.w(TAG, "open: no record audio permission!");
+            return ResultCode.NO_RECORD_AUDIO_PERMISSION;
         }
 
         close(cameraId);

@@ -19,19 +19,19 @@ public interface ICamera {
         public static final int SUCCESS = 0;
 
         /**
-         * The constant PERMISSION_CAMERA_DENIED.
+         * The constant NO_CAMERA_PERMISSION.
          */
-        public static final int PERMISSION_CAMERA_DENIED = -1;
+        public static final int NO_CAMERA_PERMISSION = -1;
 
         /**
-         * The constant PERMISSION_WRITE_EXTERNAL_STORAGE_DENIED.
+         * The constant NO_WRITE_EXTERNAL_STORAGE_PERMISSION.
          */
-        public static final int PERMISSION_WRITE_EXTERNAL_STORAGE_DENIED = -2;
+        public static final int NO_WRITE_EXTERNAL_STORAGE_PERMISSION = -2;
 
         /**
-         * The constant PERMISSION_RECORD_AUDIO_DENIED.
+         * The constant NO_RECORD_AUDIO_PERMISSION.
          */
-        public static final int PERMISSION_RECORD_AUDIO_DENIED = -3;
+        public static final int NO_RECORD_AUDIO_PERMISSION = -3;
 
         /**
          * The constant CAMERA_DISCONNECTED.
