@@ -113,16 +113,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         stopRecord();
         stopPlay();
-
-        if (null != recorder) {
-            recorder.release();
-            recorder = null;
-        }
-
-        if (null != track) {
-            track.release();
-            track = null;
-        }
+        recorder.release();
+        track.release();
     }
 
     @Override
