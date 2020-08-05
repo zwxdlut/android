@@ -192,7 +192,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         camera.setRecordCallback(recordCallback);
         Log.i(TAG, "init: camera count = " + cameraIds.length);
 
-        // Initialize display
+        // Initialize UI
         size = getMatchSize();
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(size.getWidth(), size.getHeight());
         params.leftMargin = 0;
