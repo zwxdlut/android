@@ -18,7 +18,6 @@ import android.widget.RelativeLayout;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import com.media.camera.CameraHelper;
 import com.media.camera.CameraNativeFactory;
@@ -115,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        ActivityCompat.requestPermissions(MainActivity.this,
+        ActivityCompat.requestPermissions(this,
                 new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO},
                 PERMISSION_REQUEST);
 
