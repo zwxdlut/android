@@ -93,6 +93,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
 
             track.stop();
+            track.release();
+            track = null;
         }
     }
 
@@ -104,16 +106,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ActivityCompat.requestPermissions(this,
                 new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE},
                 PERMISSION_REQUEST);
+
+        init();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
         stopRecord();
         stopPlay();
-        recorder.release();
-        track.release();
     }
 
     @Override
@@ -126,7 +127,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     && PackageManager.PERMISSION_GRANTED == grantResults[1]
                     && PackageManager.PERMISSION_GRANTED == grantResults[2]) {
                 Log.i(TAG, "onRequestPermissionsResult: permission granted requestCode = " + requestCode);
-                init();
             } else {
                 Log.w(TAG, "onRequestPermissionsResult: permission denied requestCode = " + requestCode);
                 finish();
@@ -157,11 +157,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void init() {
-        // Initialize the recorder and track
+        // Initialize the parameters of the recorder and track
         iBufSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT);
-        recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT, iBufSize);
         oBufSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT);
-        track = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT, oBufSize, AudioTrack.MODE_STREAM);
         pcmFile = new File(getExternalFilesDir(null), "test.pcm");
         Log.i(TAG, "init: record buffer size is " + iBufSize + ", track buffer size is " + oBufSize + ", pcm file is" + pcmFile.getPath());
 
@@ -189,6 +187,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
 
+        recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT, iBufSize);
+        if (AudioRecord.STATE_INITIALIZED != recorder.getState()) {
+            Log.e(TAG, "startRecord: initialize recorder failed!");
+            recorder = null;
+            return;
+        }
+
         isRecording = true;
         recordThread = new RecordThread();
         recordThread.start();
@@ -208,6 +213,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             recordThread = null;
         }
+
+        if (null != recorder) {
+            recorder.release();
+            recorder = null;
+        }
     }
 
     private void startPlay() {
@@ -221,10 +231,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Log.w(TAG, "startPlay: pcm file is not exit");
         }
 
+        track = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT, oBufSize, AudioTrack.MODE_STREAM);
+        if (AudioTrack.STATE_INITIALIZED != track.getState()) {
+            Log.e(TAG, "startPlay: initialize track failed!");
+            track = null;
+            return;
+        }
+
         isPlaying = true;
         playThread = new PlayThread();
         playThread.start();
-
     }
 
     private void stopPlay() {
