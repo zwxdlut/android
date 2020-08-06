@@ -159,8 +159,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void init() {
         // Initialize the recorder and the track
         iBufSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT);
-        recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT, iBufSize);
         oBufSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT);
+        recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT, iBufSize);
         track = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT, oBufSize, AudioTrack.MODE_STREAM);
         pcmFile = new File(getExternalFilesDir(null), "test.pcm");
         Log.i(TAG, "init: record buffer size is " + iBufSize + ", track buffer size is " + oBufSize + ", pcm file is" + pcmFile.getPath());
