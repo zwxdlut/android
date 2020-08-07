@@ -1,4 +1,8 @@
-package com.media.camera.demo;
+package com.media.camera_demo;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -15,11 +19,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-
-import com.media.camera.CameraHelper;
 import com.media.camera.CameraNativeFactory;
 import com.media.camera.ICamera;
 
