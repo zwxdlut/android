@@ -158,7 +158,7 @@ public class CameraHelper {
                 return;
             }
 
-            String filePath = recordDirs.get(cameraId);
+            String path = recordDirs.get(cameraId);
             Size size = recordSizes.get(cameraId);
             ContentValues values = new ContentValues();
             MediaMetadataRetriever mmr = new MediaMetadataRetriever();
@@ -169,7 +169,7 @@ public class CameraHelper {
             releaseRecorder(cameraId);
 
             try {
-                mmr.setDataSource(filePath);
+                mmr.setDataSource(path);
                 values.put(MediaStore.Video.Media.DURATION, mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
                 thumbnail = mmr.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
                 Log.i(TAG, "onCaptureSequenceCompleted: the video thumbnail(MediaMetadataRetriever) = " + thumbnail);
@@ -178,24 +178,24 @@ public class CameraHelper {
             }
 
             // Insert the video to MediaStore
-            values.put(MediaStore.Video.Media.DATA, filePath);
+            values.put(MediaStore.Video.Media.DATA, path);
             if (null != size) {
                 values.put(MediaStore.Video.Media.WIDTH, size.getWidth());
                 values.put(MediaStore.Video.Media.HEIGHT, size.getHeight());
             }
             uri = context.getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
-            Log.i(TAG, "onCaptureSequenceCompleted: insert the video to database, filePath = " + filePath + ", uri = " + uri);
+            Log.i(TAG, "onCaptureSequenceCompleted: insert the video to database, path = " + path + ", uri = " + uri);
 
             // Insert the thumbnail to MediaStore
-            if (null != filePath) {
+            if (null != path) {
                 if (null == thumbnail) {
-                    thumbnail = ThumbnailUtils.createVideoThumbnail(filePath, MediaStore.Video.Thumbnails.FULL_SCREEN_KIND);
+                    thumbnail = ThumbnailUtils.createVideoThumbnail(path, MediaStore.Video.Thumbnails.FULL_SCREEN_KIND);
                     Log.i(TAG, "onCaptureSequenceCompleted: the video thumbnail(ThumbnailUtils) = " + thumbnail);
                 }
 
                 if (null != thumbnail && null != uri) {
                     try {
-                        String thumbnailPath = thumbnailDirs.get(cameraId) + filePath.substring(filePath.lastIndexOf(File.separator), filePath.lastIndexOf('.')) + ".jpg";
+                        String thumbnailPath = thumbnailDirs.get(cameraId) + path.substring(path.lastIndexOf(File.separator), path.lastIndexOf('.')) + ".jpg";
                         FileOutputStream fos = new FileOutputStream(thumbnailPath);
 
                         thumbnail.compress(Bitmap.CompressFormat.JPEG, 100, fos);
@@ -216,7 +216,7 @@ public class CameraHelper {
             }
 
             if (null != recordCallback) {
-                recordCallback.onComplete(cameraId, filePath);
+                recordCallback.onComplete(cameraId, path);
             }
 
         }
@@ -244,7 +244,7 @@ public class CameraHelper {
             final int width = reader.getWidth();
             final int height = reader.getHeight();
             final String cameraId = key;
-            final String filePath = captureDirs.get(cameraId) + File.separator + dateFormat.format(new Date()) + ".jpg";
+            final String path = captureDirs.get(cameraId) + File.separator + dateFormat.format(new Date()) + ".jpg";
 
             buffer.get(bytes);
             Log.i(TAG, "onImageAvailable: cameraId = " + cameraId + " width = " + width + ", height = " + height);
@@ -254,7 +254,7 @@ public class CameraHelper {
                 public void run() {
                     try {
                         // Write the image data to the file
-                        FileOutputStream fos = new FileOutputStream(filePath);
+                        FileOutputStream fos = new FileOutputStream(path);
                         fos.write(bytes);
                         fos.flush();
                         fos.close();
@@ -270,7 +270,7 @@ public class CameraHelper {
                             if (null != location) {
                                 double latitude = location.getLatitude();
                                 double longitude = location.getLongitude();
-                                ExifInterface exif = new ExifInterface(filePath);
+                                ExifInterface exif = new ExifInterface(path);
                                 exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE_REF, ConvertUtils.convertToDegree(latitude));
                                 exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF, ConvertUtils.convertToDegree(longitude));
                                 exif.saveAttributes();
@@ -280,17 +280,17 @@ public class CameraHelper {
                         }
 
                         // Insert the image to MediaStore
-                        values.put(MediaStore.Images.Media.DATA, filePath);
+                        values.put(MediaStore.Images.Media.DATA, path);
                         values.put(MediaStore.Images.Media.WIDTH, width);
                         values.put(MediaStore.Images.Media.HEIGHT, height);
                         Uri uri = context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-                        Log.i(TAG, "run(onImageAvailable): insert the image file to database, filePath = " + filePath + ", uri = " + uri);
+                        Log.i(TAG, "run(onImageAvailable): insert the image file to database, path = " + path + ", uri = " + uri);
                     } catch (IOException | InterruptedException e) {
                         e.printStackTrace();
                     }
 
                     if (null != captureCallback) {
-                        captureCallback.onComplete(cameraId, filePath);
+                        captureCallback.onComplete(cameraId, path);
                     }
                 }
             }, "ImageReader.OnImageAvailableListener.onImageAvailable").start();
@@ -517,9 +517,9 @@ public class CameraHelper {
          * Called when the capture complete.
          *
          * @param cameraId The camera id.
-         * @param filePath The captured file full path.
+         * @param path     The captured file full path.
          */
-        public void onComplete(String cameraId, String filePath);
+        public void onComplete(String cameraId, String path);
     }
 
     /**
@@ -545,9 +545,9 @@ public class CameraHelper {
          * Called when the record complete.
          *
          * @param cameraId The camera id.
-         * @param filePath The record file full path.
+         * @param path     The record file full path.
          */
-        public void onComplete(String cameraId, String filePath);
+        public void onComplete(String cameraId, String path);
 
         /**
          * Called when error occurred while recording.
@@ -1246,14 +1246,14 @@ public class CameraHelper {
         Log.i(TAG, "prepareRecorder: cameraId = " + cameraId + ", duration = " + duration);
 
         MediaRecorder mediaRecorder = new MediaRecorder();
-        String filePath = recordDirs.get(cameraId).substring(0, recordDirs.get(cameraId).lastIndexOf(File.separator)) + File.separator + dateFormat.format(new Date()) + ".mp4";
+        String path = recordDirs.get(cameraId).substring(0, recordDirs.get(cameraId).lastIndexOf(File.separator)) + File.separator + dateFormat.format(new Date()) + ".mp4";
         Integer sensorOrientation = sensorOrientations.get(cameraId);
         WindowManager windowManager = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE));
 
         mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
         mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        mediaRecorder.setOutputFile(filePath);
+        mediaRecorder.setOutputFile(path);
         mediaRecorder.setVideoEncodingBitRate(videoBps.get(cameraId));
         mediaRecorder.setVideoFrameRate(30);
         mediaRecorder.setVideoSize(recordSizes.get(cameraId).getWidth(), recordSizes.get(cameraId).getHeight());
@@ -1284,7 +1284,7 @@ public class CameraHelper {
             e.printStackTrace();
         }
 
-        recordDirs.put(cameraId, filePath);
+        recordDirs.put(cameraId, path);
         mediaRecorders.put(cameraId, mediaRecorder);
     }
 

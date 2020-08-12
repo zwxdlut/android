@@ -72,10 +72,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     //private CameraHelper.ICaptureCallback captureCallback = new CameraHelper.ICaptureCallback() {
     private ICamera.ICaptureCallback captureCallback = new ICamera.ICaptureCallback() {
         @Override
-        public void onComplete(String cameraId, String filePath) {
-            Log.i(TAG, "onComplete: capture cameraId = " + cameraId + ", filePath = " + filePath);
+        public void onComplete(String cameraId, String path) {
+            Log.i(TAG, "onComplete: capture cameraId = " + cameraId + ", path = " + path);
 
-            final Bitmap bm = BitmapFactory.decodeFile(filePath);
+            final Bitmap bm = BitmapFactory.decodeFile(path);
             Rect rect = new Rect();
             getWindowManager().getDefaultDisplay().getRectSize(rect);
             Matrix matrix = new Matrix();
@@ -98,8 +98,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     //private CameraHelper.IRecordCallback recordCallback = new CameraHelper.IRecordCallback() {
     private ICamera.IRecordCallback recordCallback = new ICamera.IRecordCallback() {
         @Override
-        public void onComplete(String cameraId, String filePath) {
-            Log.i(TAG, "onComplete: record cameraId = " + cameraId + ", filePath = " + filePath);
+        public void onComplete(String cameraId, String path) {
+            Log.i(TAG, "onComplete: record cameraId = " + cameraId + ", path = " + path);
         }
 
         @Override

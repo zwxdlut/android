@@ -180,9 +180,9 @@ public interface ICamera {
          * Called when the capture complete.
          *
          * @param cameraId The camera id.
-         * @param filePath The captured file full path.
+         * @param path     The captured file full path.
          */
-        public void onComplete(String cameraId, String filePath);
+        public void onComplete(String cameraId, String path);
     }
 
     /**
@@ -208,9 +208,9 @@ public interface ICamera {
          * Called when the record complete.
          *
          * @param cameraId The camera id.
-         * @param filePath The record file full path.
+         * @param path     The record file full path.
          */
-        public void onComplete(String cameraId, String filePath);
+        public void onComplete(String cameraId, String path);
 
         /**
          * Called when error occurred while recording.
