@@ -25,7 +25,10 @@ import java.util.stream.Collectors;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG = "MainActivity";
     private static final int PERMISSION_REQUEST = 1;
-    private static final int SAMPLE_RATE = 8000;
+    private static final int SAMPLE_RATE = 16000;
+    private static final int ENCODING_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
+    private static final int CHANNEL_IN = AudioFormat.CHANNEL_IN_MONO;
+    private static final int CHANNEL_OUT = AudioFormat.CHANNEL_OUT_MONO;
     private AudioRecord recorder = null;
     private AudioTrack track = null;
     private int iBufSize = 0;
@@ -158,8 +161,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void init() {
         // Initialize the parameters of the recorder and track
-        iBufSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT);
-        oBufSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT);
+        iBufSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_IN, ENCODING_FORMAT);
+        oBufSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, CHANNEL_OUT, ENCODING_FORMAT);
         pcmFile = new File(getExternalFilesDir(null), "test.pcm");
         Log.i(TAG, "init: record buffer size is " + iBufSize + ", track buffer size is " + oBufSize + ", pcm file is" + pcmFile.getPath());
 
@@ -187,7 +190,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
 
-        recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT, iBufSize);
+        recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, CHANNEL_IN, ENCODING_FORMAT, iBufSize);
         if (AudioRecord.STATE_INITIALIZED != recorder.getState()) {
             Log.e(TAG, "startRecord: initialize recorder failed!");
             recorder = null;
@@ -231,7 +234,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Log.w(TAG, "startPlay: pcm file is not exit");
         }
 
-        track = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT, oBufSize, AudioTrack.MODE_STREAM);
+        track = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE, CHANNEL_OUT, ENCODING_FORMAT, oBufSize, AudioTrack.MODE_STREAM);
         if (AudioTrack.STATE_INITIALIZED != track.getState()) {
             Log.e(TAG, "startPlay: initialize track failed!");
             track = null;
