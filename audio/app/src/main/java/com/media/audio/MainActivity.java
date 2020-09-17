@@ -6,6 +6,7 @@ import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
@@ -109,8 +110,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ActivityCompat.requestPermissions(this,
                 new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE},
                 PERMISSION_REQUEST);
-
-        init();
     }
 
     @Override
@@ -130,9 +129,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     && PackageManager.PERMISSION_GRANTED == grantResults[1]
                     && PackageManager.PERMISSION_GRANTED == grantResults[2]) {
                 Log.i(TAG, "onRequestPermissionsResult: permission granted requestCode = " + requestCode);
+                init();
             } else {
                 Log.w(TAG, "onRequestPermissionsResult: permission denied requestCode = " + requestCode);
-                finish();
             }
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -234,7 +233,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Log.w(TAG, "startPlay: pcm file is not exit");
         }
 
-        track = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE, CHANNEL_OUT, ENCODING_FORMAT, oBufSize, AudioTrack.MODE_STREAM);
+        track = new AudioTrack.Builder()
+                .setAudioAttributes(new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build())
+                .setAudioFormat(new AudioFormat.Builder()
+                    .setEncoding(ENCODING_FORMAT)
+                    .setSampleRate(SAMPLE_RATE)
+                    .setChannelMask(CHANNEL_OUT)
+                    .build())
+                .setBufferSizeInBytes(oBufSize)
+                .setTransferMode(AudioTrack.MODE_STREAM)
+                .build();
+
         if (AudioTrack.STATE_INITIALIZED != track.getState()) {
             Log.e(TAG, "startPlay: initialize track failed!");
             track = null;

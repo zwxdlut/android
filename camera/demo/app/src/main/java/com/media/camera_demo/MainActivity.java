@@ -116,8 +116,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ActivityCompat.requestPermissions(this,
                 new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO},
                 PERMISSION_REQUEST);
-
-        init();
     }
 
     @Override
@@ -130,9 +128,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     && PackageManager.PERMISSION_GRANTED == grantResults[1]
                     && PackageManager.PERMISSION_GRANTED == grantResults[2]) {
                 Log.i(TAG, "onRequestPermissionsResult: permission granted requestCode = " + requestCode);
+                init();
             } else {
                 Log.w(TAG, "onRequestPermissionsResult: permission denied requestCode = " + requestCode);
-                finish();
             }
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
