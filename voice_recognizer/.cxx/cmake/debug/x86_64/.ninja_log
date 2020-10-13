@@ -1,0 +1,4 @@
+# ninja log v5
+0	23	0	clean	7cb106a547128f27
+0	291	624254041	CMakeFiles/vad_api_native.dir/src/vad_api_native.cc.o	3bbab1e73770932c
+292	483	624254042	D:/code/313003.honda-tjbx-ha/voice_recognizer/build/intermediates/cmake/debug/obj/x86_64/libvad_api_native.so	3e54c21e0f7abed9

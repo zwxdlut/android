@@ -1,0 +1,36 @@
+{
+  "version" : "Common 1.0",
+  "logger" : {
+    "text_buffer_entries" : 1000000,
+    "data_buffer_size_per_channel": 500000,
+    "consumers" : [{
+        "name" : "SystemTestErrorLogConsumer",
+        "modules" : "",
+        "not_modules" : "",
+        "zones" : "LOG_ERROR|LOG_FATAL"
+      },{
+        "name" : "SystemTestFileLogConsumer",
+        "modules" : "",
+        "not_modules" : "",
+        "zones" : "LOG_ALL_TEXT"
+      },{
+        "name" : "text to file",
+        "output" : "./WuwSample.log",
+        "max_file_size" : 1000000,
+        "enable_backup_log": 1,
+        "modules" : "",
+        "not_modules" : "",
+        "zones" : "LOG_ALL_TEXT"
+      },{
+        "name" : "error to file",
+        "output" : "./WuwSample_ErrorsAndWarnings.log",
+        "max_file_size" : 100000,
+        "enable_backup_log": 1,
+        "modules" : "",
+        "not_modules" : "",
+        "zones" : "LOG_ERROR|LOG_FATAL|LOG_WARNING"
+
+      }
+    ]
+  }
+}

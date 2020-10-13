@@ -1,0 +1,2 @@
+ninja: Entering directory `D:\code\313003.honda-tjbx-ha\voice_recognizer\.cxx\cmake\debug\x86_64'
+ninja: no work to do.

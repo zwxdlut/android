@@ -1,0 +1,21 @@
+{
+  "version" : "VoConHigh 5.0",
+  "application" : {
+    "name" : "WUW",
+    "input": [{
+      "type" : "asr",
+      "asr" : {
+        "search" : [{
+          "name" : "WUW_SEARCH",
+          "type" : "static",
+          "static" : {
+            "file_name" : "wuw_anyspeech.fcf"
+          },
+          "vocon_parameters": {
+            "LH_SEARCH_PARAM_TSILENCE": 150
+          }
+        }]
+      }
+    }]
+  }
+}

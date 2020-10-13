@@ -1,0 +1,3 @@
+D:/code/313003.honda-tjbx-ha/voice_recognizer/.externalNativeBuild/cmake/release/x86_64/CMakeFiles/vad_api_native.dir
+D:/code/313003.honda-tjbx-ha/voice_recognizer/.externalNativeBuild/cmake/release/x86_64/CMakeFiles/edit_cache.dir
+D:/code/313003.honda-tjbx-ha/voice_recognizer/.externalNativeBuild/cmake/release/x86_64/CMakeFiles/rebuild_cache.dir

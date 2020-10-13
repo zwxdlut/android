@@ -1,0 +1,3 @@
+# ninja log v5
+0	194	624278103	CMakeFiles/vad_api_native.dir/src/vad_api_native.cc.o	e01a1282b3a0ca20
+194	393	624278103	D:/code/android_examples/voice_recognizer/build/intermediates/cmake/debug/obj/x86_64/libvad_api_native.so	726e285b27468623

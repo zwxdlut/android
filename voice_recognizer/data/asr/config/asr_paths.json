@@ -1,0 +1,10 @@
+{
+  "version": "VoConHigh 5.0",
+
+  "asr_paths": {
+    "asr": "../data/asr",
+    "liquid": "../data/liquid",
+    "acmod": "../data/acmod",
+    "search": ["../data/ctx"]
+  }
+}

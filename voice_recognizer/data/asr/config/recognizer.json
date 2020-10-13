@@ -1,0 +1,34 @@
+{
+  "version": "VoConHigh 5.0",
+  "recognizer": [{
+      "name": "testRecognizer",
+      "asr_engine": {
+        "language": [{
+            "acmod": {
+              "file_name": {
+                "vh_callback": {
+                  "name": "ACMOD_FILENAME",
+                  "type": "string",
+                  "default": "acmod6_6000_mnc_tmjl_wuw_f16_v1_0_0.dat"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }, {
+      "name": "rec",
+      "asr_engine": {
+        "language": [{
+            "acmod": {
+              "file_name": "acmod6_6000_mnc_tmjl_wuw_f16_v1_0_0.dat"
+            }
+          }
+        ],
+        "speech_event": {
+            "show_nth_event": 0
+        }
+      }
+    }
+  ]
+}

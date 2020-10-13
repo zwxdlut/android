@@ -1,0 +1,3 @@
+D:/code/android_examples/voice_recognizer/.externalNativeBuild/cmake/debug/x86_64/CMakeFiles/vad_api_native.dir
+D:/code/android_examples/voice_recognizer/.externalNativeBuild/cmake/debug/x86_64/CMakeFiles/edit_cache.dir
+D:/code/android_examples/voice_recognizer/.externalNativeBuild/cmake/debug/x86_64/CMakeFiles/rebuild_cache.dir

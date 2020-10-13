@@ -1,0 +1,69 @@
+{
+  "variant": {
+    "module": {
+      "rootBuildGradleFolder": "D:\\code\\313003.honda-tjbx-ha",
+      "sdkFolder": "D:\\android\\sdk",
+      "isNativeCompilerSettingsCacheEnabled": false,
+      "isBuildOnlyTargetAbiEnabled": true,
+      "splitsAbiFilterSet": [],
+      "intermediatesFolder": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\build\\intermediates",
+      "gradleModulePathName": ":voice_recognizer",
+      "moduleRootFolder": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer",
+      "makeFile": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\src\\main\\cpp\\CMakeLists.txt",
+      "buildSystem": "CMAKE",
+      "compilerSettingsCacheFolder": "D:\\code\\313003.honda-tjbx-ha\\.cxx",
+      "cxxFolder": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\.cxx",
+      "ndkFolder": "D:\\android\\sdk\\ndk\\21.0.6113669",
+      "ndkVersion": "21.0.6113669",
+      "ndkSupportedAbiList": [
+        "ARMEABI_V7A",
+        "ARM64_V8A",
+        "X86",
+        "X86_64"
+      ],
+      "ndkDefaultAbiList": [
+        "ARMEABI_V7A",
+        "ARM64_V8A",
+        "X86",
+        "X86_64"
+      ],
+      "cmakeToolchainFile": "."
+    },
+    "buildSystemArgumentList": [],
+    "cFlagList": [],
+    "cppFlagsList": [
+      "-std\u003dc++11"
+    ],
+    "variantName": "release",
+    "soFolder": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\build\\intermediates\\cmake\\release\\lib",
+    "objFolder": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\build\\intermediates\\cmake\\release\\obj",
+    "jsonFolder": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\.cxx\\cmake\\release",
+    "gradleBuildOutputFolder": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\.cxx\\cxx\\release",
+    "isDebuggableEnabled": false,
+    "validAbiList": [
+      "X86_64"
+    ],
+    "buildTargetSet": []
+  },
+  "abi": "X86_64",
+  "abiPlatformVersion": 23,
+  "cxxBuildFolder": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\.cxx\\cmake\\release\\x86_64",
+  "jsonFile": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\.cxx\\cmake\\release\\x86_64\\android_gradle_build.json",
+  "gradleBuildOutputFolder": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\.cxx\\cxx\\release\\x86_64",
+  "objFolder": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\build\\intermediates\\cmake\\release\\obj\\x86_64",
+  "buildCommandFile": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\.cxx\\cmake\\release\\x86_64\\build_command.txt",
+  "buildOutputFile": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\.cxx\\cmake\\release\\x86_64\\build_output.txt",
+  "modelOutputFile": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\.cxx\\cmake\\release\\x86_64\\build_model.json",
+  "cmake": {
+    "cmakeListsWrapperFile": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\.cxx\\cxx\\release\\x86_64\\CMakeLists.txt",
+    "toolchainWrapperFile": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\.cxx\\cxx\\release\\x86_64\\android_gradle_build.toolchain.cmake",
+    "buildGenerationStateFile": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\.cxx\\cxx\\release\\x86_64\\build_generation_state.json",
+    "cacheKeyFile": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\.cxx\\cxx\\release\\x86_64\\compiler_cache_key.json",
+    "compilerCacheUseFile": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\.cxx\\cxx\\release\\x86_64\\compiler_cache_use.json",
+    "compilerCacheWriteFile": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\.cxx\\cxx\\release\\x86_64\\compiler_cache_write.json",
+    "toolchainSettingsFromCacheFile": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\.cxx\\cxx\\release\\x86_64\\compiler_settings_cache.cmake",
+    "cmakeWrappingBaseFolder": "."
+  },
+  "jsonGenerationLoggingRecordFile": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\.cxx\\cmake\\release\\x86_64\\json_generation_record.json",
+  "compileCommandsJsonFile": "D:\\code\\313003.honda-tjbx-ha\\voice_recognizer\\.cxx\\cmake\\release\\x86_64\\compile_commands.json"
+}
