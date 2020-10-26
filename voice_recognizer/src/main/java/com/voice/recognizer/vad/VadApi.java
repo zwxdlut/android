@@ -9,7 +9,7 @@ public class VadApi {
         return Builder.instance;
     }
 
-    public interface VadApiCallback {
+    public interface ResultCallback {
         int onResult(int status);
     }
 
@@ -17,7 +17,7 @@ public class VadApi {
 
     public native int delete();
 
-    public native int start(VadApiCallback callback);
+    public native int start(ResultCallback callback);
 
     public native int stop();
 

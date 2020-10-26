@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private VoiceRecognizer.IVoiceCallback voiceCallback = new VoiceRecognizer.IVoiceCallback() {
         @Override
-        public void onState(final VoiceRecognizer.ASR_STATE state) {
+        public void onState(final VoiceRecognizer.VR_STATE state) {
             Log.i(TAG, "onState: state = " + state);
 
             runOnUiThread(new Runnable() {
@@ -41,8 +41,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         @Override
-        public void onDetect(int state) {
-            Log.i(TAG, "onDetect: state = " + state);
+        public void onResult(int status) {
+            Log.i(TAG, "onResult: status = " + status);
         }
     };
 

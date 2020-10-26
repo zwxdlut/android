@@ -47,11 +47,11 @@ public class VoiceRecognizer {
     private IAsrEventHandler asrEventHandler = null;
 
     private boolean done = true;
-    private int voiceState = 0;
-    private int g_timeoutMs = 5000;
-    private ASR_STATE state = ASR_STATE.IDLE;
+    private int vadStatus = 0;
+    private int g_timeoutMs = 15000;
+    private VR_STATE vrState = VR_STATE.IDLE;
     private OneShotWuwSampleThread thread = null;
-    private VadApi vadApi = VadApi.getInstance();
+    private VadApi vad = VadApi.getInstance();
     private Timer timer = null;
     private FileOutputStream fos = null;
     private IVoiceCallback voiceCallback = null;
@@ -63,12 +63,8 @@ public class VoiceRecognizer {
     private audioIn.IAudioDataCallback audioDataCallback = new audioIn.IAudioDataCallback() {
         @Override
         public void onCapture(final byte buf[], final int size) {
-            if (ASR_STATE.AWAKE == state) {
-                vadApi.feed(buf, size);
-
-                if (null != voiceCallback) {
-                    voiceCallback.onCapture(buf, size);
-                }
+            if (VR_STATE.AWAKE == vrState) {
+                vad.feed(buf, size);
 
                 if (null != fos) {
                     try {
@@ -79,14 +75,17 @@ public class VoiceRecognizer {
                     }
                 }
             }
-        }
 
+            if (null != voiceCallback) {
+                voiceCallback.onCapture(buf, size);
+            }
+        }
     };
 
-    private VadApi.VadApiCallback vadCallback = new VadApi.VadApiCallback() {
+    private VadApi.ResultCallback vadResultCallback = new VadApi.ResultCallback() {
         @Override
         public int onResult(int status) {
-            if (0 == voiceState) {
+            if (0 == vadStatus) {
                 // Rising edge
                 if (1 == status) {
                     stopTimer();
@@ -99,17 +98,17 @@ public class VoiceRecognizer {
                 }
             }
 
-            voiceState = status;
+            vadStatus = status;
 
             if (null != voiceCallback) {
-                voiceCallback.onDetect(voiceState);
+                voiceCallback.onResult(vadStatus);
             }
 
             return 0;
         }
     };
 
-    public enum ASR_STATE {
+    public enum VR_STATE {
         IDLE,
         ASLEEP,
         AWAKE
@@ -125,9 +124,9 @@ public class VoiceRecognizer {
     }
 
     public interface IVoiceCallback {
-        void onState(ASR_STATE state);
+        void onState(VR_STATE state);
         void onCapture(byte buf[], int size);
-        void onDetect(int state);
+        void onResult(int status);
     }
 
     public static VoiceRecognizer getInstance(Context context) {
@@ -196,9 +195,9 @@ public class VoiceRecognizer {
     }
 
     public void wakeup() {
-        Log.i(TAG, "wakeup: state = " + state);
+        Log.i(TAG, "wakeup: vrState = " + vrState);
 
-        if (ASR_STATE.IDLE == state || ASR_STATE.AWAKE == state) {
+        if (VR_STATE.IDLE == vrState) {
             return;
         }
 
@@ -206,9 +205,9 @@ public class VoiceRecognizer {
     }
 
     public void sleep() {
-        Log.i(TAG, "sleep: state = " + state);
+        Log.i(TAG, "sleep: vrState = " + vrState);
 
-        if (ASR_STATE.IDLE == state || ASR_STATE.ASLEEP == state) {
+        if (VR_STATE.IDLE == vrState) {
             return;
         }
 
@@ -232,12 +231,12 @@ public class VoiceRecognizer {
         String errorMessage = "";
         ResultCode resultCode = ResultCode.OK;
 
-        state = ASR_STATE.ASLEEP;
-        voiceState = 0;
+        vrState = VR_STATE.ASLEEP;
+        vadStatus = 0;
 
         // Initialize vad
-        vadApi.create(context.getExternalFilesDir(null).getAbsolutePath() + "/app/asr/data/" + VAD_RES_FILE_NAME);
-        vadApi.setting("{\"AdditionalPauseTime\" : 1000}");
+        vad.create(context.getExternalFilesDir(null).getAbsolutePath() + "/app/asr/data/" + VAD_RES_FILE_NAME);
+        vad.setting("{\"AdditionalPauseTime\" : 1000}");
 
         initAsr();
 
@@ -250,7 +249,7 @@ public class VoiceRecognizer {
 
         // Notify asleep
         if (null != voiceCallback) {
-            voiceCallback.onState(state);
+            voiceCallback.onState(vrState);
         }
 
         SampleRecognizerListener recognizerListener = (SampleRecognizerListener) asrComponentsInitializer.getRecognizerListener();
@@ -262,8 +261,8 @@ public class VoiceRecognizer {
                 event = asrEventHandler.removeEvent();
             }
 
-            if (event == IAsrEventHandler.ASR_EVENT.WUW_RESULT) {
-                if (ASR_STATE.ASLEEP != state) {
+            if (IAsrEventHandler.ASR_EVENT.WUW_RESULT == event) {
+                if (VR_STATE.AWAKE == vrState) {
                     continue;
                 }
 
@@ -273,38 +272,34 @@ public class VoiceRecognizer {
                 publishProgress("wakeup word found!\n");
                 addApplications();
                 openOutputStream();
-                vadApi.start(vadCallback);
-                state = ASR_STATE.AWAKE;
+                vad.start(vadResultCallback);
+                vrState = VR_STATE.AWAKE;
                 startTimer(g_timeoutMs);
 
                 if (null != voiceCallback) {
-                    voiceCallback.onState(state);
+                    voiceCallback.onState(vrState);
                 }
             } else if (event == IAsrEventHandler.ASR_EVENT.NO_WUW_RESULT) {
                 errorCheck(recognizerListener.getResultCode(), recognizerListener.getPublisherMessage());
                 addApplications();
-            } else if (event == IAsrEventHandler.ASR_EVENT.COMMAND_RESULT) {
-                publishProgress("no voice detected, back to asleep!\n");
+            } else if (IAsrEventHandler.ASR_EVENT.COMMAND_RESULT == event || IAsrEventHandler.ASR_EVENT.INITIAL_TIMEOUT == event) {
+                if (VR_STATE.ASLEEP == vrState) {
+                    continue;
+                }
+
+                publishProgress("go to asleep!\n");
                 addApplications();
-                state = ASR_STATE.ASLEEP;
-                vadApi.stop();
+                stopTimer();
+                vrState = VR_STATE.ASLEEP;
+                vad.stop();
                 closeOutputStream();
+                // Trigger falling edge if vadStatus is 1 avoiding it done in VadApi.ResultCallback.OnResult
+                vadStatus = 0;
 
                 if (null != voiceCallback) {
-                    voiceCallback.onState(state);
+                    voiceCallback.onState(vrState);
                 }
-            }  else if (event == IAsrEventHandler.ASR_EVENT.INITIAL_TIMEOUT) {
-                publishProgress("command should be within " + g_timeoutMs + " ms after wake-up word for one-shot wuw case!\n");
-                publishProgress("<b>initial timeout, recognition go to sleep!</b>");
-                addApplications();
-                state = ASR_STATE.ASLEEP;
-                vadApi.stop();
-                closeOutputStream();
-
-                if (null != voiceCallback) {
-                    voiceCallback.onState(state);
-                }
-            } else if (event == IAsrEventHandler.ASR_EVENT.OTHER_EVENT) {
+            } else if (IAsrEventHandler.ASR_EVENT.OTHER_EVENT == event) {
                 publishProgress(recognizerListener.getPublisherMessage());
             }
 
@@ -313,13 +308,13 @@ public class VoiceRecognizer {
             }
         }
 
-        state = ASR_STATE.IDLE;
-        vadApi.stop();
+        vrState = VR_STATE.IDLE;
+        vad.stop();
         closeOutputStream();
 
         // Notify idle
         if (null != voiceCallback) {
-            voiceCallback.onState(state);
+            voiceCallback.onState(vrState);
         }
 
         stopRecognizer();
@@ -329,7 +324,7 @@ public class VoiceRecognizer {
         ILogging.deleteInstance();
 
         asrComponentsInitializer.setAudioDataCallback(null);
-        vadApi.delete();
+        vad.delete();
     }
 
     private void postExecute() {
@@ -421,6 +416,8 @@ public class VoiceRecognizer {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
+                publishProgress("command should be within " + g_timeoutMs + " ms after wake-up word for one-shot wuw case!\n");
+                publishProgress("<b>initial timeout, recognition go to sleep!</b>");
                 asrEventHandler.addEvent(IAsrEventHandler.ASR_EVENT.INITIAL_TIMEOUT);
             }
         };
@@ -430,7 +427,11 @@ public class VoiceRecognizer {
     }
 
     private void stopTimer() {
-        timer.cancel();
+        if (null != timer) {
+            timer.cancel();
+            timer = null;
+        }
+
     }
 
     private void openOutputStream() {

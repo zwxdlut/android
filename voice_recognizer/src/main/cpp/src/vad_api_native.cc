@@ -12,6 +12,7 @@
 static const char *TAG = "VAD_API_NATIVE";
 static JavaVM *g_vm = NULL;
 static struct api_vad *g_engine = NULL;
+static bool started = false;
 
 int vad_result_handler(void *_ptr, int _status)
 {
@@ -99,9 +100,15 @@ JNIEXPORT jint JNICALL Java_com_voice_recognizer_vad_VadApi_start(JNIEnv *_env, 
         return -1;
     }
 
+    if (started)
+    {
+        return 0;
+    }
+
     jobject callback = _env->NewGlobalRef(_callback);
 
     _env->GetJavaVM(&g_vm);
+    started = true;
 
     return vad_start(g_engine, callback, vad_result_handler);
 }
@@ -112,6 +119,8 @@ JNIEXPORT jint JNICALL Java_com_voice_recognizer_vad_VadApi_stop(JNIEnv *_env, j
     {
         return -1;
     }
+
+    started = false;
 
     return vad_stop(g_engine);
 }
@@ -131,6 +140,11 @@ JNIEXPORT jint JNICALL Java_com_voice_recognizer_vad_VadApi_feed(JNIEnv *_env, j
     if (NULL == g_engine)
     {
         return -1;
+    }
+
+    if (!started)
+    {
+        return -2;
     }
 
     int ret = 0;
