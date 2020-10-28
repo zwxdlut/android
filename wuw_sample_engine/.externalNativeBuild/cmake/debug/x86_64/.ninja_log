@@ -1,0 +1,3 @@
+# ninja log v5
+1	176	625572140	CMakeFiles/vad_api_jni.dir/src/vad_api_jni.cc.o	3083feba38ad6103
+176	345	625572140	D:/code/android_examples/wuw_sample_engine/build/intermediates/cmake/debug/obj/x86_64/libvad_api_jni.so	14f38da0d404befd

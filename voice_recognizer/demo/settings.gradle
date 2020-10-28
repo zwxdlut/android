@@ -1,4 +1,0 @@
-include ':app'
-include ':voice_recognizer'
-project(':voice_recognizer').projectDir = new File(settingsDir, '../')
-rootProject.name = "voice_recognition"

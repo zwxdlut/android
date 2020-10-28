@@ -1,2 +1,0 @@
-[1/2] Building CXX object CMakeFiles/vad_api_native.dir/src/vad_api_native.cc.o
-[2/2] Linking CXX shared library D:\code\android_examples\voice_recognizer\build\intermediates\cmake\debug\obj\x86_64\libvad_api_native.so

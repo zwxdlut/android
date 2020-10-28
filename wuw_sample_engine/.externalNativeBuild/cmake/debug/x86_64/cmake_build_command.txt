@@ -1,0 +1,20 @@
+Executable : D:\android\sdk\cmake\3.10.2.4988404\bin\cmake.exe
+arguments : 
+-HD:\code\android_examples\wuw_sample_engine\src\main\cpp
+-BD:\code\android_examples\wuw_sample_engine\.externalNativeBuild\cmake\debug\x86_64
+-DANDROID_ABI=x86_64
+-DANDROID_PLATFORM=android-23
+-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=D:\code\android_examples\wuw_sample_engine\build\intermediates\cmake\debug\obj\x86_64
+-DCMAKE_BUILD_TYPE=Debug
+-DANDROID_NDK=D:\android\sdk\ndk-bundle
+-DCMAKE_CXX_FLAGS=-std=c++11
+-DCMAKE_SYSTEM_NAME=Android
+-DCMAKE_ANDROID_ARCH_ABI=x86_64
+-DCMAKE_SYSTEM_VERSION=23
+-DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+-DCMAKE_ANDROID_NDK=D:\android\sdk\ndk-bundle
+-DCMAKE_TOOLCHAIN_FILE=D:\android\sdk\ndk-bundle\build\cmake\android.toolchain.cmake
+-G Ninja
+-DCMAKE_MAKE_PROGRAM=D:\android\sdk\cmake\3.10.2.4988404\bin\ninja.exe
+jvmArgs : 
+

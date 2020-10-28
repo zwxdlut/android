@@ -1,7 +1,0 @@
-Executable : D:\android\sdk\cmake\3.10.2.4988404\bin\ninja.exe
-arguments : 
--C
-D:\code\313003.honda-tjbx-ha\voice_recognizer\.cxx\cmake\release\x86_64
-vad_api_native
-jvmArgs : 
-

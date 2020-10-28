@@ -1,0 +1,8 @@
+Executable : D:\android\sdk\cmake\3.10.2.4988404\bin\cmake.exe
+arguments : 
+--build
+D:\code\android_examples\wuw_sample_engine\.externalNativeBuild\cmake\debug\x86_64
+--target
+vad_api_jni
+jvmArgs : 
+
