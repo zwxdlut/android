@@ -99,9 +99,9 @@ public class CameraNative implements ICamera {
     private ICaptureCallback captureCallback = null;
     private IRecordCallback recordCallback = null;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss", Locale.CHINESE);
-    private HandlerThread handlerThread = null;
+    private HandlerThread thread = null;
     private Handler handler = null;
-    private HandlerThread sessionHandlerThread = null;
+    private HandlerThread sessionThread = null;
     private Handler sessionHandler = null;
     private Map<String, Boolean> cameraFlags = new ArrayMap<>();
     private Map<String, Lock> cameraLocks = new ArrayMap<>();
@@ -648,9 +648,9 @@ public class CameraNative implements ICamera {
             Log.i(TAG, "open: camera " + cameraId + " record size = " + size);
 
             cameraFlags.put(cameraId, false);
-            handlerThread = new HandlerThread("CameraHandlerThread");
-            handlerThread.start();
-            handler = new Handler(handlerThread.getLooper());
+            thread = new HandlerThread("CameraHandlerThread");
+            thread.start();
+            handler = new Handler(thread.getLooper());
             cameraManager.openCamera(cameraId, new CameraDevice.StateCallback() {
                 @Override
                 public void onOpened(@NonNull CameraDevice camera) {
@@ -716,14 +716,14 @@ public class CameraNative implements ICamera {
         deleteCameraCaptureSession(cameraId);
         closeDevice(cameraId);
 
-        if (null != handlerThread) {
-            handlerThread.quitSafely();
+        if (null != thread) {
+            thread.quitSafely();
             try {
-                handlerThread.join();
+                thread.join();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } finally {
-                handlerThread = null;
+                thread = null;
                 handler = null;
             }
         }
@@ -986,9 +986,9 @@ public class CameraNative implements ICamera {
         final int[] ret = {ResultCode.SUCCESS};
 
         try {
-            sessionHandlerThread = new HandlerThread("SessionHandlerThread");
-            sessionHandlerThread.start();
-            sessionHandler = new Handler(sessionHandlerThread.getLooper());
+            sessionThread = new HandlerThread("SessionHandlerThread");
+            sessionThread.start();
+            sessionHandler = new Handler(sessionThread.getLooper());
             cameraFlags.put(cameraId, false);
             cameraDevice.createCaptureSession(surfaces, new CameraCaptureSession.StateCallback() {
                 @Override
@@ -1033,14 +1033,14 @@ public class CameraNative implements ICamera {
             }
         }
 
-        if (null != sessionHandlerThread) {
-            sessionHandlerThread.quitSafely();
+        if (null != sessionThread) {
+            sessionThread.quitSafely();
             try {
-                sessionHandlerThread.join();
+                sessionThread.join();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } finally {
-                sessionHandlerThread = null;
+                sessionThread = null;
                 sessionHandler = null;
             }
         }
