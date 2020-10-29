@@ -48,7 +48,7 @@ public class WuwSampleEngine {
     private boolean done = true;
     private int vadStatus = 0;
     private int g_timeoutMs = 15000;
-    private VR_STATE vrState = VR_STATE.IDLE;
+    private ASR_STATE asrState = ASR_STATE.IDLE;
     private OneShotWuwSampleThread thread = null;
     private VadApi vad = VadApi.getInstance();
     private Timer timer = null;
@@ -62,7 +62,7 @@ public class WuwSampleEngine {
     private audioIn.IAudioDataCallback audioDataCallback = new audioIn.IAudioDataCallback() {
         @Override
         public void onCapture(final byte buf[], final int size) {
-            if (VR_STATE.AWAKE == vrState) {
+            if (ASR_STATE.AWAKE == asrState) {
                 vad.feed(buf, size);
 
                 if (null != fos) {
@@ -107,7 +107,7 @@ public class WuwSampleEngine {
         }
     };
 
-    public enum VR_STATE {
+    public enum ASR_STATE {
         IDLE,
         ASLEEP,
         AWAKE
@@ -123,7 +123,7 @@ public class WuwSampleEngine {
     }
 
     public interface IVoiceCallback {
-        void onState(VR_STATE state);
+        void onState(ASR_STATE state);
         void onCapture(byte buf[], int size);
         void onResult(int status);
     }
@@ -194,9 +194,9 @@ public class WuwSampleEngine {
     }
 
     public void wakeup() {
-        Log.i(TAG, "wakeup: vrState = " + vrState);
+        Log.i(TAG, "wakeup: asrState = " + asrState);
 
-        if (VR_STATE.IDLE == vrState) {
+        if (ASR_STATE.IDLE == asrState) {
             return;
         }
 
@@ -204,9 +204,9 @@ public class WuwSampleEngine {
     }
 
     public void sleep() {
-        Log.i(TAG, "sleep: vrState = " + vrState);
+        Log.i(TAG, "sleep: asrState = " + asrState);
 
-        if (VR_STATE.IDLE == vrState) {
+        if (ASR_STATE.IDLE == asrState) {
             return;
         }
 
@@ -230,7 +230,7 @@ public class WuwSampleEngine {
         String errorMessage = "";
         ResultCode resultCode = ResultCode.OK;
 
-        vrState = VR_STATE.ASLEEP;
+        asrState = ASR_STATE.ASLEEP;
         vadStatus = 0;
 
         // Initialize vad
@@ -248,7 +248,7 @@ public class WuwSampleEngine {
 
         // Notify asleep
         if (null != voiceCallback) {
-            voiceCallback.onState(vrState);
+            voiceCallback.onState(asrState);
         }
 
         SampleRecognizerListener recognizerListener = (SampleRecognizerListener) asrComponentsInitializer.getRecognizerListener();
@@ -261,7 +261,7 @@ public class WuwSampleEngine {
             }
 
             if (IAsrEventHandler.ASR_EVENT.WUW_RESULT == event) {
-                if (VR_STATE.AWAKE == vrState) {
+                if (ASR_STATE.AWAKE == asrState) {
                     continue;
                 }
 
@@ -272,31 +272,31 @@ public class WuwSampleEngine {
                 addApplications();
                 openOutputStream();
                 vad.start(vadResultCallback);
-                vrState = VR_STATE.AWAKE;
+                asrState = ASR_STATE.AWAKE;
                 startTimer(g_timeoutMs);
 
                 if (null != voiceCallback) {
-                    voiceCallback.onState(vrState);
+                    voiceCallback.onState(asrState);
                 }
             } else if (event == IAsrEventHandler.ASR_EVENT.NO_WUW_RESULT) {
                 errorCheck(recognizerListener.getResultCode(), recognizerListener.getPublisherMessage());
                 addApplications();
             } else if (IAsrEventHandler.ASR_EVENT.COMMAND_RESULT == event || IAsrEventHandler.ASR_EVENT.INITIAL_TIMEOUT == event) {
-                if (VR_STATE.ASLEEP == vrState) {
+                if (ASR_STATE.ASLEEP == asrState) {
                     continue;
                 }
 
                 publishProgress("go to asleep!\n");
                 addApplications();
                 stopTimer();
-                vrState = VR_STATE.ASLEEP;
+                asrState = ASR_STATE.ASLEEP;
                 vad.stop();
                 closeOutputStream();
                 // Trigger falling edge if vadStatus is 1 avoiding it done in VadApi.ResultCallback.OnResult
                 vadStatus = 0;
 
                 if (null != voiceCallback) {
-                    voiceCallback.onState(vrState);
+                    voiceCallback.onState(asrState);
                 }
             } else if (IAsrEventHandler.ASR_EVENT.OTHER_EVENT == event) {
                 publishProgress(recognizerListener.getPublisherMessage());
@@ -307,13 +307,13 @@ public class WuwSampleEngine {
             }
         }
 
-        vrState = VR_STATE.IDLE;
+        asrState = ASR_STATE.IDLE;
         vad.stop();
         closeOutputStream();
 
         // Notify idle
         if (null != voiceCallback) {
-            voiceCallback.onState(vrState);
+            voiceCallback.onState(asrState);
         }
 
         stopRecognizer();

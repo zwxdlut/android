@@ -196,7 +196,6 @@ public class audioIn
                 e.printStackTrace();
               }
 
-
               audioDataCallback.onCapture(bytes, bytes.length);
             }
           }

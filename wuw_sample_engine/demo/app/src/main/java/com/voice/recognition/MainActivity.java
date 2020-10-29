@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private WuwSampleEngine.IVoiceCallback voiceCallback = new WuwSampleEngine.IVoiceCallback() {
         @Override
-        public void onState(final WuwSampleEngine.VR_STATE state) {
+        public void onState(final WuwSampleEngine.ASR_STATE state) {
             Log.i(TAG, "onState: state = " + state);
 
             runOnUiThread(new Runnable() {
