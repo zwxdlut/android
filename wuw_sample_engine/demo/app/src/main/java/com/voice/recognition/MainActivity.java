@@ -51,11 +51,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Initialize UI
+        // initialize UI
         findViewById(R.id.btn_start_asr).setOnClickListener(this);
         findViewById(R.id.btn_stop_asr).setOnClickListener(this);
 
-        // Initialize wuw sample engine
+        // initialize wuw sample engine
         wuwSampleEngine = WuwSampleEngine.getInstance(this);
         wuwSampleEngine.setVoiceCallback(voiceCallback);
 
@@ -79,15 +79,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (requestCode == PERMISSION_REQUEST) {
             if (PackageManager.PERMISSION_GRANTED == grantResults[0]
                     && PackageManager.PERMISSION_GRANTED == grantResults[1]) {
-                Log.i(TAG, "onRequestPermissionsResult: permission granted requestCode = " + requestCode);
+                Log.i(TAG, "onRequestPermissionsResult: Permission granted requestCode = " + requestCode);
 
                 try {
                     wuwSampleEngine.extractAssetsFiles();
                 } catch (IOException e) {
-                    Log.e(TAG, "init: " + e.getMessage() + " not found\n Add asset to assets folder and rebuild application");
+                    Log.e(TAG, "init: " + e.getMessage() + " not found!\n Add asset to assets folder and rebuild application!");
                 }
             } else {
-                Log.w(TAG, "onRequestPermissionsResult: permission denied requestCode = " + requestCode);
+                Log.w(TAG, "onRequestPermissionsResult: Permission denied requestCode = " + requestCode);
                 finish();
             }
         } else {

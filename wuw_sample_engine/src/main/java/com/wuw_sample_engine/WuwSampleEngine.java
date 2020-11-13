@@ -85,12 +85,12 @@ public class WuwSampleEngine {
         @Override
         public int onResult(int status) {
             if (0 == vadStatus) {
-                // Rising edge
+                // rising edge
                 if (1 == status) {
                     stopTimer();
                 }
             } else {
-                // Falling edge
+                // falling edge
                 if (0 == status) {
                     asrEventHandler.addEvent(IAsrEventHandler.ASR_EVENT.COMMAND_RESULT);
 
@@ -158,17 +158,17 @@ public class WuwSampleEngine {
         Log.i(TAG, "start: done = " + done);
 
         if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)) {
-            Log.i(TAG, "start: no record audio permission!");
+            Log.i(TAG, "start: No record audio permission!");
             return;
         }
 
         if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-            Log.i(TAG, "start: no write external storage permission!");
+            Log.i(TAG, "start: No write external storage permission!");
             return;
         }
 
         if (!done) {
-            Log.i(TAG, "start: asr has already been started");
+            Log.i(TAG, "start: Asr has already been started");
             return;
         }
 
@@ -233,7 +233,7 @@ public class WuwSampleEngine {
         asrState = ASR_STATE.ASLEEP;
         vadStatus = 0;
 
-        // Initialize vad
+        // initialize vad
         vad.create(context.getExternalFilesDir(null).getAbsolutePath() + "/app/asr/data/" + VAD_RES_FILE_NAME);
         vad.setting("{\"AdditionalPauseTime\" : 1000}");
 
@@ -246,7 +246,7 @@ public class WuwSampleEngine {
         addApplications();
         startRecognizer();
 
-        // Notify asleep
+        // notify asleep
         if (null != voiceCallback) {
             voiceCallback.onState(asrState);
         }
@@ -268,7 +268,7 @@ public class WuwSampleEngine {
                 errorCheck(recognizerListener.getResultCode(), recognizerListener.getPublisherMessage());
                 publishProgress("RESULT: " + asrResult.getTopResult() + "\n");
                 publishProgress("EndTime: " + asrResult.getEndTime() + "\n");
-                publishProgress("wakeup word found!\n");
+                publishProgress("Wakeup word found!\n");
                 addApplications();
                 openOutputStream();
                 vad.start(vadResultCallback);
@@ -286,13 +286,13 @@ public class WuwSampleEngine {
                     continue;
                 }
 
-                publishProgress("go to asleep!\n");
+                publishProgress("Go to asleep!\n");
                 addApplications();
                 stopTimer();
                 asrState = ASR_STATE.ASLEEP;
                 vad.stop();
                 closeOutputStream();
-                // Trigger falling edge if vadStatus is 1 avoiding it done in VadApi.ResultCallback.OnResult
+                // Trigger falling edge if vadStatus is 1 to avoid it in VadApi.ResultCallback.OnResult.
                 vadStatus = 0;
 
                 if (null != voiceCallback) {
@@ -311,7 +311,7 @@ public class WuwSampleEngine {
         vad.stop();
         closeOutputStream();
 
-        // Notify idle
+        // notify idle
         if (null != voiceCallback) {
             voiceCallback.onState(asrState);
         }
@@ -319,10 +319,9 @@ public class WuwSampleEngine {
         stopRecognizer();
         ILogging.getInstance().flush();
         asrComponentsInitializer.deInitializeComponents(errorMessage, resultCode);
+        asrComponentsInitializer.setAudioDataCallback(null);
         errorCheck(resultCode, errorMessage);
         ILogging.deleteInstance();
-
-        asrComponentsInitializer.setAudioDataCallback(null);
         vad.delete();
     }
 
@@ -415,8 +414,8 @@ public class WuwSampleEngine {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                publishProgress("command should be within " + g_timeoutMs + " ms after wake-up word for one-shot wuw case!\n");
-                publishProgress("<b>initial timeout, wuw sample engine go to sleep!</b>");
+                publishProgress("Command should be within " + g_timeoutMs + " ms after wake-up word for one-shot wuw case!\n");
+                publishProgress("<b>Initial timeout, wuw sample engine go to sleep!</b>");
                 asrEventHandler.addEvent(IAsrEventHandler.ASR_EVENT.INITIAL_TIMEOUT);
             }
         };

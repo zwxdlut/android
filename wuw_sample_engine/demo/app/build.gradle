@@ -21,11 +21,11 @@ android {
         }
     }
 
-//    repositories {
-//        flatDir {
-//            dirs project(':wuw_sample_engine').file('lib')
-//        }
-//    }
+    repositories {
+        flatDir {
+            dirs project(':wuw_sample_engine').file('lib')
+        }
+    }
 }
 
 dependencies {

@@ -48,35 +48,35 @@ android {
         }
     }
 
-//    repositories {
-//        flatDir {
-//            dirs 'lib'
-//        }
-//    }
+    repositories {
+        flatDir {
+            dirs 'lib'
+        }
+    }
 }
 
 
 dependencies {
-    implementation fileTree(dir: "lib", include: ["*.jar", "*.aar"])
+    implementation fileTree(dir: "lib", include: ["*.jar"])
 
-//    // csdk
-//    implementation(name:'csdk_asr5', ext:'aar')
-//    implementation(name:'csdk_asr5_cop_file_reader', ext:'aar')
-//    implementation(name:'csdk_audio', ext:'aar')
-//    implementation(name:'csdk_audio_codec_mp3', ext:'aar')
-//    implementation(name:'csdk_audio_container_ogg', ext:'aar')
-//    implementation(name:'csdk_audio_module_buffer', ext:'aar')
-//    implementation(name:'csdk_audio_module_decoder', ext:'aar')
-//    implementation(name:'csdk_audio_module_encoder', ext:'aar')
-//    implementation(name:'csdk_audio_module_from_file', ext:'aar')
-//    implementation(name:'csdk_audio_module_input', ext:'aar')
-//    implementation(name:'csdk_audio_module_output', ext:'aar')
-//    implementation(name:'csdk_audio_module_segmentation', ext:'aar')
-//    implementation(name:'csdk_audio_module_src', ext:'aar')
-//    implementation(name:'csdk_audio_module_stream_distributor', ext:'aar')
-//    implementation(name:'csdk_audio_module_to_file', ext:'aar')
-//    implementation(name:'csdk_cloudservices', ext:'aar')
-//    implementation(name:'csdk_common', ext:'aar')
+    // csdk
+    implementation(name:'csdk_asr5', ext:'aar')
+    implementation(name:'csdk_asr5_cop_file_reader', ext:'aar')
+    implementation(name:'csdk_audio', ext:'aar')
+    implementation(name:'csdk_audio_codec_mp3', ext:'aar')
+    implementation(name:'csdk_audio_container_ogg', ext:'aar')
+    implementation(name:'csdk_audio_module_buffer', ext:'aar')
+    implementation(name:'csdk_audio_module_decoder', ext:'aar')
+    implementation(name:'csdk_audio_module_encoder', ext:'aar')
+    implementation(name:'csdk_audio_module_from_file', ext:'aar')
+    implementation(name:'csdk_audio_module_input', ext:'aar')
+    implementation(name:'csdk_audio_module_output', ext:'aar')
+    implementation(name:'csdk_audio_module_segmentation', ext:'aar')
+    implementation(name:'csdk_audio_module_src', ext:'aar')
+    implementation(name:'csdk_audio_module_stream_distributor', ext:'aar')
+    implementation(name:'csdk_audio_module_to_file', ext:'aar')
+    implementation(name:'csdk_cloudservices', ext:'aar')
+    implementation(name:'csdk_common', ext:'aar')
 
     implementation 'androidx.appcompat:appcompat:1.2.0'
     testImplementation 'junit:junit:4.12'

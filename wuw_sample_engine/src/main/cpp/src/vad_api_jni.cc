@@ -22,7 +22,7 @@ int vad_result_handler(void *_ptr, int _status)
 {
     if (NULL == _ptr)
     {
-        __android_log_print(ANDROID_LOG_ERROR, TAG, "vad_result_handler: the callback pointer is null!!!\n");
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "vad_result_handler: The callback pointer is null!\n");
         return -1;
     }
 
@@ -34,7 +34,7 @@ int vad_result_handler(void *_ptr, int _status)
 
     if (JNI_OK != ret)
     {
-        __android_log_print(ANDROID_LOG_ERROR, TAG, "vad_result_handler: get the env failed!!!\n");
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "vad_result_handler: Get the env failed!\n");
         return ret;
     }
 
@@ -44,7 +44,7 @@ int vad_result_handler(void *_ptr, int _status)
 
     if (0 == java_class)
     {
-        __android_log_print(ANDROID_LOG_ERROR, TAG, "vad_result_handler: unable to find the callback class!!!\n");
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "vad_result_handler: Unable to find the callback class!\n");
         return -1;
     }
 
@@ -53,7 +53,7 @@ int vad_result_handler(void *_ptr, int _status)
 
     if (NULL == id)
     {
-        __android_log_print(ANDROID_LOG_ERROR, TAG, "vad_result_handler: unable to find the method onResult!!!\n");
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "vad_result_handler: Unable to find the method onResult!\n");
         return -1;
     }
 
@@ -69,7 +69,7 @@ JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_create(JNIEnv *_e
 
     if (NULL == g_engine)
     {
-        __android_log_print(ANDROID_LOG_ERROR, TAG, "create: create vad engine failed!!!\n");
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "create: Create vad engine failed!\n");
         ret = -1;
     }
 
@@ -92,7 +92,7 @@ JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_delete(JNIEnv *_e
     }
     else
     {
-        __android_log_print(ANDROID_LOG_ERROR, TAG, "delete： delete vad engine failed!!!");
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "delete： Delete vad engine failed!");
         return -1;
     }
 }
