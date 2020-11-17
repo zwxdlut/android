@@ -61,18 +61,10 @@ public class WuwSampleEngine {
 
     private audioIn.IAudioDataCallback audioDataCallback = new audioIn.IAudioDataCallback() {
         @Override
-        public void onCapture(final byte buf[], final int size) {
+        public void onCapture(byte buf[], int size) {
             if (ASR_STATE.AWAKE == asrState) {
                 vad.feed(buf, size);
-
-                if (null != fos) {
-                    try {
-                        fos.write(buf, 0, size);
-                        fos.flush();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
+                writePcm(buf, size);
             }
 
             if (null != voiceCallback) {
@@ -100,7 +92,7 @@ public class WuwSampleEngine {
             vadStatus = status;
 
             if (null != voiceCallback) {
-                voiceCallback.onResult(vadStatus);
+                voiceCallback.onResult(status);
             }
 
             return 0;
@@ -124,7 +116,9 @@ public class WuwSampleEngine {
 
     public interface IVoiceCallback {
         void onState(ASR_STATE state);
+
         void onCapture(byte buf[], int size);
+
         void onResult(int status);
     }
 
@@ -158,17 +152,17 @@ public class WuwSampleEngine {
         Log.i(TAG, "start: done = " + done);
 
         if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)) {
-            Log.i(TAG, "start: No record audio permission!");
+            Log.i(TAG, "start: no record audio permission!");
             return;
         }
 
         if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-            Log.i(TAG, "start: No write external storage permission!");
+            Log.i(TAG, "start: no write external storage permission!");
             return;
         }
 
         if (!done) {
-            Log.i(TAG, "start: Asr has already been started");
+            Log.i(TAG, "start: asr has already been started");
             return;
         }
 
@@ -222,7 +216,7 @@ public class WuwSampleEngine {
             am.startBluetoothSco();
         } catch (NullPointerException e) {
             // workaround for Lollipop when bluetooth device isn't connected
-            System.out.println("startBluetoothSco() failed. No bluetooth device is connected");
+            Log.i(TAG, "preExecute: startBluetoothSco failed! No bluetooth device is connected!");
         }
     }
 
@@ -268,9 +262,9 @@ public class WuwSampleEngine {
                 errorCheck(recognizerListener.getResultCode(), recognizerListener.getPublisherMessage());
                 publishProgress("RESULT: " + asrResult.getTopResult() + "\n");
                 publishProgress("EndTime: " + asrResult.getEndTime() + "\n");
-                publishProgress("Wakeup word found!\n");
+                publishProgress("wakeup word found!\n");
                 addApplications();
-                openOutputStream();
+                openPcm();
                 vad.start(vadResultCallback);
                 asrState = ASR_STATE.AWAKE;
                 startTimer(g_timeoutMs);
@@ -286,14 +280,13 @@ public class WuwSampleEngine {
                     continue;
                 }
 
-                publishProgress("Go to asleep!\n");
+                publishProgress("go to asleep!\n");
                 addApplications();
                 stopTimer();
                 asrState = ASR_STATE.ASLEEP;
                 vad.stop();
-                closeOutputStream();
-                // Trigger falling edge if vadStatus is 1 to avoid it in VadApi.ResultCallback.OnResult.
                 vadStatus = 0;
+                closePcm();
 
                 if (null != voiceCallback) {
                     voiceCallback.onState(asrState);
@@ -309,7 +302,7 @@ public class WuwSampleEngine {
 
         asrState = ASR_STATE.IDLE;
         vad.stop();
-        closeOutputStream();
+        closePcm();
 
         // notify idle
         if (null != voiceCallback) {
@@ -414,8 +407,8 @@ public class WuwSampleEngine {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                publishProgress("Command should be within " + g_timeoutMs + " ms after wake-up word for one-shot wuw case!\n");
-                publishProgress("<b>Initial timeout, wuw sample engine go to sleep!</b>");
+                publishProgress("command should be within " + g_timeoutMs + " ms after wake-up word for one-shot wuw case!\n");
+                publishProgress("<b>initial timeout, wuw sample engine go to sleep!</b>");
                 asrEventHandler.addEvent(IAsrEventHandler.ASR_EVENT.INITIAL_TIMEOUT);
             }
         };
@@ -432,7 +425,7 @@ public class WuwSampleEngine {
 
     }
 
-    private void openOutputStream() {
+    private void openPcm() {
         File file = new File(context.getExternalFilesDir(null), "command.pcm");
 
         if (file.exists()) {
@@ -451,7 +444,18 @@ public class WuwSampleEngine {
         }
     }
 
-    private void closeOutputStream() {
+    private void writePcm(byte buf[], int size) {
+        if (null != fos) {
+            try {
+                fos.write(buf, 0, size);
+                fos.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void closePcm() {
         if (null != fos) {
             try {
                 fos.flush();

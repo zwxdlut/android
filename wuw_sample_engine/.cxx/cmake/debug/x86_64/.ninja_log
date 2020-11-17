@@ -5,3 +5,6 @@
 0	13	0	clean	7cb106a547128f27
 1	202	626878474	CMakeFiles/vad_api_jni.dir/src/vad_api_jni.cc.o	ae36fae3a36cba02
 202	387	626878474	D:/code/android_examples/wuw_sample_engine/build/intermediates/cmake/debug/obj/x86_64/libvad_api_jni.so	2cef0c7f87f75f47
+0	13	0	clean	7cb106a547128f27
+1	204	627312863	CMakeFiles/vad_api_jni.dir/src/vad_api_jni.cc.o	ae36fae3a36cba02
+204	428	627312863	D:/code/android_examples/wuw_sample_engine/build/intermediates/cmake/debug/obj/x86_64/libvad_api_jni.so	2cef0c7f87f75f47
