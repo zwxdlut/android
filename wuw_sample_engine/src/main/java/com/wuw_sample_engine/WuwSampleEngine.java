@@ -221,13 +221,13 @@ public class WuwSampleEngine {
     }
 
     private void execute() {
+        Log.i(TAG, "execute");
+
         String errorMessage = "";
         ResultCode resultCode = ResultCode.OK;
 
-        asrState = ASR_STATE.ASLEEP;
-        vadStatus = 0;
-
         // initialize vad
+        vadStatus = 0;
         vad.create(context.getExternalFilesDir(null).getAbsolutePath() + "/app/asr/data/" + VAD_RES_FILE_NAME);
         vad.setting("{\"AdditionalPauseTime\" : 1000}");
 
@@ -239,6 +239,7 @@ public class WuwSampleEngine {
 
         addApplications();
         startRecognizer();
+        asrState = ASR_STATE.ASLEEP;
 
         // notify asleep
         if (null != voiceCallback) {
@@ -255,14 +256,27 @@ public class WuwSampleEngine {
             }
 
             if (IAsrEventHandler.ASR_EVENT.WUW_RESULT == event) {
-                if (ASR_STATE.AWAKE == asrState) {
-                    continue;
-                }
-
                 errorCheck(recognizerListener.getResultCode(), recognizerListener.getPublisherMessage());
                 publishProgress("RESULT: " + asrResult.getTopResult() + "\n");
                 publishProgress("EndTime: " + asrResult.getEndTime() + "\n");
                 publishProgress("wakeup word found!\n");
+
+                if (ASR_STATE.AWAKE == asrState) {
+                    publishProgress("wuw sample engine has been awake!\n");
+//                    stopTimer();
+//                    asrState = ASR_STATE.ASLEEP;
+//                    vad.stop();
+//                    vadStatus = 0;
+//                    closePcm();
+//
+//                    // avoid falling edge
+//                    if (!asrEventHandler.isEmpty()) {
+//                        publishProgress("remove event\n");
+//                        asrEventHandler.removeEvent();
+//                    }
+                    continue;
+                }
+
                 addApplications();
                 openPcm();
                 vad.start(vadResultCallback);
