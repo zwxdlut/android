@@ -241,7 +241,6 @@ public class WuwSampleEngine {
         startRecognizer();
         asrState = ASR_STATE.ASLEEP;
 
-        // notify asleep
         if (null != voiceCallback) {
             voiceCallback.onState(asrState);
         }
@@ -263,18 +262,19 @@ public class WuwSampleEngine {
 
                 if (ASR_STATE.AWAKE == asrState) {
                     publishProgress("wuw sample engine has been awake!\n");
-//                    stopTimer();
-//                    asrState = ASR_STATE.ASLEEP;
-//                    vad.stop();
-//                    vadStatus = 0;
-//                    closePcm();
-//
-//                    // avoid falling edge
-//                    if (!asrEventHandler.isEmpty()) {
-//                        publishProgress("remove event\n");
-//                        asrEventHandler.removeEvent();
-//                    }
-                    continue;
+                    stopTimer();
+                    asrState = ASR_STATE.ASLEEP;
+                    vad.stop();
+                    vadStatus = 0;
+                    closePcm();
+
+                    // avoid falling edge
+                    if (!asrEventHandler.isEmpty()) {
+                        publishProgress("remove event!\n");
+                        asrEventHandler.removeEvent();
+                    }
+
+                    //continue;
                 }
 
                 addApplications();
@@ -314,11 +314,12 @@ public class WuwSampleEngine {
             }
         }
 
+        publishProgress("go to idle!\n");
+        stopTimer();
         asrState = ASR_STATE.IDLE;
         vad.stop();
         closePcm();
 
-        // notify idle
         if (null != voiceCallback) {
             voiceCallback.onState(asrState);
         }
