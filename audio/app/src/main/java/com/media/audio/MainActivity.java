@@ -12,6 +12,7 @@ import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -233,19 +234,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Log.w(TAG, "startPlay: pcm file is not exit");
         }
 
-        track = new AudioTrack.Builder()
-                .setAudioAttributes(new AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build())
-                .setAudioFormat(new AudioFormat.Builder()
-                    .setEncoding(ENCODING_FORMAT)
-                    .setSampleRate(SAMPLE_RATE)
-                    .setChannelMask(CHANNEL_OUT)
-                    .build())
-                .setBufferSizeInBytes(oBufSize)
-                .setTransferMode(AudioTrack.MODE_STREAM)
-                .build();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            track = new AudioTrack.Builder()
+                    .setAudioAttributes(new AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_MEDIA)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                            .build())
+                    .setAudioFormat(new AudioFormat.Builder()
+                            .setEncoding(ENCODING_FORMAT)
+                            .setSampleRate(SAMPLE_RATE)
+                            .setChannelMask(CHANNEL_OUT)
+                            .build())
+                    .setBufferSizeInBytes(oBufSize)
+                    .setTransferMode(AudioTrack.MODE_STREAM)
+                    .build();
+        } else {
+            track = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE, CHANNEL_OUT,
+                    ENCODING_FORMAT, oBufSize, AudioTrack.MODE_STREAM);
+        }
 
         if (AudioTrack.STATE_INITIALIZED != track.getState()) {
             Log.e(TAG, "startPlay: initialize track failed!");
