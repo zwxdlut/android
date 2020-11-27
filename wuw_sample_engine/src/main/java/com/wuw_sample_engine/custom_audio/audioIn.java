@@ -186,24 +186,24 @@ public class audioIn
           {
             IAudioInputAdapterListener.FlowState flowStateOut[] = {nuance.audio.IAudioInputAdapterListener.FlowState.NORMAL};
             listener.onAudioDataCaptured(tempBuffer, false, ResultCode.OK, flowStateOut);
-
-            if (null != audioDataCallback) {
-              byte[] bytes = new byte[2 * audioData];
-
-              try {
-                ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().put(tempBuffer, 0, audioData);
-              } catch (Exception e) {
-                e.printStackTrace();
-              }
-
-              audioDataCallback.onCapture(bytes, bytes.length);
-            }
           }
           else
           {
             errorCode = "Invalid_Nuance_Audio_IAudioInputAdapterListener";
             logger.logMessage(LogZone.LOG_ERROR,"audioIn::audioRecord failed with error "+errorCode);
             break;
+          }
+
+          if (null != audioDataCallback) {
+            byte bytes[] = new byte[2 * audioData];
+
+            try {
+              ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().put(tempBuffer, 0, audioData);
+            } catch (Exception e) {
+              e.printStackTrace();
+            }
+
+            audioDataCallback.onCapture(bytes, bytes.length);
           }
         }
       }

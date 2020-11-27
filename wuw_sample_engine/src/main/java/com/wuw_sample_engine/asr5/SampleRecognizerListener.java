@@ -42,7 +42,6 @@ public class SampleRecognizerListener extends IRecognizerListener {
         if (recogEvent != RecogEvent.RECOGNIZER_SILENCE_DETECTED && recogEvent != RecogEvent.RECOGNIZER_SPEECH_DETECTED) {
             publisherMessage_ = "EVENT: " + recogEvent.toString() + "\nEvent message: " + (message.isEmpty() ? "null" : message) + "\n\n";
             asrEventHandler.addEvent(IAsrEventHandler.ASR_EVENT.OTHER_EVENT);
-
         }
     }
 
@@ -50,7 +49,6 @@ public class SampleRecognizerListener extends IRecognizerListener {
     public void onResult(String result, ResultType resultType, boolean isFinal) {
         if (resultType == ResultType.RESULT_TYPE_ASR) {
             asrResult.parseResult(result, rc, publisherMessage_);
-
         } else {
             publisherMessage_ = "Unexpected result type returned.";
             asrEventHandler.addEvent(IAsrEventHandler.ASR_EVENT.OTHER_EVENT);
