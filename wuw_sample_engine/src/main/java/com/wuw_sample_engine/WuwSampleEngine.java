@@ -106,11 +106,132 @@ public class WuwSampleEngine {
     }
 
     public class OneShotWuwSampleThread extends Thread {
+        public OneShotWuwSampleThread() {
+            super("one_shot_wuw_sample");
+        }
+
         @Override
         public void run() {
-            preExecute();
-            execute();
-            postExecute();
+            Log.i(TAG, "run");
+
+            AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+            String errorMessage = "";
+            ResultCode resultCode = ResultCode.OK;
+            SampleRecognizerListener recognizerListener = null;
+
+            try {
+                am.startBluetoothSco();
+            } catch (NullPointerException e) {
+                // workaround for Lollipop when bluetooth device isn't connected
+                Log.i(TAG, "preExecute: startBluetoothSco failed! No bluetooth device is connected!");
+            }
+
+            // initialize vad
+            vadStatus = 0;
+            vad.create(context.getExternalFilesDir(null).getAbsolutePath() + "/app/asr/data/" + VAD_RES_FILE_NAME);
+            vad.setting("{\"AdditionalPauseTime\" : 1000}");
+
+            // initialize asr
+            initAsr();
+            asrComponentsInitializer.setAudioDataCallback(audioDataCallback);
+            asrComponentsInitializer.initializeAsrComponents(errorMessage, resultCode);
+            errorCheck(resultCode, errorMessage);
+            addApplications();
+            startRecognizer();
+            recognizerListener = (SampleRecognizerListener) asrComponentsInitializer.getRecognizerListener();
+            asrState = ASR_STATE.ASLEEP;
+
+            if (null != voiceCallback) {
+                voiceCallback.onState(asrState);
+            }
+
+            while (!done) {
+                IAsrEventHandler.ASR_EVENT event = IAsrEventHandler.ASR_EVENT.UNQUALIFIED_RESULT;
+
+                if (!asrEventHandler.isEmpty()) {
+                    event = asrEventHandler.removeEvent();
+                }
+
+                if (IAsrEventHandler.ASR_EVENT.WUW_RESULT == event) {
+                    errorCheck(recognizerListener.getResultCode(), recognizerListener.getPublisherMessage());
+                    publishProgress("RESULT: " + asrResult.getTopResult() + "\n");
+                    publishProgress("EndTime: " + asrResult.getEndTime() + "\n");
+                    publishProgress("wakeup word found!\n");
+
+                    if (ASR_STATE.AWAKE == asrState) {
+                        publishProgress("wuw sample engine has been awake!\n");
+                        stopTimer();
+                        asrState = ASR_STATE.ASLEEP;
+                        vad.stop();
+                        vadStatus = 0;
+                        closePcm();
+
+                        // avoid falling edge
+                        if (!asrEventHandler.isEmpty()) {
+                            publishProgress("remove event!\n");
+                            asrEventHandler.removeEvent();
+                        }
+
+                        //continue;
+                    }
+
+                    addApplications();
+                    openPcm();
+                    vad.start(vadResultCallback);
+                    asrState = ASR_STATE.AWAKE;
+                    startTimer(g_timeoutMs);
+
+                    if (null != voiceCallback) {
+                        voiceCallback.onState(asrState);
+                    }
+                } else if (event == IAsrEventHandler.ASR_EVENT.NO_WUW_RESULT) {
+                    errorCheck(recognizerListener.getResultCode(), recognizerListener.getPublisherMessage());
+                    addApplications();
+                } else if (IAsrEventHandler.ASR_EVENT.COMMAND_RESULT == event || IAsrEventHandler.ASR_EVENT.INITIAL_TIMEOUT == event) {
+                    if (ASR_STATE.ASLEEP == asrState) {
+                        continue;
+                    }
+
+                    publishProgress("go to asleep!\n");
+                    addApplications();
+                    stopTimer();
+                    asrState = ASR_STATE.ASLEEP;
+                    vad.stop();
+                    vadStatus = 0;
+                    closePcm();
+
+                    if (null != voiceCallback) {
+                        voiceCallback.onState(asrState);
+                    }
+                } else if (IAsrEventHandler.ASR_EVENT.OTHER_EVENT == event) {
+                    publishProgress(recognizerListener.getPublisherMessage());
+                } else {
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            publishProgress("go to idle!\n");
+            stopTimer();
+            asrState = ASR_STATE.IDLE;
+            vad.stop();
+            closePcm();
+
+            if (null != voiceCallback) {
+                voiceCallback.onState(asrState);
+            }
+
+            stopRecognizer();
+            ILogging.getInstance().flush();
+            asrComponentsInitializer.deInitializeComponents(errorMessage, resultCode);
+            asrComponentsInitializer.setAudioDataCallback(null);
+            errorCheck(resultCode, errorMessage);
+            ILogging.deleteInstance();
+            vad.delete();
+            am.stopBluetoothSco();
         }
     }
 
@@ -205,139 +326,6 @@ public class WuwSampleEngine {
         }
 
         asrEventHandler.addEvent(IAsrEventHandler.ASR_EVENT.COMMAND_RESULT);
-    }
-
-    private void preExecute() {
-        Log.i(TAG, "preExecute");
-
-        AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-
-        try {
-            am.startBluetoothSco();
-        } catch (NullPointerException e) {
-            // workaround for Lollipop when bluetooth device isn't connected
-            Log.i(TAG, "preExecute: startBluetoothSco failed! No bluetooth device is connected!");
-        }
-    }
-
-    private void execute() {
-        Log.i(TAG, "execute");
-
-        String errorMessage = "";
-        ResultCode resultCode = ResultCode.OK;
-
-        // initialize vad
-        vadStatus = 0;
-        vad.create(context.getExternalFilesDir(null).getAbsolutePath() + "/app/asr/data/" + VAD_RES_FILE_NAME);
-        vad.setting("{\"AdditionalPauseTime\" : 1000}");
-
-        initAsr();
-
-        asrComponentsInitializer.setAudioDataCallback(audioDataCallback);
-        asrComponentsInitializer.initializeAsrComponents(errorMessage, resultCode);
-        errorCheck(resultCode, errorMessage);
-
-        addApplications();
-        startRecognizer();
-        asrState = ASR_STATE.ASLEEP;
-
-        if (null != voiceCallback) {
-            voiceCallback.onState(asrState);
-        }
-
-        SampleRecognizerListener recognizerListener = (SampleRecognizerListener) asrComponentsInitializer.getRecognizerListener();
-
-        while (true) {
-            IAsrEventHandler.ASR_EVENT event = IAsrEventHandler.ASR_EVENT.UNQUALIFIED_RESULT;
-
-            if (!asrEventHandler.isEmpty()) {
-                event = asrEventHandler.removeEvent();
-            }
-
-            if (IAsrEventHandler.ASR_EVENT.WUW_RESULT == event) {
-                errorCheck(recognizerListener.getResultCode(), recognizerListener.getPublisherMessage());
-                publishProgress("RESULT: " + asrResult.getTopResult() + "\n");
-                publishProgress("EndTime: " + asrResult.getEndTime() + "\n");
-                publishProgress("wakeup word found!\n");
-
-                if (ASR_STATE.AWAKE == asrState) {
-                    publishProgress("wuw sample engine has been awake!\n");
-                    stopTimer();
-                    asrState = ASR_STATE.ASLEEP;
-                    vad.stop();
-                    vadStatus = 0;
-                    closePcm();
-
-                    // avoid falling edge
-                    if (!asrEventHandler.isEmpty()) {
-                        publishProgress("remove event!\n");
-                        asrEventHandler.removeEvent();
-                    }
-
-                    //continue;
-                }
-
-                addApplications();
-                openPcm();
-                vad.start(vadResultCallback);
-                asrState = ASR_STATE.AWAKE;
-                startTimer(g_timeoutMs);
-
-                if (null != voiceCallback) {
-                    voiceCallback.onState(asrState);
-                }
-            } else if (event == IAsrEventHandler.ASR_EVENT.NO_WUW_RESULT) {
-                errorCheck(recognizerListener.getResultCode(), recognizerListener.getPublisherMessage());
-                addApplications();
-            } else if (IAsrEventHandler.ASR_EVENT.COMMAND_RESULT == event || IAsrEventHandler.ASR_EVENT.INITIAL_TIMEOUT == event) {
-                if (ASR_STATE.ASLEEP == asrState) {
-                    continue;
-                }
-
-                publishProgress("go to asleep!\n");
-                addApplications();
-                stopTimer();
-                asrState = ASR_STATE.ASLEEP;
-                vad.stop();
-                vadStatus = 0;
-                closePcm();
-
-                if (null != voiceCallback) {
-                    voiceCallback.onState(asrState);
-                }
-            } else if (IAsrEventHandler.ASR_EVENT.OTHER_EVENT == event) {
-                publishProgress(recognizerListener.getPublisherMessage());
-            }
-
-            if (done) {
-                break;
-            }
-        }
-
-        publishProgress("go to idle!\n");
-        stopTimer();
-        asrState = ASR_STATE.IDLE;
-        vad.stop();
-        closePcm();
-
-        if (null != voiceCallback) {
-            voiceCallback.onState(asrState);
-        }
-
-        stopRecognizer();
-        ILogging.getInstance().flush();
-        asrComponentsInitializer.deInitializeComponents(errorMessage, resultCode);
-        asrComponentsInitializer.setAudioDataCallback(null);
-        errorCheck(resultCode, errorMessage);
-        ILogging.deleteInstance();
-        vad.delete();
-    }
-
-    private void postExecute() {
-        Log.i(TAG, "postExecute");
-
-        AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-        am.stopBluetoothSco();
     }
 
     private void publishProgress(String... progress) {
