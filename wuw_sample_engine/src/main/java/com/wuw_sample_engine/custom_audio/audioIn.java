@@ -99,7 +99,7 @@ public class audioIn
       }
       else
       {
-        record = new Thread("audioIn.record")
+        record = new Thread("AudioInRecord")
         {
           public void run()
           {

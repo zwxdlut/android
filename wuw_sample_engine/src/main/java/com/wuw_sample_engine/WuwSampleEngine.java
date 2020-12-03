@@ -49,7 +49,7 @@ public class WuwSampleEngine {
     private int vadStatus = 0;
     private int g_timeoutMs = 15000;
     private ASR_STATE asrState = ASR_STATE.IDLE;
-    private OneShotWuwSampleThread thread = null;
+    private WuwSampleHandlerThread thread = null;
     private VadApi vad = VadApi.getInstance();
     private Timer timer = null;
     private FileOutputStream fos = null;
@@ -107,9 +107,9 @@ public class WuwSampleEngine {
         AWAKE
     }
 
-    private class OneShotWuwSampleThread extends Thread {
-        public OneShotWuwSampleThread() {
-            super("WuwSampleEngine.OneShotWuwSampleThread");
+    private class WuwSampleHandlerThread extends Thread {
+        public WuwSampleHandlerThread() {
+            super("WuwSampleHandler");
         }
 
         @Override
@@ -279,7 +279,7 @@ public class WuwSampleEngine {
         }
 
         done = false;
-        thread = new OneShotWuwSampleThread();
+        thread = new WuwSampleHandlerThread();
         thread.start();
     }
 
