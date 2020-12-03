@@ -109,7 +109,7 @@ public class WuwSampleEngine {
 
     public class OneShotWuwSampleThread extends Thread {
         public OneShotWuwSampleThread() {
-            super("one_shot_wuw_sample");
+            super("WuwSampleEngine.OneShotWuwSampleThread");
         }
 
         @Override
