@@ -1,25 +1,51 @@
 package com.wuw_sample_engine.asr5;
 
 import java.util.LinkedList;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class AsrEventHandler implements IAsrEventHandler {
-
-    private LinkedList<ASR_EVENT> eventsList_ = null;
+    private LinkedList<ASR_EVENT> eventsList_ = new LinkedList<>();
+    private ReentrantLock lock = new ReentrantLock();
+    Condition condition = lock.newCondition();
 
     public AsrEventHandler() {
-        eventsList_ = new LinkedList<>();
     }
 
-    public synchronized void addEvent(ASR_EVENT event) {
+    public void addEvent(ASR_EVENT event) {
+        lock.lock();
         eventsList_.add(event);
+        condition.signalAll();
+        lock.unlock();
     }
 
-    public synchronized ASR_EVENT removeEvent() {
-        return eventsList_.remove();
+    public ASR_EVENT removeEvent() {
+        ASR_EVENT event = null;
+
+        lock.lock();
+
+        if (eventsList_.isEmpty()) {
+            try {
+                condition.await();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        event =  eventsList_.remove();
+
+        lock.unlock();
+
+        return event;
     }
 
-    @Override
-    public boolean isEmpty() {
-        return eventsList_.isEmpty();
+    public boolean removeEvent(ASR_EVENT event) {
+        boolean ret = false;
+
+        lock.lock();
+        ret = eventsList_.remove(event);
+        lock.unlock();
+
+        return ret;
     }
 }

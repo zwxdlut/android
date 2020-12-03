@@ -79,11 +79,13 @@ public class WuwSampleEngine {
             if (0 == vadStatus) {
                 // rising edge
                 if (1 == status) {
+                    Log.i(TAG, "onResult: rising edge!");
                     stopTimer();
                 }
             } else {
                 // falling edge
                 if (0 == status) {
+                    Log.i(TAG, "onResult: falling edge!");
                     asrEventHandler.addEvent(IAsrEventHandler.ASR_EVENT.COMMAND_RESULT);
 
                 }
@@ -146,11 +148,7 @@ public class WuwSampleEngine {
             }
 
             while (!done) {
-                IAsrEventHandler.ASR_EVENT event = IAsrEventHandler.ASR_EVENT.UNQUALIFIED_RESULT;
-
-                if (!asrEventHandler.isEmpty()) {
-                    event = asrEventHandler.removeEvent();
-                }
+                IAsrEventHandler.ASR_EVENT event = asrEventHandler.removeEvent();
 
                 if (IAsrEventHandler.ASR_EVENT.WUW_RESULT == event) {
                     errorCheck(recognizerListener.getResultCode(), recognizerListener.getPublisherMessage());
@@ -167,9 +165,8 @@ public class WuwSampleEngine {
                         closePcm();
 
                         // avoid falling edge
-                        if (!asrEventHandler.isEmpty()) {
-                            publishProgress("remove event!\n");
-                            asrEventHandler.removeEvent();
+                        if(asrEventHandler.removeEvent(IAsrEventHandler.ASR_EVENT.COMMAND_RESULT)) {
+                            publishProgress("remove event COMMAND_RESULT!\n");
                         }
 
                         //continue;
@@ -205,12 +202,6 @@ public class WuwSampleEngine {
                     }
                 } else if (IAsrEventHandler.ASR_EVENT.OTHER_EVENT == event) {
                     publishProgress(recognizerListener.getPublisherMessage());
-                } else {
-                    try {
-                        Thread.sleep(10);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
                 }
             }
 
@@ -298,6 +289,9 @@ public class WuwSampleEngine {
         done = true;
 
         if (null != thread) {
+		    // unblock event queue
+            asrEventHandler.addEvent(AsrEventHandler.ASR_EVENT.UNQUALIFIED_RESULT);
+
             try {
                 thread.join();
             } catch (InterruptedException e) {
@@ -433,6 +427,7 @@ public class WuwSampleEngine {
 
         if (file.exists()) {
             file.delete();
+
             try {
                 file.createNewFile();
             } catch (IOException e) {

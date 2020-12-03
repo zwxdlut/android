@@ -14,5 +14,5 @@ public interface IAsrEventHandler {
 
     ASR_EVENT removeEvent();
 
-    boolean isEmpty();
+    boolean removeEvent(ASR_EVENT event);
 }
