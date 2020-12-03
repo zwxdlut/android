@@ -107,7 +107,7 @@ public class WuwSampleEngine {
         AWAKE
     }
 
-    public class OneShotWuwSampleThread extends Thread {
+    private class OneShotWuwSampleThread extends Thread {
         public OneShotWuwSampleThread() {
             super("WuwSampleEngine.OneShotWuwSampleThread");
         }
