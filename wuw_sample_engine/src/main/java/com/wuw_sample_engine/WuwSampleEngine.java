@@ -360,7 +360,6 @@ public class WuwSampleEngine {
             publishProgress(resultCode + ": " + msg + "\n");
             publishProgress("Quit application");
             ILogging.getInstance().flush();
-            done = true;
         }
     }
 
