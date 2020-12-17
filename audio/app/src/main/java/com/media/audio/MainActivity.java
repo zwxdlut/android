@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 FileInputStream fis = new FileInputStream(pcmFile);
                 byte[] buf = new byte[playBuf];
 
-                while(isPlaying) {
+                while (isPlaying) {
                     int count = fis.read(buf, 0, buf.length);
 
                     if (0 >= count) {
