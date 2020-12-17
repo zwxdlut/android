@@ -33,8 +33,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final int CHANNEL_OUT = AudioFormat.CHANNEL_OUT_MONO;
     private AudioRecord recorder = null;
     private AudioTrack track = null;
-    private int iBufSize = 0;
-    private int oBufSize = 0;
+    private int recordBuf = 0;
+    private int playBuf = 0;
     private boolean isRecording = false;
     private boolean isPlaying = false;
     private Thread recordThread = null;
@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             try {
                 FileOutputStream fos = new FileOutputStream(pcmFile);
-                byte[] buf = new byte[iBufSize];
+                byte[] buf = new byte[recordBuf];
 
                 while (isRecording) {
                     int count = recorder.read(buf, 0, buf.length);
@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             try {
                 FileInputStream fis = new FileInputStream(pcmFile);
-                byte[] buf = new byte[oBufSize];
+                byte[] buf = new byte[playBuf];
 
                 while(isPlaying) {
                     int count = fis.read(buf, 0, buf.length);
@@ -161,10 +161,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void init() {
         // Initialize the parameters of the recorder and track
-        iBufSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_IN, ENCODING_FORMAT);
-        oBufSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, CHANNEL_OUT, ENCODING_FORMAT);
+        recordBuf = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_IN, ENCODING_FORMAT);
+        playBuf = AudioTrack.getMinBufferSize(SAMPLE_RATE, CHANNEL_OUT, ENCODING_FORMAT);
         pcmFile = new File(getExternalFilesDir(null), "test.pcm");
-        Log.i(TAG, "init: record buffer size is " + iBufSize + ", track buffer size is " + oBufSize + ", pcm file is" + pcmFile.getPath());
+        Log.i(TAG, "init: record buffer size is " + recordBuf + ", track buffer size is " + playBuf + ", pcm file is" + pcmFile.getPath());
 
         // Initialize UI
         findViewById(R.id.btn_start_record).setOnClickListener(this);
@@ -190,7 +190,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
 
-        recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, CHANNEL_IN, ENCODING_FORMAT, iBufSize);
+        recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, CHANNEL_IN, ENCODING_FORMAT, recordBuf);
         if (AudioRecord.STATE_INITIALIZED != recorder.getState()) {
             Log.e(TAG, "startRecord: initialize recorder failed!");
             recorder = null;
@@ -246,12 +246,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             .setSampleRate(SAMPLE_RATE)
                             .setChannelMask(CHANNEL_OUT)
                             .build())
-                    .setBufferSizeInBytes(oBufSize)
+                    .setBufferSizeInBytes(playBuf)
                     .setTransferMode(AudioTrack.MODE_STREAM)
                     .build();
         } else {
             track = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE, CHANNEL_OUT,
-                    ENCODING_FORMAT, oBufSize, AudioTrack.MODE_STREAM);
+                    ENCODING_FORMAT, playBuf, AudioTrack.MODE_STREAM);
         }
 
         if (AudioTrack.STATE_INITIALIZED != track.getState()) {
