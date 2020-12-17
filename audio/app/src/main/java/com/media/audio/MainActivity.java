@@ -33,8 +33,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final int CHANNEL_OUT = AudioFormat.CHANNEL_OUT_MONO;
     private AudioRecord recorder = null;
     private AudioTrack track = null;
-    private int recordBuf = 0;
-    private int playBuf = 0;
+    private int recordSize = 0;
+    private int playSize = 0;
     private boolean isRecording = false;
     private boolean isPlaying = false;
     private Thread recordThread = null;
@@ -48,13 +48,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             try {
                 FileOutputStream fos = new FileOutputStream(pcmFile);
-                byte[] buf = new byte[recordBuf];
+                byte[] buf = new byte[recordSize];
 
                 while (isRecording) {
-                    int count = recorder.read(buf, 0, buf.length);
+                    int size = recorder.read(buf, 0, buf.length);
 
-                    Log.i(TAG, "run(RecordThread): read " + count + " bytes from recorder");
-                    fos.write(buf, 0, count);
+                    Log.i(TAG, "run(RecordThread): read " + size + " bytes from recorder");
+                    fos.write(buf, 0, size);
                     fos.flush();
                 }
 
@@ -76,19 +76,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             try {
                 FileInputStream fis = new FileInputStream(pcmFile);
-                byte[] buf = new byte[playBuf];
+                byte[] buf = new byte[playSize];
 
                 while (isPlaying) {
-                    int count = fis.read(buf, 0, buf.length);
+                    int size = fis.read(buf, 0, buf.length);
 
-                    if (0 >= count) {
+                    if (0 >= size) {
                         Log.i(TAG, "run(PlayThread): reach the end of the file");
                         isPlaying = false;
                         break;
                     }
 
-                    count = track.write(buf, 0, count);
-                    Log.i(TAG, "run(PlayThread): write " + count + " bytes to track");
+                    size = track.write(buf, 0, size);
+                    Log.i(TAG, "run(PlayThread): write " + size + " bytes to track");
                 }
 
                 fis.close();
@@ -161,10 +161,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void init() {
         // Initialize the parameters of the recorder and track
-        recordBuf = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_IN, ENCODING_FORMAT);
-        playBuf = AudioTrack.getMinBufferSize(SAMPLE_RATE, CHANNEL_OUT, ENCODING_FORMAT);
+        recordSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_IN, ENCODING_FORMAT);
+        playSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, CHANNEL_OUT, ENCODING_FORMAT);
         pcmFile = new File(getExternalFilesDir(null), "test.pcm");
-        Log.i(TAG, "init: record buffer size is " + recordBuf + ", track buffer size is " + playBuf + ", pcm file is" + pcmFile.getPath());
+        Log.i(TAG, "init: record buffer size is " + recordSize + ", track buffer size is " + playSize + ", pcm file is" + pcmFile.getPath());
 
         // Initialize UI
         findViewById(R.id.btn_start_record).setOnClickListener(this);
@@ -190,7 +190,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
 
-        recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, CHANNEL_IN, ENCODING_FORMAT, recordBuf);
+        recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, CHANNEL_IN, ENCODING_FORMAT, recordSize);
         if (AudioRecord.STATE_INITIALIZED != recorder.getState()) {
             Log.e(TAG, "startRecord: create recorder failed!");
             recorder = null;
@@ -246,12 +246,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             .setSampleRate(SAMPLE_RATE)
                             .setChannelMask(CHANNEL_OUT)
                             .build())
-                    .setBufferSizeInBytes(playBuf)
+                    .setBufferSizeInBytes(playSize)
                     .setTransferMode(AudioTrack.MODE_STREAM)
                     .build();
         } else {
             track = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE, CHANNEL_OUT,
-                    ENCODING_FORMAT, playBuf, AudioTrack.MODE_STREAM);
+                    ENCODING_FORMAT, playSize, AudioTrack.MODE_STREAM);
         }
 
         if (AudioTrack.STATE_INITIALIZED != track.getState()) {
