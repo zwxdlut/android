@@ -232,6 +232,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         if (!pcmFile.exists()) {
             Log.w(TAG, "startPlay: pcm file is not exit");
+            return;
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
