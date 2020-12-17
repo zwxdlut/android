@@ -192,7 +192,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, CHANNEL_IN, ENCODING_FORMAT, recordBuf);
         if (AudioRecord.STATE_INITIALIZED != recorder.getState()) {
-            Log.e(TAG, "startRecord: initialize recorder failed!");
+            Log.e(TAG, "startRecord: create recorder failed!");
             recorder = null;
             return;
         }
@@ -255,7 +255,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         if (AudioTrack.STATE_INITIALIZED != track.getState()) {
-            Log.e(TAG, "startPlay: initialize track failed!");
+            Log.e(TAG, "startPlay: create track failed!");
             track = null;
             return;
         }
