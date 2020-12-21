@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
 
     /* Messenger service */
     private Messenger msgService = null;
+
     private ServiceConnection msgConn = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -60,9 +61,10 @@ public class MainActivity extends AppCompatActivity {
             msgService = null;
         }
     };
+
     private Messenger replyMsg = new Messenger(new ReplyHandler());
 
-    private class ReplyHandler extends Handler {
+    private static class ReplyHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
             Log.d(TAG, "handleMessage: msg = " + msg + ", data = " + msg.getData());
