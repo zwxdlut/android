@@ -47,7 +47,7 @@ public class WuwSampleEngine {
 
     private boolean done = true;
     private int vadStatus = 0;
-    private int g_timeoutMs = 15000;
+    private int timeoutMs = 15000;
     private ASR_STATE asrState = ASR_STATE.IDLE;
     private WuwSampleHandlerThread thread = null;
     private VadApi vad = VadApi.getInstance();
@@ -176,7 +176,7 @@ public class WuwSampleEngine {
                     openPcm();
                     vad.start(vadResultCallback);
                     asrState = ASR_STATE.AWAKE;
-                    startTimer(g_timeoutMs);
+                    startTimer();
 
                     if (null != voiceCallback) {
                         voiceCallback.onState(asrState);
@@ -399,11 +399,11 @@ public class WuwSampleEngine {
         printAsrConfiguratio();
     }
 
-    private void startTimer(int timeoutMs) {
+    private void startTimer() {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                publishProgress("command should be within " + g_timeoutMs + " ms after wake-up word for one-shot wuw case!\n");
+                publishProgress("command should be within " + timeoutMs + " ms after wake-up word for one-shot wuw case!\n");
                 publishProgress("<b>initial timeout, wuw sample engine go to sleep!</b>");
                 asrEventHandler.addEvent(IAsrEventHandler.ASR_EVENT.INITIAL_TIMEOUT);
             }
@@ -418,7 +418,6 @@ public class WuwSampleEngine {
             timer.cancel();
             timer = null;
         }
-
     }
 
     private void openPcm() {
