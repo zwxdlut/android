@@ -11,21 +11,19 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public class AsrAssetExtractor implements IAsrAssetExtractor {
-
     private String TARGET_BASE_PATH;
 
     public AsrAssetExtractor() {
-
     }
 
     @Override
-    public void extractAssetsFiles(Context context) throws IOException {
+    public void extractAssetsFiles(Context context) {
         AssetManager assetManager = context.getAssets();
 
         TARGET_BASE_PATH = context.getExternalFilesDir(null).getAbsolutePath() + "/app/asr/";
-        if (null == TARGET_BASE_PATH) {
-            TARGET_BASE_PATH = context.getFilesDir().getAbsolutePath();
-        }
+//        if (null == TARGET_BASE_PATH) {
+//            TARGET_BASE_PATH = context.getFilesDir().getAbsolutePath();
+//        }
 
         copyFileOrDir("", assetManager);
     }
