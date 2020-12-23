@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.btn_stop_asr).setOnClickListener(this);
 
         // initialize wuw sample engine
-        wuwSampleEngine = WuwSampleEngine.getInstance(this);
+        wuwSampleEngine = WuwSampleEngine.getInstance();
         wuwSampleEngine.setVoiceCallback(voiceCallback);
 
         ActivityCompat.requestPermissions(this,

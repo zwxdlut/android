@@ -1,6 +1,7 @@
 package com.wuw_sample_engine;
 
 import android.Manifest;
+import android.app.Application;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
@@ -27,6 +28,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -37,7 +39,7 @@ public class WuwSampleEngine {
     private static final String TAG = "WuwSampleEngine";
     private static final String VAD_RES_FILE_NAME = "vad_tdnn_0627.bin";
     private static WuwSampleEngine instance = null;
-    private Context context;
+    private Context context = null;
 
     private IAsrConfigParam asrConfigParam = null;
     private IAsrAssetExtractor assetExtractor = null;
@@ -105,6 +107,14 @@ public class WuwSampleEngine {
         IDLE,
         ASLEEP,
         AWAKE
+    }
+
+    public interface IVoiceCallback {
+        void onState(ASR_STATE state);
+
+        void onCapture(byte buf[], int size);
+
+        void onResult(int status);
     }
 
     private class WuwSampleHandlerThread extends Thread {
@@ -226,28 +236,28 @@ public class WuwSampleEngine {
         }
     }
 
-    public interface IVoiceCallback {
-        void onState(ASR_STATE state);
-
-        void onCapture(byte buf[], int size);
-
-        void onResult(int status);
+    private static class Builder {
+        private static WuwSampleEngine instance = new WuwSampleEngine();
     }
 
-    public static WuwSampleEngine getInstance(Context context) {
-        if (null == instance) {
-            synchronized (WuwSampleEngine.class) {
-                if (null == instance) {
-                    instance = new WuwSampleEngine(context);
-                }
+    public static WuwSampleEngine getInstance() {
+        return Builder.instance;
+    }
+
+    private WuwSampleEngine() {
+        try {
+            //Application application = (Application) Class.forName("android.app.ActivityThread").getMethod("currentApplication").invoke(null, (Object[]) null);
+            Application application = (Application) Class.forName("android.app.AppGlobals").getMethod("getInitialApplication").invoke(null, (Object[]) null);
+
+            if (null != application) {
+                context = application.getApplicationContext();
+            } else {
+                throw new NullPointerException();
             }
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | ClassNotFoundException e) {
+            e.printStackTrace();
         }
 
-        return instance;
-    }
-
-    private WuwSampleEngine(Context context) {
-        this.context = context.getApplicationContext();
         asrConfigParam = new AsrConfigParam(context.getExternalFilesDir(null).getAbsolutePath());
         assetExtractor = new AsrAssetExtractor();
     }
