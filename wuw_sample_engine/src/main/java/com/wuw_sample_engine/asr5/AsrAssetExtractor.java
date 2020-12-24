@@ -17,7 +17,7 @@ public class AsrAssetExtractor implements IAsrAssetExtractor {
     }
 
     @Override
-    public void extractAssetsFiles(Context context) {
+    public void extractAssetsFiles(Context context) throws IOException {
         AssetManager assetManager = context.getAssets();
 
         TARGET_BASE_PATH = context.getExternalFilesDir(null).getAbsolutePath() + "/app/asr/";
