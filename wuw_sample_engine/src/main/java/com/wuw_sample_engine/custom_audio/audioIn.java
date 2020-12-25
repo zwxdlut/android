@@ -53,7 +53,7 @@ public class audioIn
   state audio_state = state.STATE_CLOSED;
 
   public interface IAudioDataCallback {
-    public void onCapture(byte buf[], int size);
+    public void onCapture(byte[] buf, int size);
   }
 
   public void setAudioDataCallback(IAudioDataCallback callback) {

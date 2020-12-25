@@ -63,7 +63,7 @@ public class WuwSampleEngine {
 
     private audioIn.IAudioDataCallback audioDataCallback = new audioIn.IAudioDataCallback() {
         @Override
-        public void onCapture(byte buf[], int size) {
+        public void onCapture(byte[] buf, int size) {
             if (ASR_STATE.AWAKE == asrState) {
                 vad.feed(buf, size);
                 writePcm(buf, size);
@@ -112,7 +112,7 @@ public class WuwSampleEngine {
     public interface IVoiceCallback {
         void onState(ASR_STATE state);
 
-        void onCapture(byte buf[], int size);
+        void onCapture(byte[] buf, int size);
 
         void onResult(int status);
     }
@@ -450,7 +450,7 @@ public class WuwSampleEngine {
         }
     }
 
-    private void writePcm(byte buf[], int size) {
+    private void writePcm(byte[] buf, int size) {
         if (null != fos) {
             try {
                 fos.write(buf, 0, size);

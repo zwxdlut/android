@@ -23,7 +23,7 @@ public class VadApi {
 
     public native int reset();
 
-    public native int feed(byte buf[], int size);
+    public native int feed(byte[] buf, int size);
 
     public native int setting(String config);
 }
