@@ -50,14 +50,14 @@ android {
 
     repositories {
         flatDir {
-            dirs 'lib'
+            dirs 'libs'
         }
     }
 }
 
 
 dependencies {
-    implementation fileTree(dir: "lib", include: ["*.jar"])
+    implementation fileTree(dir: "libs", include: ["*.jar"])
 
     // csdk
     implementation(name:'csdk_asr5', ext:'aar')
