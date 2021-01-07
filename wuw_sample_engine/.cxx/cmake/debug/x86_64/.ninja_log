@@ -1,0 +1,10 @@
+# ninja log v5
+1	206	631695957	CMakeFiles/vad_api_jni.dir/src/vad_api_jni.cc.o	ae36fae3a36cba02
+206	409	631695957	D:/code/android_examples/wuw_sample_engine/build/intermediates/cmake/debug/obj/x86_64/libvad_api_jni.so	2cef0c7f87f75f47
+0	14	0	clean	7cb106a547128f27
+2	370	631702633	CMakeFiles/vad_api_jni.dir/src/vad_api_jni.cc.o	ae36fae3a36cba02
+370	685	631702633	D:/code/android_examples/wuw_sample_engine/build/intermediates/cmake/debug/obj/x86_64/libvad_api_jni.so	2cef0c7f87f75f47
+0	14	0	clean	7cb106a547128f27
+0	13	0	clean	7cb106a547128f27
+1	196	631702923	CMakeFiles/vad_api_jni.dir/src/vad_api_jni.cc.o	ae36fae3a36cba02
+197	377	631702923	D:/code/android_examples/wuw_sample_engine/build/intermediates/cmake/debug/obj/x86_64/libvad_api_jni.so	2cef0c7f87f75f47

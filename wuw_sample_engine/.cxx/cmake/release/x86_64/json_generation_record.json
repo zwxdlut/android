@@ -13,6 +13,180 @@
   },
   {
     "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\build-tools\\25.0.0\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\build-tools\\25.0.2\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\build-tools\\26.0.2\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\build-tools\\28.0.3\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\build-tools\\29.0.2\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\build-tools\\29.0.3\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\build-tools\\30.0.0\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\cmake\\3.10.2.4988404\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\emulator\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\extras\\intel\\Hardware_Accelerated_Execution_Manager\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\lldb\\3.1\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\ndk-bundle\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\ndk\\20.0.5594570\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\ndk\\21.0.6113669\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\patcher\\v4\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\platform-tools\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\platforms\\android-23\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\platforms\\android-26\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\platforms\\android-27\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\platforms\\android-28\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\platforms\\android-29\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\sources\\android-23\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\sources\\android-27\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\sources\\android-28\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\sources\\android-29\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\system-images\\android-25\\google_apis\\x86\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\system-images\\android-26\\google_apis\\x86_64\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\system-images\\android-27\\default\\x86_64\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
+    "message": "Parsing D:\\android\\sdk\\tools\\package.xml",
+    "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
+    "tag": "release|x86_64"
+  },
+  {
+    "level": "INFO",
     "message": "- CMake found in SDK at \u0027D:\\android\\sdk\\cmake\\3.10.2.4988404\u0027 had version \u00273.10.2\u0027",
     "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\CMakeLists.txt",
     "tag": "release|x86_64"

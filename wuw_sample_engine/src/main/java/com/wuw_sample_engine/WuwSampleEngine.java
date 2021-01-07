@@ -200,7 +200,6 @@ public class WuwSampleEngine {
                     }
 
                     publishProgress("go to asleep!\n");
-                    addApplications();
                     stopTimer();
                     asrState = ASR_STATE.ASLEEP;
                     vad.stop();
