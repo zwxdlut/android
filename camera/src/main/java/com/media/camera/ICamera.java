@@ -147,7 +147,7 @@ public interface ICamera {
          * Called when the camera state changed.
          *
          * @param cameraId The camera id.
-         * @param state    The state:
+         * @param state The state:
          * <ul>
          * <li>{@link State#CAMERA_CLOSED}
          * <li>{@link State#CAMERA_OPENED}
@@ -160,7 +160,7 @@ public interface ICamera {
          * Called when the camera error occurred.
          *
          * @param cameraId The camera id.
-         * @param error    The error code:
+         * @param error The error code:
          * <ul>
          * <li>{@link ErrorCode#CAMERA_IN_USE}
          * <li>{@link ErrorCode#MAX_CAMERAS_IN_USE}
@@ -180,7 +180,7 @@ public interface ICamera {
          * Called when the capture complete.
          *
          * @param cameraId The camera id.
-         * @param path     The captured file full path.
+         * @param path The captured file full path.
          */
         public void onComplete(String cameraId, String path);
     }
@@ -216,7 +216,7 @@ public interface ICamera {
          * Called when error occurred while recording.
          *
          * @param cameraId The camera id.
-         * @param what     The type of error that has occurred:
+         * @param what The type of error that has occurred:
          * <ul>
          * <li>{@link ErrorCode#UNKNOWN}
          * <li>{@link ErrorCode#SERVER_DIED}
@@ -268,7 +268,7 @@ public interface ICamera {
     /**
      * Set the preview surface.
      *
-     * @param cameraId       The camera id.
+     * @param cameraId The camera id.
      * @param previewSurface The preview surface.
      * @return {@link ResultCode}.
      */
@@ -278,8 +278,8 @@ public interface ICamera {
      * Set the capture size.
      *
      * @param cameraId The camera id.
-     * @param width    The capture width.
-     * @param height   The capture height.
+     * @param width The capture width.
+     * @param height The capture height.
      * @return {@link ResultCode}.
      */
     public int setCaptureSize(String cameraId, int width, int height);
@@ -288,7 +288,7 @@ public interface ICamera {
      * Set the capture storage directory.
      *
      * @param cameraId The camera id.
-     * @param dir      The capture storage directory.
+     * @param dir The capture storage directory.
      * @return {@link ResultCode}.
      */
     public int setCaptureDir(String cameraId, String dir);
@@ -305,8 +305,8 @@ public interface ICamera {
      * Set the record video size.
      *
      * @param cameraId The camera id.
-     * @param width    The record video width.
-     * @param height   The record video height.
+     * @param width The record video width.
+     * @param height The record video height.
      * @return {@link ResultCode}.
      */
     public int setRecordSize(String cameraId, int width, int height);
@@ -315,7 +315,7 @@ public interface ICamera {
      * Set the video encoding bit rate.
      *
      * @param cameraId The camera id.
-     * @param bps      The video encoding bit rate in bps.
+     * @param bps The video encoding bit rate in bps.
      * @return {@link ResultCode}.
      */
     public int setVideoEncodingBps(String cameraId, int bps);
@@ -324,7 +324,7 @@ public interface ICamera {
      * Set the record storage directory.
      *
      * @param cameraId The camera id.
-     * @param dir      The record storage directory.
+     * @param dir The record storage directory.
      * @return {@link ResultCode}.
      */
     public int setRecordDir(String cameraId, String dir);
@@ -372,8 +372,8 @@ public interface ICamera {
     /**
      * Capture a picture.
      *
-     * @param cameraId  The camera id.
-     * @param latitude  The latitude.
+     * @param cameraId The camera id.
+     * @param latitude The latitude.
      * @param longitude The longitude.
      * @return {@link ResultCode}.
      */
