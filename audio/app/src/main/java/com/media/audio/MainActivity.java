@@ -37,8 +37,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private int playSize = 0;
     private boolean isRecording = false;
     private boolean isPlaying = false;
-    private Thread recordThread = null;
-    private Thread playThread = null;
+    private RecordThread recordThread = null;
+    private PlayThread playThread = null;
     private File pcmFile = null;
 
     private class RecordThread extends Thread {
