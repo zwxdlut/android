@@ -66,6 +66,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
 
             recorder.stop();
+            recorder.release();
+            recorder = null;
         }
     }
 
@@ -191,6 +193,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, CHANNEL_IN, ENCODING_FORMAT, recordSize);
+
         if (AudioRecord.STATE_INITIALIZED != recorder.getState()) {
             Log.e(TAG, "startRecord: create recorder failed!");
             recorder = null;
@@ -215,11 +218,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
 
             recordThread = null;
-        }
-
-        if (null != recorder) {
-            recorder.release();
-            recorder = null;
         }
     }
 

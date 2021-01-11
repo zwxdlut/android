@@ -51,7 +51,7 @@ public class WuwSampleEngine {
     private int vadStatus = 0;
     private int timeoutMs = 15000;
     private ASR_STATE asrState = ASR_STATE.IDLE;
-    private WuwSampleHandlerThread thread = null;
+    private WuwSampleHandlerThread wuwSampleHandlerThread = null;
     private VadApi vad = VadApi.getInstance();
     private Timer timer = null;
     private FileOutputStream fos = null;
@@ -288,8 +288,8 @@ public class WuwSampleEngine {
         }
 
         done = false;
-        thread = new WuwSampleHandlerThread();
-        thread.start();
+        wuwSampleHandlerThread = new WuwSampleHandlerThread();
+        wuwSampleHandlerThread.start();
     }
 
     public void stop() {
@@ -297,17 +297,17 @@ public class WuwSampleEngine {
 
         done = true;
 
-        if (null != thread) {
+        if (null != wuwSampleHandlerThread) {
 		    // unblock event queue
             asrEventHandler.addEvent(AsrEventHandler.ASR_EVENT.UNQUALIFIED_RESULT);
 
             try {
-                thread.join();
+                wuwSampleHandlerThread.join();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
-            thread = null;
+            wuwSampleHandlerThread = null;
         }
     }
 
