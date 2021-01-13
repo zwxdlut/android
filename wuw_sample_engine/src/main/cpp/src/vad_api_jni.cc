@@ -84,16 +84,17 @@ JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1delete(JN
         return 0;
     }
 
-    if (0 == vad_delete(g_engine))
-    {
-        g_engine = NULL;
-        return 0;
-    }
-    else
+    int ret = 0;
+
+    ret = vad_delete(g_engine);
+    g_engine = NULL;
+
+    if (0 != ret)
     {
         __android_log_print(ANDROID_LOG_ERROR, TAG, "delete： Delete vad engine failed!");
-        return -1;
     }
+
+    return ret;
 }
 
 JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1start(JNIEnv *_env, jobject _thiz, jobject _callback)

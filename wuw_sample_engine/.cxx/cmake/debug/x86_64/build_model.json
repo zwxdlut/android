@@ -174,7 +174,6 @@
       "project": {
         "compilerSettingsCacheFolder": "D:\\code\\android_examples\\wuw_sample_engine\\example\\.cxx",
         "cxxFolder": "D:\\code\\android_examples\\wuw_sample_engine\\example\\.cxx",
-        "ideBuildTargetAbi": "x86_64,x86",
         "isBuildOnlyTargetAbiEnabled": true,
         "isCmakeBuildCohabitationEnabled": false,
         "isNativeCompilerSettingsCacheEnabled": false,
