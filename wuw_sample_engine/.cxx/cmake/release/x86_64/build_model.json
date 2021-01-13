@@ -172,12 +172,12 @@
       "ndkDefaultStl": "LIBCXX_STATIC",
       "ndkVersion": "21.0.6113669",
       "project": {
-        "compilerSettingsCacheFolder": "D:\\code\\android_examples\\wuw_sample_engine\\demo\\.cxx",
-        "cxxFolder": "D:\\code\\android_examples\\wuw_sample_engine\\demo\\.cxx",
+        "compilerSettingsCacheFolder": "D:\\code\\android_examples\\wuw_sample_engine\\example\\.cxx",
+        "cxxFolder": "D:\\code\\android_examples\\wuw_sample_engine\\example\\.cxx",
         "isBuildOnlyTargetAbiEnabled": true,
         "isCmakeBuildCohabitationEnabled": false,
         "isNativeCompilerSettingsCacheEnabled": false,
-        "rootBuildGradleFolder": "D:\\code\\android_examples\\wuw_sample_engine\\demo",
+        "rootBuildGradleFolder": "D:\\code\\android_examples\\wuw_sample_engine\\example",
         "sdkFolder": "D:\\android\\sdk",
         "isPrefabEnabled": false
       },

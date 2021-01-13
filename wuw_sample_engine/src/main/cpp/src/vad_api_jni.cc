@@ -16,7 +16,6 @@ extern "C" {
 static const char *TAG = "vad_api_jni";
 static JavaVM *g_vm = NULL;
 static struct api_vad *g_engine = NULL;
-static bool started = false;
 
 int vad_result_handler(void *_ptr, int _status)
 {
@@ -60,7 +59,7 @@ int vad_result_handler(void *_ptr, int _status)
     return env->CallIntMethod(callback, id, _status);;
 }
 
-JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_create(JNIEnv *_env, jobject _thiz, jstring _res_path)
+JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1create(JNIEnv *_env, jobject _thiz, jstring _res_path)
 {
     int ret = 0;
     const char *res_path = _env->GetStringUTFChars(_res_path, JNI_FALSE);
@@ -78,7 +77,7 @@ JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_create(JNIEnv *_e
     return ret;
 }
 
-JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_delete(JNIEnv *_env, jobject _thiz)
+JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1delete(JNIEnv *_env, jobject _thiz)
 {
     if (NULL == g_engine)
     {
@@ -97,39 +96,48 @@ JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_delete(JNIEnv *_e
     }
 }
 
-JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_start(JNIEnv *_env, jobject _thiz, jobject _callback)
+JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1start(JNIEnv *_env, jobject _thiz, jobject _callback)
 {
     if (NULL == g_engine)
     {
         return -1;
-    }
-
-    if (started)
-    {
-        return 0;
     }
 
     jobject callback = _env->NewGlobalRef(_callback);
 
     _env->GetJavaVM(&g_vm);
-    started = true;
 
     return vad_start(g_engine, callback, vad_result_handler);
 }
 
-JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_stop(JNIEnv *_env, jobject _thiz)
+JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1feed(JNIEnv *_env, jobject _thiz, jbyteArray _buf, jint _size)
 {
     if (NULL == g_engine)
     {
         return -1;
     }
 
-    started = false;
+    int ret = 0;
+    char *buf = (char *)malloc(_size);
+
+    _env->GetByteArrayRegion(_buf, 0, _size, reinterpret_cast<jbyte *>(buf));
+    ret = vad_feed(g_engine, buf, _size);
+    free(buf);
+
+    return ret;
+}
+
+JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1stop(JNIEnv *_env, jobject _thiz)
+{
+    if (NULL == g_engine)
+    {
+        return -1;
+    }
 
     return vad_stop(g_engine);
 }
 
-JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_reset(JNIEnv *env, jobject thiz)
+JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1reset(JNIEnv *env, jobject thiz)
 {
     if (NULL == g_engine)
     {
@@ -139,37 +147,12 @@ JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_reset(JNIEnv *env
     return vad_reset(g_engine);
 }
 
-JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_feed(JNIEnv *_env, jobject _thiz, jbyteArray _buf, jint _size)
-{
-    if (NULL == g_engine)
-    {
-        return -1;
-    }
-
-    if (!started)
-    {
-        return -2;
-    }
-
-    int ret = 0;
-    char *buf = (char *)malloc(_size);
-
-    _env->GetByteArrayRegion(_buf, 0, _size, reinterpret_cast<jbyte *>(buf));
-
-    ret = vad_feed(g_engine, buf, _size);
-
-    free(buf);
-
-    return ret;
-}
-
-JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_setting(JNIEnv *_env, jobject _thiz, jstring _config)
+JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1setting(JNIEnv *_env, jobject _thiz, jstring _config)
 {
     int ret = 0;
     const char *config = _env->GetStringUTFChars(_config, JNI_FALSE);
 
     ret = vad_setting(g_engine, config);
-
     _env->ReleaseStringUTFChars(_config, config);
 
     return ret;

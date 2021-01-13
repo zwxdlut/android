@@ -9,58 +9,58 @@ extern "C" {
 #endif
 /*
  * Class:     com_wuw_sample_engine_vad_VadApi
- * Method:    create
+ * Method:    native_create
  * Signature: (Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_create
+JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1create
   (JNIEnv *, jobject, jstring);
 
 /*
  * Class:     com_wuw_sample_engine_vad_VadApi
- * Method:    delete
+ * Method:    native_delete
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_delete
+JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1delete
   (JNIEnv *, jobject);
 
 /*
  * Class:     com_wuw_sample_engine_vad_VadApi
- * Method:    start
+ * Method:    native_start
  * Signature: (Lcom/wuw_sample_engine/vad/VadApi/ResultCallback;)I
  */
-JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_start
+JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1start
   (JNIEnv *, jobject, jobject);
 
 /*
  * Class:     com_wuw_sample_engine_vad_VadApi
- * Method:    stop
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_stop
-  (JNIEnv *, jobject);
-
-/*
- * Class:     com_wuw_sample_engine_vad_VadApi
- * Method:    reset
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_reset
-  (JNIEnv *, jobject);
-
-/*
- * Class:     com_wuw_sample_engine_vad_VadApi
- * Method:    feed
+ * Method:    native_feed
  * Signature: ([BI)I
  */
-JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_feed
+JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1feed
   (JNIEnv *, jobject, jbyteArray, jint);
 
 /*
  * Class:     com_wuw_sample_engine_vad_VadApi
- * Method:    setting
+ * Method:    native_stop
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1stop
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     com_wuw_sample_engine_vad_VadApi
+ * Method:    native_reset
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1reset
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     com_wuw_sample_engine_vad_VadApi
+ * Method:    native_setting
  * Signature: (Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_setting
+JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1setting
   (JNIEnv *, jobject, jstring);
 
 #ifdef __cplusplus
