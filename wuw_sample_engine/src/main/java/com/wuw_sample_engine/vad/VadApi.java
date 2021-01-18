@@ -42,7 +42,12 @@ public class VadApi {
     }
 
     public int stop() {
+        if (!started) {
+            return 0;
+        }
+
         started = false;
+
         return native_stop();
     }
 

@@ -29,8 +29,11 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import nuance.common.ILogging;
 import nuance.common.ResultCode;
@@ -38,20 +41,19 @@ import nuance.common.ResultCode;
 public class WuwSampleEngine {
     private static final String TAG = "WuwSampleEngine";
     private static final String VAD_RES_FILE_NAME = "vad_tdnn_0627.bin";
-    private static WuwSampleEngine instance = null;
-    private Context context = null;
-
+    private boolean done = true;
+    private int vadStatus = 0;
+    private int timeoutMs = 15000;
     private IAsrConfigParam asrConfigParam = null;
     private IAsrAssetExtractor assetExtractor = null;
     private IAsrComponentsInitializer asrComponentsInitializer = null;
     private IAsrResult asrResult = null;
     private IAsrEventHandler asrEventHandler = null;
-
-    private boolean done = true;
-    private int vadStatus = 0;
-    private int timeoutMs = 15000;
+    private Context context = null;
     private ASR_STATE asrState = ASR_STATE.IDLE;
-    private WuwSampleHandlerThread wuwSampleHandlerThread = null;
+    private WuwSampleHandleThread wuwSampleHandleThread = null;
+    private AudioInHandleThread audioInHandleThread = null;
+    private LinkedBlockingQueue<short[]> audioInQueue = new LinkedBlockingQueue<>();
     private VadApi vad = VadApi.getInstance();
     private Timer timer = null;
     private FileOutputStream fos = null;
@@ -63,14 +65,11 @@ public class WuwSampleEngine {
 
     private audioIn.IAudioDataCallback audioDataCallback = new audioIn.IAudioDataCallback() {
         @Override
-        public void onCapture(byte[] buf, int size) {
-            if (ASR_STATE.AWAKE == asrState) {
-                vad.feed(buf, size);
-                writePcm(buf, size);
-            }
-
-            if (null != voiceCallback) {
-                voiceCallback.onCapture(buf, size);
+        public void onCapture(short[] buf, int size) {
+            try {
+                audioInQueue.put(buf);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     };
@@ -117,14 +116,14 @@ public class WuwSampleEngine {
         void onResult(int status);
     }
 
-    private class WuwSampleHandlerThread extends Thread {
-        public WuwSampleHandlerThread() {
-            super("WuwSampleHandler");
+    private class WuwSampleHandleThread extends Thread {
+        public WuwSampleHandleThread() {
+            super("WuwSampleHandleThread");
         }
 
         @Override
         public void run() {
-            Log.i(TAG, "run");
+            Log.i(TAG, "WuwSampleHandleThread.run: +");
 
             AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
             String errorMessage = "";
@@ -169,10 +168,7 @@ public class WuwSampleEngine {
                     if (ASR_STATE.AWAKE == asrState) {
                         publishProgress("wuw sample engine has been awake!\n");
                         stopTimer();
-                        asrState = ASR_STATE.ASLEEP;
-                        vad.stop();
-                        vadStatus = 0;
-                        closePcm();
+                        transform(ASR_STATE.ASLEEP);
 
                         // avoid falling edge
                         if(asrEventHandler.removeEvent(IAsrEventHandler.ASR_EVENT.COMMAND_RESULT)) {
@@ -183,9 +179,7 @@ public class WuwSampleEngine {
                     }
 
                     addApplications();
-                    openPcm();
-                    vad.start(vadResultCallback);
-                    asrState = ASR_STATE.AWAKE;
+                    transform(ASR_STATE.AWAKE);
                     startTimer();
 
                     if (null != voiceCallback) {
@@ -201,10 +195,7 @@ public class WuwSampleEngine {
 
                     publishProgress("go to asleep!\n");
                     stopTimer();
-                    asrState = ASR_STATE.ASLEEP;
-                    vad.stop();
-                    vadStatus = 0;
-                    closePcm();
+                    transform(ASR_STATE.ASLEEP);
 
                     if (null != voiceCallback) {
                         voiceCallback.onState(asrState);
@@ -216,9 +207,7 @@ public class WuwSampleEngine {
 
             publishProgress("go to idle!\n");
             stopTimer();
-            asrState = ASR_STATE.IDLE;
-            vad.stop();
-            closePcm();
+            transform(ASR_STATE.IDLE);
 
             if (null != voiceCallback) {
                 voiceCallback.onState(asrState);
@@ -232,6 +221,51 @@ public class WuwSampleEngine {
             ILogging.deleteInstance();
             vad.delete();
             am.stopBluetoothSco();
+
+            Log.i(TAG, "WuwSampleHandleThread.run: -");
+        }
+    }
+
+    private class AudioInHandleThread extends Thread {
+        public AudioInHandleThread() {
+            super("AudioInHandleThread");
+        }
+
+        @Override
+        public void run() {
+            Log.i(TAG, "AudioInHandleThread.run: +");
+
+            while (!done) {
+                try {
+                    short[] buf = audioInQueue.take();
+
+                    if (null == buf || 0 == buf.length) {
+                        continue;
+                    }
+
+                    byte[] bytes = new byte[2 * buf.length];
+
+                    ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().put(buf, 0, buf.length);
+
+                    if (ASR_STATE.AWAKE == asrState) {
+                        synchronized (this) {
+                            if (ASR_STATE.AWAKE == asrState) {
+                                vad.feed(bytes, bytes.length);
+                                writePcm(bytes, bytes.length);
+                            }
+                        }
+                    }
+
+                    if (null != voiceCallback) {
+                        voiceCallback.onCapture(bytes, bytes.length);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            Log.i(TAG, "AudioInHandleThread.run: -");
+
         }
     }
 
@@ -287,9 +321,12 @@ public class WuwSampleEngine {
             return;
         }
 
+        audioInQueue.clear();
         done = false;
-        wuwSampleHandlerThread = new WuwSampleHandlerThread();
-        wuwSampleHandlerThread.start();
+        wuwSampleHandleThread = new WuwSampleHandleThread();
+        wuwSampleHandleThread.start();
+        audioInHandleThread = new AudioInHandleThread();
+        audioInHandleThread.start();
     }
 
     public void stop() {
@@ -297,17 +334,35 @@ public class WuwSampleEngine {
 
         done = true;
 
-        if (null != wuwSampleHandlerThread) {
-		    // unblock event queue
-            asrEventHandler.addEvent(AsrEventHandler.ASR_EVENT.UNQUALIFIED_RESULT);
-
+        if (null != audioInHandleThread) {
             try {
-                wuwSampleHandlerThread.join();
+                // unlock audio in queue
+                short[] dummy = new short[0];
+                audioInQueue.put(dummy);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
-            wuwSampleHandlerThread = null;
+            try {
+                audioInHandleThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            audioInHandleThread = null;
+        }
+
+        if (null != wuwSampleHandleThread) {
+		    // unblock event queue
+            asrEventHandler.addEvent(AsrEventHandler.ASR_EVENT.UNQUALIFIED_RESULT);
+
+            try {
+                wuwSampleHandleThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            wuwSampleHandleThread = null;
         }
     }
 
@@ -468,6 +523,25 @@ public class WuwSampleEngine {
                 fos = null;
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+    }
+
+    private void transform(ASR_STATE state) {
+        Log.i(TAG, "transform: state = " + state);
+
+        if (ASR_STATE.AWAKE== state) {
+            synchronized (this) {
+                openPcm();
+                vad.start(vadResultCallback);
+                asrState = state;
+            }
+        } else if (ASR_STATE.ASLEEP == state || ASR_STATE.IDLE == state) {
+            synchronized (this) {
+                asrState = state;
+                vad.stop();
+                vadStatus = 0;
+                closePcm();
             }
         }
     }

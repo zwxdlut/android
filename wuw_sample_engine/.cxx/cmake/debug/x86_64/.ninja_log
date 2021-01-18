@@ -1,7 +1,16 @@
 # ninja log v5
-0	12	0	clean	7cb106a547128f27
-0	190	632207387	CMakeFiles/vad_api_jni.dir/src/vad_api_jni.cc.o	ae36fae3a36cba02
-191	387	632207387	D:/code/android_examples/wuw_sample_engine/build/intermediates/cmake/debug/obj/x86_64/libvad_api_jni.so	2cef0c7f87f75f47
+1	14	0	clean	7cb106a547128f27
+0	193	632308752	CMakeFiles/vad_api_jni.dir/src/vad_api_jni.cc.o	ae36fae3a36cba02
+193	367	632308752	D:/code/android_examples/wuw_sample_engine/build/intermediates/cmake/debug/obj/x86_64/libvad_api_jni.so	2cef0c7f87f75f47
 0	13	0	clean	7cb106a547128f27
-1	211	632210068	CMakeFiles/vad_api_jni.dir/src/vad_api_jni.cc.o	ae36fae3a36cba02
-211	420	632210068	D:/code/android_examples/wuw_sample_engine/build/intermediates/cmake/debug/obj/x86_64/libvad_api_jni.so	2cef0c7f87f75f47
+2	231	632313888	CMakeFiles/vad_api_jni.dir/src/vad_api_jni.cc.o	ae36fae3a36cba02
+231	420	632313888	D:/code/android_examples/wuw_sample_engine/build/intermediates/cmake/debug/obj/x86_64/libvad_api_jni.so	2cef0c7f87f75f47
+0	13	0	clean	7cb106a547128f27
+2	211	632314534	CMakeFiles/vad_api_jni.dir/src/vad_api_jni.cc.o	ae36fae3a36cba02
+211	397	632314534	D:/code/android_examples/wuw_sample_engine/build/intermediates/cmake/debug/obj/x86_64/libvad_api_jni.so	2cef0c7f87f75f47
+0	14	0	clean	7cb106a547128f27
+4	225	632401336	CMakeFiles/vad_api_jni.dir/src/vad_api_jni.cc.o	ae36fae3a36cba02
+226	428	632401336	D:/code/android_examples/wuw_sample_engine/build/intermediates/cmake/debug/obj/x86_64/libvad_api_jni.so	2cef0c7f87f75f47
+0	14	0	clean	7cb106a547128f27
+2	212	632665525	CMakeFiles/vad_api_jni.dir/src/vad_api_jni.cc.o	ae36fae3a36cba02
+212	687	632665526	D:/code/android_examples/wuw_sample_engine/build/intermediates/cmake/debug/obj/x86_64/libvad_api_jni.so	2cef0c7f87f75f47

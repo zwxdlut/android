@@ -7,9 +7,9 @@ import android.content.Context;
  */
 public interface ICameraFactory {
     /**
-     * Get camera instance.
+     * Get the camera instance.
      *
-     * @return The camera instance.
+     * @return the camera instance
      */
     public ICamera getCamera(Context context);
 }

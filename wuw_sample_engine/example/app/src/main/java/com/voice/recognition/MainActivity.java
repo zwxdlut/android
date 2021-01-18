@@ -1,6 +1,10 @@
 package com.voice.recognition;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -20,7 +24,7 @@ import java.util.stream.Collectors;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
     private static final String TAG = "MainActivity";
     private static final int PERMISSION_REQUEST = 1;
-    private WuwSampleEngine wuwSampleEngine = null;
+    private WuwSampleEngine engine = null;
 
     private WuwSampleEngine.IVoiceCallback voiceCallback = new WuwSampleEngine.IVoiceCallback() {
         @Override
@@ -54,10 +58,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // initialize UI
         findViewById(R.id.btn_start_asr).setOnClickListener(this);
         findViewById(R.id.btn_stop_asr).setOnClickListener(this);
+        findViewById(R.id.btn_wakeup).setOnClickListener(this);
+        findViewById(R.id.btn_sleep).setOnClickListener(this);
 
         // initialize wuw sample engine
-        wuwSampleEngine = WuwSampleEngine.getInstance();
-        wuwSampleEngine.setVoiceCallback(voiceCallback);
+        engine = WuwSampleEngine.getInstance();
+        engine.setVoiceCallback(voiceCallback);
+
+        try {
+            engine.extractAssetsFiles();
+        } catch (IOException e) {
+            Log.e(TAG, "init: " + e.getMessage() + " not found!\n add asset to assets folder and rebuild application!");
+        }
 
         ActivityCompat.requestPermissions(this,
                 new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE},
@@ -67,8 +79,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        wuwSampleEngine.stop();
-        wuwSampleEngine.setVoiceCallback(null);
+        engine.stop();
+        engine.setVoiceCallback(null);
     }
 
     @Override
@@ -80,12 +92,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (PackageManager.PERMISSION_GRANTED == grantResults[0]
                     && PackageManager.PERMISSION_GRANTED == grantResults[1]) {
                 Log.i(TAG, "onRequestPermissionsResult: permission granted requestCode = " + requestCode);
-
-                try {
-                    wuwSampleEngine.extractAssetsFiles();
-                } catch (IOException e) {
-                    Log.e(TAG, "init: " + e.getMessage() + " not found!\n add asset to assets folder and rebuild application!");
-                }
             } else {
                 Log.w(TAG, "onRequestPermissionsResult: permission denied requestCode = " + requestCode);
                 finish();
@@ -99,10 +105,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_start_asr:
-                wuwSampleEngine.start();
+                engine.start();
                 break;
             case R.id.btn_stop_asr:
-                wuwSampleEngine.stop();
+                engine.stop();
+                break;
+            case R.id.btn_wakeup:
+                engine.wakeup();
+                break;
+            case R.id.btn_sleep:
+                engine.sleep();
                 break;
             default:
                 break;

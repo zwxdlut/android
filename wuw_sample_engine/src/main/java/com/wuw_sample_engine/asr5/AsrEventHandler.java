@@ -7,14 +7,14 @@ import java.util.concurrent.locks.ReentrantLock;
 public class AsrEventHandler implements IAsrEventHandler {
     private LinkedList<ASR_EVENT> eventsList_ = new LinkedList<>();
     private ReentrantLock lock = new ReentrantLock();
-    Condition condition = lock.newCondition();
+    private Condition condition = lock.newCondition();
 
     public AsrEventHandler() {
     }
 
     public void addEvent(ASR_EVENT event) {
         lock.lock();
-        eventsList_.add(event);
+        eventsList_.offer(event);
         condition.signalAll();
         lock.unlock();
     }
@@ -32,7 +32,7 @@ public class AsrEventHandler implements IAsrEventHandler {
             }
         }
 
-        event =  eventsList_.remove();
+        event =  eventsList_.poll();
 
         lock.unlock();
 

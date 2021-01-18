@@ -483,8 +483,8 @@ public class CameraHelper {
         /**
          * Called when the camera state changed.
          *
-         * @param cameraId The camera id.
-         * @param state The state:
+         * @param cameraId the camera id
+         * @param state the camera state:
          * <ul>
          * <li>{@link State#CAMERA_CLOSED}
          * <li>{@link State#CAMERA_OPENED}
@@ -496,8 +496,8 @@ public class CameraHelper {
         /**
          * Called when the camera error occurred.
          *
-         * @param cameraId The camera id.
-         * @param error The error code:
+         * @param cameraId the camera id
+         * @param error the error code:
          * <ul>
          * <li>{@link ErrorCode#CAMERA_IN_USE}
          * <li>{@link ErrorCode#MAX_CAMERAS_IN_USE}
@@ -516,8 +516,8 @@ public class CameraHelper {
         /**
          * Called when the capture complete.
          *
-         * @param cameraId The camera id.
-         * @param path     The captured file full path.
+         * @param cameraId the camera id
+         * @param path the captured file full path
          */
         public void onComplete(String cameraId, String path);
     }
@@ -544,21 +544,21 @@ public class CameraHelper {
         /**
          * Called when the record complete.
          *
-         * @param cameraId The camera id.
-         * @param path The record file full path.
+         * @param cameraId the camera id
+         * @param path the record file full path
          */
         public void onComplete(String cameraId, String path);
 
         /**
          * Called when error occurred while recording.
          *
-         * @param cameraId The camera id.
-         * @param what The type of error that has occurred:
+         * @param cameraId the camera id
+         * @param what the type of error that has occurred:
          * <ul>
          * <li>{@link ErrorCode#UNKNOWN}
          * <li>{@link ErrorCode#SERVER_DIED}
          * <ul/>
-         * @param extra An extra code, specific to the error type.
+         * @param extra an extra code, specific to the error type
          */
         public void onError(String cameraId, int what, int extra);
     }

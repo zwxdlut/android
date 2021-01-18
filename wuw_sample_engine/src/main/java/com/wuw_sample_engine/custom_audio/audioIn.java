@@ -12,15 +12,12 @@
 
 package com.wuw_sample_engine.custom_audio;
 
-import nuance.audio.IAudioInputAdapterListener;
-import nuance.common.ResultCode;
-import nuance.common.LogZone;
-
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import nuance.audio.IAudioInputAdapterListener;
+import nuance.common.LogZone;
+import nuance.common.ResultCode;
 
 public class audioIn
 {
@@ -53,7 +50,7 @@ public class audioIn
   state audio_state = state.STATE_CLOSED;
 
   public interface IAudioDataCallback {
-    public void onCapture(byte[] buf, int size);
+    public void onCapture(short[] buf, int size);
   }
 
   public void setAudioDataCallback(IAudioDataCallback callback) {
@@ -99,7 +96,7 @@ public class audioIn
       }
       else
       {
-        record = new Thread("AudioInRecord")
+        record = new Thread("AudioInThread")
         {
           public void run()
           {
@@ -195,15 +192,7 @@ public class audioIn
           }
 
           if (null != audioDataCallback) {
-            byte bytes[] = new byte[2 * audioData];
-
-            try {
-              ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().put(tempBuffer, 0, audioData);
-            } catch (Exception e) {
-              e.printStackTrace();
-            }
-
-            audioDataCallback.onCapture(bytes, bytes.length);
+            audioDataCallback.onCapture(tempBuffer, audioData);
           }
         }
       }

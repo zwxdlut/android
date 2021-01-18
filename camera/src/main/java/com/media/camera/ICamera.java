@@ -146,8 +146,8 @@ public interface ICamera {
         /**
          * Called when the camera state changed.
          *
-         * @param cameraId The camera id.
-         * @param state The state:
+         * @param cameraId the camera id
+         * @param state the camera state:
          * <ul>
          * <li>{@link State#CAMERA_CLOSED}
          * <li>{@link State#CAMERA_OPENED}
@@ -159,8 +159,8 @@ public interface ICamera {
         /**
          * Called when the camera error occurred.
          *
-         * @param cameraId The camera id.
-         * @param error The error code:
+         * @param cameraId the camera id
+         * @param error the error code:
          * <ul>
          * <li>{@link ErrorCode#CAMERA_IN_USE}
          * <li>{@link ErrorCode#MAX_CAMERAS_IN_USE}
@@ -179,8 +179,8 @@ public interface ICamera {
         /**
          * Called when the capture complete.
          *
-         * @param cameraId The camera id.
-         * @param path The captured file full path.
+         * @param cameraId the camera id
+         * @param path the captured file full path
          */
         public void onComplete(String cameraId, String path);
     }
@@ -207,21 +207,21 @@ public interface ICamera {
         /**
          * Called when the record complete.
          *
-         * @param cameraId The camera id.
-         * @param path     The record file full path.
+         * @param cameraId the camera id
+         * @param path the record file full path
          */
         public void onComplete(String cameraId, String path);
 
         /**
          * Called when error occurred while recording.
          *
-         * @param cameraId The camera id.
-         * @param what The type of error that has occurred:
+         * @param cameraId the camera id
+         * @param what the type of error that has occurred:
          * <ul>
          * <li>{@link ErrorCode#UNKNOWN}
          * <li>{@link ErrorCode#SERVER_DIED}
          * <ul/>
-         * @param extra    An extra code, specific to the error type.
+         * @param extra an extra code, specific to the error type
          */
         public void onError(String cameraId, int what, int extra);
     }
@@ -229,57 +229,57 @@ public interface ICamera {
     /**
      * Get the camera id list.
      *
-     * @return The camera id list.
+     * @return the camera id list
      */
     public String[] getCameraIdList();
 
     /**
      * Get the available preview sizes.
      *
-     * @param cameraId The camera id.
-     * @return The available preview sizes.
+     * @param cameraId the camera id
+     * @return the available preview sizes
      */
     public Size[] getAvailablePreviewSizes(String cameraId);
 
     /**
      * Get the available capture sizes.
      *
-     * @param cameraId The camera id.
-     * @return The available capture sizes.
+     * @param cameraId the camera id
+     * @return the available capture sizes
      */
     public Size[] getAvailableCaptureSizes(String cameraId);
 
     /**
      * Get the available record sizes.
      *
-     * @param cameraId The camera id.
-     * @return The available record sizes.
+     * @param cameraId the camera id
+     * @return the available record sizes
      */
     public Size[] getAvailableRecordSizes(String cameraId);
 
     /**
      * Set the camera callback.
      *
-     * @param callback The camera callback.
-     * @return {@link ResultCode}.
+     * @param callback the camera callback
+     * @return {@link ResultCode}
      */
     public int setCameraCallback(ICameraCallback callback);
 
     /**
      * Set the preview surface.
      *
-     * @param cameraId The camera id.
-     * @param previewSurface The preview surface.
-     * @return {@link ResultCode}.
+     * @param cameraId the camera id
+     * @param previewSurface the preview surface
+     * @return {@link ResultCode}
      */
     public int setPreviewSurface(String cameraId, Surface previewSurface);
 
     /**
      * Set the capture size.
      *
-     * @param cameraId The camera id.
-     * @param width The capture width.
-     * @param height The capture height.
+     * @param cameraId the camera id
+     * @param width the capture width
+     * @param height the capture height
      * @return {@link ResultCode}.
      */
     public int setCaptureSize(String cameraId, int width, int height);
@@ -287,77 +287,77 @@ public interface ICamera {
     /**
      * Set the capture storage directory.
      *
-     * @param cameraId The camera id.
-     * @param dir The capture storage directory.
-     * @return {@link ResultCode}.
+     * @param cameraId the camera id
+     * @param dir the capture storage directory
+     * @return {@link ResultCode}
      */
     public int setCaptureDir(String cameraId, String dir);
 
     /**
      * Set the capture callback.
      *
-     * @param callback The capture callback.
-     * @return {@link ResultCode}.
+     * @param callback the capture callback
+     * @return {@link ResultCode}
      */
     public int setCaptureCallback(ICaptureCallback callback);
 
     /**
      * Set the record video size.
      *
-     * @param cameraId The camera id.
-     * @param width The record video width.
-     * @param height The record video height.
-     * @return {@link ResultCode}.
+     * @param cameraId the camera id
+     * @param width the record video width
+     * @param height the record video height
+     * @return {@link ResultCode}
      */
     public int setRecordSize(String cameraId, int width, int height);
 
     /**
      * Set the video encoding bit rate.
      *
-     * @param cameraId The camera id.
-     * @param bps The video encoding bit rate in bps.
-     * @return {@link ResultCode}.
+     * @param cameraId the camera id
+     * @param bps the video encoding bit rate in bps
+     * @return {@link ResultCode}
      */
     public int setVideoEncodingBps(String cameraId, int bps);
 
     /**
      * Set the record storage directory.
      *
-     * @param cameraId The camera id.
-     * @param dir The record storage directory.
-     * @return {@link ResultCode}.
+     * @param cameraId the camera id
+     * @param dir the record storage directory
+     * @return {@link ResultCode}
      */
     public int setRecordDir(String cameraId, String dir);
 
     /**
      * Set the record callback.
      *
-     * @param callback The record callback.
-     * @return {@link ResultCode}.
+     * @param callback the record callback
+     * @return {@link ResultCode}
      */
     public int setRecordCallback(IRecordCallback callback);
 
     /**
      * Open the camera by id.
      *
-     * @param cameraId The camera id.
-     * @return {@link ResultCode}.
+     * @param cameraId the camera id
+     * @return {@link ResultCode}
      */
     public int open(String cameraId);
 
     /**
      * Close the camera by id.
      *
-     * @param cameraId The camera id.
-     * @return {@link ResultCode}.
+     * @param cameraId the camera id
+     * @return {@link ResultCode}
      */
     public int close(String cameraId);
 
     /**
      * Start the preview.
      *
-     * @param cameraId The camera id.
-     * @return {@link ResultCode}.
+     * @param cameraId the camera id
+     * @return {@link ResultCode}
      */
     public int startPreview(String cameraId);
 
@@ -365,42 +365,42 @@ public interface ICamera {
      * Stop the preview.
      *
      * @param cameraId the camera id
-     * @return {@link ResultCode}.
+     * @return {@link ResultCode}
      */
     public int stopPreview(String cameraId);
 
     /**
      * Capture a picture.
      *
-     * @param cameraId The camera id.
-     * @param latitude The latitude.
-     * @param longitude The longitude.
-     * @return {@link ResultCode}.
+     * @param cameraId the camera id
+     * @param latitude the latitude
+     * @param longitude the longitude
+     * @return {@link ResultCode}
      */
     public int capture(String cameraId, double latitude, double longitude);
 
     /**
      * Start record.
      *
-     * @param cameraId The camera id.
-     * @return {@link ResultCode}.
+     * @param cameraId the camera id
+     * @return {@link ResultCode}
      */
     public int startRecord(String cameraId);
 
     /**
      * Start record with max duration.
      *
-     * @param cameraId The camera id.
-     * @param duration The record max duration in ms.
-     * @return {@link ResultCode}.
+     * @param cameraId the camera id
+     * @param duration the record max duration in ms
+     * @return {@link ResultCode}
      */
     public int startRecord(String cameraId, int duration);
 
     /**
      * Stop record.
      *
-     * @param cameraId The camera id.
-     * @return {@link ResultCode}.
+     * @param cameraId the camera id
+     * @return {@link ResultCode}
      */
     public int stopRecord(String cameraId);
 }

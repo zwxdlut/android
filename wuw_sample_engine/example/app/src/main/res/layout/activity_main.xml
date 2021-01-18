@@ -24,4 +24,22 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btn_start_asr" />
 
+    <Button
+        android:id="@+id/btn_wakeup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Wakeup"
+        app:layout_constraintLeft_toRightOf="@+id/btn_start_asr"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btn_sleep"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sleep"
+        app:layout_constraintLeft_toRightOf="@+id/btn_stop_asr"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btn_wakeup" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
