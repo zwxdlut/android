@@ -2,10 +2,12 @@
 // Created by Administrator on 2020/8/12.
 //
 
-#include <stdio.h>
-#include <malloc.h>
-#include <string.h>
 #include <android/log.h>
+#include <cstdio>
+#include <malloc.h>
+#include <cstdint>
+#include <cstring>
+#include <mutex>
 
 #include "vad_api.h"
 #include "vad_api_jni.h"
@@ -15,28 +17,41 @@ extern "C" {
 #endif
 
 static const char *TAG = "vad_api_jni";
-static JavaVM *g_vm = NULL;
-static jobject g_callback = NULL;
-static struct api_vad *g_engine = NULL;
+static JavaVM *g_vm = nullptr;
+static jobject g_callback = nullptr;
+static std::mutex g_mutex;
+static struct api_vad *g_engine = nullptr;
 
 int vad_result_handler(void *_ptr, int _status)
 {
-    if (NULL == g_callback)
+    if (nullptr == g_callback)
     {
         __android_log_print(ANDROID_LOG_ERROR, TAG, "vad_result_handler: The callback is null!\n");
         return -1;
     }
 
+    if (nullptr == g_vm)
+    {
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "vad_result_handler: The JavaVM is null!\n");
+        return -1;
+    }
+
     int ret = 0;
     bool is_attached = false;
-    JNIEnv *env = NULL;
+    JNIEnv *env = nullptr;
 
     // get the env
     ret = g_vm->GetEnv((void **) &env, JNI_VERSION_1_6);
 
     if (JNI_OK != ret) {
-        __android_log_print(ANDROID_LOG_ERROR, TAG, "vad_result_handler: Get the env failed(%d), need to attach!\n", ret);
-        ret =  g_vm->AttachCurrentThread(&env, NULL);
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "vad_result_handler: get the env failed(%d)!\n", ret);
+
+        if (JNI_EDETACHED != ret)
+        {
+            return ret;
+        }
+
+        ret =  g_vm->AttachCurrentThread(&env, nullptr);
 
         if (JNI_OK != ret)
         {
@@ -47,26 +62,38 @@ int vad_result_handler(void *_ptr, int _status)
         is_attached = true;
     }
 
+    g_mutex.lock();
+
+    if (nullptr == g_callback)
+    {
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "vad_result_handler: The callback is null!\n");
+        g_mutex.unlock();
+        return -1;
+    }
+
     // get the callback class
-    //jobject callback = (jobject)_ptr;
     jclass java_class = env->GetObjectClass(g_callback);
 
-    if (NULL == java_class)
+    if (nullptr == java_class)
     {
         __android_log_print(ANDROID_LOG_ERROR, TAG, "vad_result_handler: unable to find the callback class!\n");
+        g_mutex.unlock();
         return -1;
     }
 
     // get the method "onResult" of the callback class
     jmethodID id = env->GetMethodID(java_class,"onResult", "(I)I");
 
-    if (NULL == id)
+    if (nullptr == id)
     {
         __android_log_print(ANDROID_LOG_ERROR, TAG, "vad_result_handler: unable to find the method onResult!\n");
+        g_mutex.unlock();
         return -1;
     }
 
     ret = env->CallIntMethod(g_callback, id, _status);
+
+    g_mutex.unlock();
 
     if (is_attached)
     {
@@ -83,7 +110,7 @@ JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1create(JN
 
     g_engine = vad_new(res_path);
 
-    if (NULL == g_engine)
+    if (nullptr == g_engine)
     {
         __android_log_print(ANDROID_LOG_ERROR, TAG, "create: create the vad engine failed!\n");
         ret = -1;
@@ -96,37 +123,53 @@ JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1create(JN
 
 JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1delete(JNIEnv *_env, jobject _thiz)
 {
-    if (NULL == g_engine)
+    int ret = 0;
+
+    if (nullptr != g_engine)
     {
-        return 0;
+        ret = vad_delete(g_engine);
+        g_engine = nullptr;
     }
 
-    jint ret = vad_delete(g_engine);
+    g_mutex.lock();
 
-    if (0 == ret)
+    if (nullptr != g_callback)
     {
-        g_engine = NULL;
+        _env->DeleteGlobalRef(g_callback);
+        g_callback = nullptr;
     }
+
+    g_mutex.unlock();
 
     return ret;
 }
 
 JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1start(JNIEnv *_env, jobject _thiz, jobject _callback)
 {
-    if (NULL == g_engine)
+    if (nullptr == g_engine)
     {
         return -1;
     }
 
-    g_callback = _env->NewGlobalRef(_callback);
     _env->GetJavaVM(&g_vm);
 
-    return vad_start(g_engine, NULL, vad_result_handler);
+    g_mutex.lock();
+
+    if (nullptr != g_callback)
+    {
+        _env->DeleteGlobalRef(g_callback);
+    }
+
+    g_callback = _env->NewGlobalRef(_callback);
+
+    g_mutex.unlock();
+
+    return vad_start(g_engine, nullptr, vad_result_handler);
 }
 
 JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1feed(JNIEnv *_env, jobject _thiz, jbyteArray _buf, jint _size)
 {
-    if (NULL == g_engine)
+    if (nullptr == g_engine)
     {
         return -1;
     }
@@ -142,7 +185,7 @@ JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1feed(JNIE
 //
 //    jbyte *buf = (jbyte *)malloc(sizeof(jbyte) * size);
 //
-//    if (NULL == buf)
+//    if (nullptr == buf)
 //    {
 //        __android_log_print(ANDROID_LOG_ERROR, TAG, "feed: malloc failed!\n");
 //        return -3;
@@ -159,7 +202,6 @@ JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1feed(JNIE
     jbyte *buf = _env->GetByteArrayElements(_buf, 0);
     jsize size = _env->GetArrayLength(_buf);
     jint ret = vad_feed(g_engine, (char *)buf, size);
-
     _env->ReleaseByteArrayElements(_buf, buf, 0);
 
     return ret;
@@ -167,21 +209,17 @@ JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1feed(JNIE
 
 JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1stop(JNIEnv *_env, jobject _thiz)
 {
-    if (NULL == g_engine)
+    if (nullptr == g_engine)
     {
         return -1;
     }
 
-    jint ret = vad_stop(g_engine);
-    _env->DeleteGlobalRef(g_callback);
-    g_callback = NULL;
-
-    return ret;
+    return vad_stop(g_engine);
 }
 
 JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1reset(JNIEnv *env, jobject thiz)
 {
-    if (NULL == g_engine)
+    if (nullptr == g_engine)
     {
         return -1;
     }
@@ -191,7 +229,7 @@ JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1reset(JNI
 
 JNIEXPORT jint JNICALL Java_com_wuw_1sample_1engine_vad_VadApi_native_1setting(JNIEnv *_env, jobject _thiz, jstring _config)
 {
-    if (NULL == g_engine)
+    if (nullptr == g_engine)
     {
         return -1;
     }

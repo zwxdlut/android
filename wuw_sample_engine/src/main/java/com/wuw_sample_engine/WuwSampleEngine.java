@@ -219,7 +219,6 @@ public class WuwSampleEngine {
             asrComponentsInitializer.setAudioDataCallback(null);
             errorCheck(resultCode, errorMessage);
             ILogging.deleteInstance();
-            vad.delete();
             am.stopBluetoothSco();
 
             Log.i(TAG, "WuwSampleHandleThread.run: -");
@@ -248,7 +247,7 @@ public class WuwSampleEngine {
                     ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().put(buf, 0, buf.length);
 
                     if (ASR_STATE.AWAKE == asrState) {
-                        synchronized (this) {
+                        synchronized (WuwSampleEngine.this) {
                             if (ASR_STATE.AWAKE == asrState) {
                                 vad.feed(bytes, bytes.length);
                                 writePcm(bytes, bytes.length);
@@ -531,17 +530,21 @@ public class WuwSampleEngine {
         Log.i(TAG, "transform: state = " + state);
 
         if (ASR_STATE.AWAKE== state) {
-            synchronized (this) {
+            synchronized (WuwSampleEngine.this) {
                 openPcm();
                 vad.start(vadResultCallback);
                 asrState = state;
             }
         } else if (ASR_STATE.ASLEEP == state || ASR_STATE.IDLE == state) {
-            synchronized (this) {
+            synchronized (WuwSampleEngine.this) {
                 asrState = state;
                 vad.stop();
                 vadStatus = 0;
                 closePcm();
+
+                if (ASR_STATE.IDLE == state) {
+                    vad.delete();
+                }
             }
         }
     }
