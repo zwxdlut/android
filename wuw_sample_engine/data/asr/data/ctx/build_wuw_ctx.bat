@@ -32,7 +32,7 @@ echo ON
 @set INPUT=.\wuw_anyspeech.bnf
 @set OUTPUT=.\wuw_anyspeech.fcf
 @set PARAM1=--clcOverrideDictionaryFilepath=.\wuw.dcb
-@set PARAM2=
+@set PARAM2=--slotLinks=true
 @set PARAM3=
 "%CSDK_TOOLS_PATH%\grmcpl.exe" --grammarFilepaths=%INPUT% --contextBufferFilepaths=%OUTPUT% --modelFilepath=%MODELFILE% %PARAM1% %PARAM2% %PARAM3%
 @IF %ERRORLEVEL% NEQ 0 @CALL :Sub_ReportError

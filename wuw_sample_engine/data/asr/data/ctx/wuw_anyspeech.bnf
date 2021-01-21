@@ -1,5 +1,7 @@
 #BNF+EMV2.1;                                                                                                                                         
 !grammar wuw_anyspeech;
 !start <_main_>;
-<_main_>:!tag(WUW, 天猫 精灵) [<...>];
+!start <anti>;
 
+<_main_>:!tag(WUW, 天猫 精灵) [<...>];
+<anti>:!tag(anti_WUW, (天猫 <...> | <...> 精灵)) [<...>];
