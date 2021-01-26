@@ -711,7 +711,6 @@ public class CameraNative implements ICamera {
     @Override
     public int close(String cameraId) {
         Log.i(TAG, "close: cameraId = " + cameraId);
-
         stopRecord(cameraId);
         deleteCameraCaptureSession(cameraId);
         closeDevice(cameraId);

@@ -329,8 +329,7 @@ public class WuwSampleEngine {
     }
 
     public void stop() {
-        publishProgress("stop: done = " + done);
-
+        Log.i(TAG, "stop: done = " + done);
         done = true;
 
         if (null != audioInHandleThread) {
