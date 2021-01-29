@@ -290,7 +290,6 @@ public class WuwSampleEngine {
             e.printStackTrace();
         }
 
-        asrConfigParam = new AsrConfigParam(context.getExternalFilesDir(null).getAbsolutePath());
         assetExtractor = new AsrAssetExtractor();
     }
 
@@ -455,6 +454,7 @@ public class WuwSampleEngine {
     }
 
     private void initAsr() {
+        asrConfigParam = new AsrConfigParam(context.getExternalFilesDir(null).getAbsolutePath());
         asrEventHandler = new AsrEventHandler();
         asrResult = new AsrResult(this.asrConfigParam, asrEventHandler);
         asrComponentsInitializer = new AsrComponentsInitializer(this.asrConfigParam, asrResult, asrEventHandler);

@@ -63,9 +63,9 @@ public class AsrResult implements IAsrResult {
 
             if (startRule.equals(asrConfigParam.getWUwStartRule()) && confidence >= asrConfigParam.getWUWConfidenceThreshold()) {
                 this.result = result;
-                Log.i("Result:", result);
-                Log.i("WuWConfidence:", String.valueOf(confidence));
-                Log.i("WuWEndTime:", String.valueOf(endTime));
+                Log.i("Result", result);
+                Log.i("WuWConfidence(" + asrConfigParam.getWUWConfidenceThreshold() + ")", String.valueOf(confidence));
+                Log.i("WuWEndTime", String.valueOf(endTime));
                 asrEventHandler.addEvent(IAsrEventHandler.ASR_EVENT.WUW_RESULT);
             } else {
                 asrEventHandler.addEvent(IAsrEventHandler.ASR_EVENT.NO_WUW_RESULT);

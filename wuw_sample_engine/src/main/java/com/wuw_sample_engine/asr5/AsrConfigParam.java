@@ -1,5 +1,13 @@
 package com.wuw_sample_engine.asr5;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
 public class AsrConfigParam implements IAsrConfigParam {
 
     private final String AUDIO_SCENARIO_NAME = "mic";
@@ -8,7 +16,7 @@ public class AsrConfigParam implements IAsrConfigParam {
     private final String ASR_NAME = "asr";
     private final String ASR_DATA_CONFIG_PATH = "/app/asr/config";
     private final String WUW_START_RULE = "wuw_anyspeech#_main_";
-    private final int WUW_CONFIDENCE_THRESHOLD = 5000;
+    private int WUW_CONFIDENCE_THRESHOLD = 5000;
 
     private String configDir;
     private String audioScenarioName;
@@ -25,6 +33,26 @@ public class AsrConfigParam implements IAsrConfigParam {
         applicationName = WUW_APPLICATION_NAME;
         recognizerName = RECOGNIZER_NAME;
         nbrConfiguredApplications = 1;
+
+        try {
+            FileInputStream fileInputStream = new FileInputStream(absPath + "/app/asr/asr_config.json");
+            InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
+            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+            String line = null;
+            StringBuilder stringBuilder = new StringBuilder();
+
+            while(null != (line = bufferedReader.readLine())) {
+                stringBuilder.append(line);
+            }
+
+            bufferedReader.close();
+            inputStreamReader.close();
+            fileInputStream.close();
+            JSONObject jsonObject = new JSONObject(stringBuilder.toString());
+            WUW_CONFIDENCE_THRESHOLD = jsonObject.getInt("wuw_confidence_threshold");
+        } catch (JSONException | IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
