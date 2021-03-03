@@ -166,7 +166,7 @@ public class WuwSampleEngine {
                     publishProgress("wakeup word found!\n");
 
                     if (ASR_STATE.AWAKE == asrState) {
-                        publishProgress("wuw sample engine has been awake!\n");
+                        publishProgress("Wuw sample engine has been awake!\n");
                         stopTimer();
                         transform(ASR_STATE.ASLEEP);
 
@@ -315,7 +315,7 @@ public class WuwSampleEngine {
         }
 
         if (!done) {
-            Log.i(TAG, "start: asr has already been started");
+            Log.i(TAG, "start: Asr has already been started!");
             return;
         }
 
@@ -411,7 +411,7 @@ public class WuwSampleEngine {
         try {
             asrComponentsInitializer.getAsrManager().setApplications(applications, asrConfigParam.getRecognizerName(), startTimeMs);
         } catch (ResultCode rc) {
-            errorCheck(rc, "ERROR: Failed to add applications");
+            errorCheck(rc, "ERROR: Failed to add applications!");
         }
     }
 
@@ -465,8 +465,8 @@ public class WuwSampleEngine {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                publishProgress("command should be within " + timeoutMs + " ms after wake-up word for one-shot wuw case!\n");
-                publishProgress("<b>initial timeout, wuw sample engine go to sleep!</b>");
+                publishProgress("Command should be within " + timeoutMs + " ms after wake-up word for one-shot wuw case!\n");
+                publishProgress("<b>Initial timeout, wuw sample engine go to sleep!</b>");
                 asrEventHandler.addEvent(IAsrEventHandler.ASR_EVENT.INITIAL_TIMEOUT);
             }
         };

@@ -32,7 +32,7 @@ int vad_result_handler(void *_ptr, int _status)
 
     if (nullptr == g_vm)
     {
-        __android_log_print(ANDROID_LOG_ERROR, TAG, "vad_result_handler: The JavaVM is null!\n");
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "vad_result_handler: JavaVM is null!\n");
         return -1;
     }
 
