@@ -37,7 +37,7 @@ android {
     sourceSets {
         main {
             assets.srcDirs = ['data/asr']
-            //jniLibs.srcDirs = ['src/main/cpp/lib']
+            //jniLibs.srcDirs = ['src/main/cpp/libs']
         }
     }
 

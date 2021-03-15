@@ -15,7 +15,7 @@
       "abi": "x86_64",
       "output": "D:\\code\\android_examples\\wuw_sample_engine\\build\\intermediates\\cmake\\release\\obj\\x86_64\\libvad_api_jni.so",
       "runtimeFiles": [
-        "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\lib\\x86_64\\libvad_api.so"
+        "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\libs\\x86_64\\libvad_api.so"
       ]
     }
   }
