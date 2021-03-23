@@ -10,13 +10,22 @@ import java.io.InputStreamReader;
 
 public class AsrConfigParam implements IAsrConfigParam {
 
+    // Stop listening to speech, if the speech goes on for longer than this
+    // time. This is to avoid the situation where, in a noisy environment,
+    // the engine would continue to listen indefinitely. This timeout must
+    // be longer than your longest expected WUW + command!
+    // Set to 0 is you wish to disable this timeout.
+    public static final int SPEECH_TIMEOUT_MS = 4500;
+
+    public static int WUW_CONFIDENCE_THRESHOLD = 5200;
+    public static final int WUW_WORD_CONFIDENCE_THRESHOLD = 5000;
+
     private final String AUDIO_SCENARIO_NAME = "mic";
     private final String WUW_APPLICATION_NAME = "WUW";
     private final String RECOGNIZER_NAME = "rec";
     private final String ASR_NAME = "asr";
     private final String ASR_DATA_CONFIG_PATH = "/app/asr/config";
     private final String WUW_START_RULE = "wuw_anyspeech#_main_";
-    private int WUW_CONFIDENCE_THRESHOLD = 5000;
 
     private String configDir;
     private String audioScenarioName;
@@ -87,10 +96,5 @@ public class AsrConfigParam implements IAsrConfigParam {
     @Override
     public String getWUwStartRule() {
         return WUW_START_RULE;
-    }
-
-    @Override
-    public int getWUWConfidenceThreshold() {
-        return WUW_CONFIDENCE_THRESHOLD;
     }
 }

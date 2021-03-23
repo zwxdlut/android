@@ -6,3 +6,10 @@
 0	171	637492877	build.ninja	b830dab9828c5b07
 0	440	637492877	CMakeFiles/vad_api_jni.dir/src/vad_api_jni.cc.o	ae36fae3a36cba02
 441	652	637492878	D:/code/android_examples/wuw_sample_engine/build/intermediates/cmake/debug/obj/x86_64/libvad_api_jni.so	ce5a87e14f5ccef5
+0	15	0	clean	7cb106a547128f27
+0	13	0	clean	7cb106a547128f27
+4	855	638192249	CMakeFiles/vad_api_jni.dir/src/vad_api_jni.cc.o	ae36fae3a36cba02
+855	1409	638192249	D:/code/android_examples/wuw_sample_engine/build/intermediates/cmake/debug/obj/x86_64/libvad_api_jni.so	ce5a87e14f5ccef5
+0	14	0	clean	7cb106a547128f27
+2	493	638193556	CMakeFiles/vad_api_jni.dir/src/vad_api_jni.cc.o	ae36fae3a36cba02
+493	719	638193556	D:/code/android_examples/wuw_sample_engine/build/intermediates/cmake/debug/obj/x86_64/libvad_api_jni.so	ce5a87e14f5ccef5

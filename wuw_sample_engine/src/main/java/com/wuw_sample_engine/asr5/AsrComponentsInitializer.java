@@ -28,7 +28,7 @@ public class AsrComponentsInitializer implements IAsrComponentsInitializer {
     private IRecognizerListener recognizerListener = null;
     private audioIn.IAudioDataCallback audioDataCallback = null;
 
-    public AsrComponentsInitializer(IAsrConfigParam asrConfigParam, IAsrResult asrResult, IAsrEventHandler asrEventHandler) {
+    public AsrComponentsInitializer(IAsrConfigParam asrConfigParam, IAsrResult asrResult, IAsrEventQueue asrEventHandler) {
         this.asrConfigParam = asrConfigParam;
         recognizerListener = new SampleRecognizerListener(asrResult, asrEventHandler);   // SETUP LISTENERS
     }

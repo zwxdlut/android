@@ -4,23 +4,28 @@ import java.util.LinkedList;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class AsrEventHandler implements IAsrEventHandler {
-    private LinkedList<ASR_EVENT> eventsList_ = new LinkedList<>();
-    private ReentrantLock lock = new ReentrantLock();
-    private Condition condition = lock.newCondition();
+/* This version of the Asr
+ */
+public class ConcurrentAsrEventQueue implements IAsrEventQueue {
+    private LinkedList<AsrEvent> eventsList_ = null;
+    private ReentrantLock lock = null;
+    private Condition condition = null;
 
-    public AsrEventHandler() {
+    public ConcurrentAsrEventQueue() {
+       eventsList_ = new LinkedList<>();
+       lock = new ReentrantLock();
+       condition = lock.newCondition();
     }
 
-    public void addEvent(ASR_EVENT event) {
+    public void addEvent(AsrEvent event) {
         lock.lock();
         eventsList_.offer(event);
         condition.signalAll();
         lock.unlock();
     }
 
-    public ASR_EVENT removeEvent() {
-        ASR_EVENT event = null;
+    public AsrEvent removeEvent() {
+        AsrEvent event = null;
 
         lock.lock();
 
@@ -39,7 +44,7 @@ public class AsrEventHandler implements IAsrEventHandler {
         return event;
     }
 
-    public boolean removeEvent(ASR_EVENT event) {
+    public boolean removeEvent(AsrEvent event) {
         boolean ret = false;
 
         lock.lock();
@@ -47,5 +52,10 @@ public class AsrEventHandler implements IAsrEventHandler {
         lock.unlock();
 
         return ret;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return eventsList_.isEmpty();
     }
 }

@@ -14,6 +14,4 @@ public interface IAsrConfigParam {
     String getConfigDir();
 
     String getWUwStartRule();
-
-    int getWUWConfidenceThreshold();
 }

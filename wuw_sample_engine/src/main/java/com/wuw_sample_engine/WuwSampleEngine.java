@@ -13,12 +13,13 @@ import androidx.core.content.ContextCompat;
 import com.wuw_sample_engine.asr5.AsrAssetExtractor;
 import com.wuw_sample_engine.asr5.AsrComponentsInitializer;
 import com.wuw_sample_engine.asr5.AsrConfigParam;
-import com.wuw_sample_engine.asr5.AsrEventHandler;
-import com.wuw_sample_engine.asr5.AsrResult;
+import com.wuw_sample_engine.asr5.AsrEvent;
+import com.wuw_sample_engine.asr5.AsrResultParser;
+import com.wuw_sample_engine.asr5.ConcurrentAsrEventQueue;
 import com.wuw_sample_engine.asr5.IAsrAssetExtractor;
 import com.wuw_sample_engine.asr5.IAsrComponentsInitializer;
 import com.wuw_sample_engine.asr5.IAsrConfigParam;
-import com.wuw_sample_engine.asr5.IAsrEventHandler;
+import com.wuw_sample_engine.asr5.IAsrEventQueue;
 import com.wuw_sample_engine.asr5.IAsrResult;
 import com.wuw_sample_engine.asr5.SampleRecognizerListener;
 import com.wuw_sample_engine.custom_audio.audioIn;
@@ -48,12 +49,12 @@ public class WuwSampleEngine {
     private IAsrAssetExtractor assetExtractor = null;
     private IAsrComponentsInitializer asrComponentsInitializer = null;
     private IAsrResult asrResult = null;
-    private IAsrEventHandler asrEventHandler = null;
+    private IAsrEventQueue asrEventQueue = null;
     private Context context = null;
     private ASR_STATE asrState = ASR_STATE.IDLE;
     private WuwSampleHandleThread wuwSampleHandleThread = null;
     private AudioInHandleThread audioInHandleThread = null;
-    private LinkedBlockingQueue<short[]> audioInQueue = new LinkedBlockingQueue<>();
+    private LinkedBlockingQueue<short[]> audioInQueue = null;
     private VadApi vad = VadApi.getInstance();
     private Timer timer = null;
     private FileOutputStream fos = null;
@@ -87,7 +88,7 @@ public class WuwSampleEngine {
                 // falling edge
                 if (0 == status) {
                     Log.i(TAG, "onResult: falling edge!");
-                    asrEventHandler.addEvent(IAsrEventHandler.ASR_EVENT.COMMAND_RESULT);
+                    asrEventQueue.addEvent(new AsrEvent(AsrEvent.ASR_EVENT.COMMAND_RESULT));
 
                 }
             }
@@ -147,7 +148,7 @@ public class WuwSampleEngine {
             asrComponentsInitializer.setAudioDataCallback(audioDataCallback);
             asrComponentsInitializer.initializeAsrComponents(errorMessage, resultCode);
             errorCheck(resultCode, errorMessage);
-            addApplications();
+            addApplications(0);
             startRecognizer();
             recognizerListener = (SampleRecognizerListener) asrComponentsInitializer.getRecognizerListener();
             asrState = ASR_STATE.ASLEEP;
@@ -157,55 +158,64 @@ public class WuwSampleEngine {
             }
 
             while (!done) {
-                IAsrEventHandler.ASR_EVENT event = asrEventHandler.removeEvent();
+                AsrEvent event = asrEventQueue.removeEvent();
 
-                if (IAsrEventHandler.ASR_EVENT.WUW_RESULT == event) {
-                    errorCheck(recognizerListener.getResultCode(), recognizerListener.getPublisherMessage());
-                    publishProgress("RESULT: " + asrResult.getTopResult() + "\n");
-                    publishProgress("EndTime: " + asrResult.getEndTime() + "\n");
-                    publishProgress("wakeup word found!\n");
+                if (null == event) {
+                    continue;
+                }
+
+                if (AsrEvent.ASR_EVENT.WUW_RESULT == event.getEvent()) {
+                    errorCheck(event.getResultCode(), event.getMessage());
+                    publishProgress("RESULT: " + event.getResult() + "\n");
+                    publishProgress("EndTime: " + event.getEndTime() + "\n");
+                    Log.i(TAG, "Go to wake!");
 
                     if (ASR_STATE.AWAKE == asrState) {
-                        publishProgress("Wuw sample engine has been awake!\n");
+                        Log.i(TAG, "Has been awake!");
                         stopTimer();
                         transform(ASR_STATE.ASLEEP);
 
                         // avoid falling edge
-                        if(asrEventHandler.removeEvent(IAsrEventHandler.ASR_EVENT.COMMAND_RESULT)) {
-                            publishProgress("remove event COMMAND_RESULT!\n");
+                        if(asrEventQueue.removeEvent(new AsrEvent(AsrEvent.ASR_EVENT.COMMAND_RESULT))) {
+                            Log.i(TAG, "Remove event AsrEvent.ASR_EVENT.COMMAND_RESULT!");
                         }
 
                         //continue;
                     }
 
-                    addApplications();
+                    addApplications(event.getEndTime());
                     transform(ASR_STATE.AWAKE);
                     startTimer();
 
                     if (null != voiceCallback) {
                         voiceCallback.onState(asrState);
                     }
-                } else if (event == IAsrEventHandler.ASR_EVENT.NO_WUW_RESULT) {
-                    errorCheck(recognizerListener.getResultCode(), recognizerListener.getPublisherMessage());
-                    addApplications();
-                } else if (IAsrEventHandler.ASR_EVENT.COMMAND_RESULT == event || IAsrEventHandler.ASR_EVENT.INITIAL_TIMEOUT == event) {
+                } else if (AsrEvent.ASR_EVENT.NO_WUW_RESULT == event.getEvent() || AsrEvent.ASR_EVENT.UNQUALIFIED_RESULT == event.getEvent()) {
+                    errorCheck(event.getResultCode(), event.getMessage());
+                    addApplications(event.getEndTime());
+                } else if (AsrEvent.ASR_EVENT.OTHER_EVENT == event.getEvent()) {
+                    publishProgress(event.getMessage());
+                } else if (AsrEvent.ASR_EVENT.SPEECH_TIMEOUT_EVENT == event.getEvent()) {
+                    publishProgress("Resetting recognizer due to time-out.\n");
+                    Log.i(TAG, event.getMessage());
+                    resetRecognizer(event.getEndTime());
+                    addApplications(event.getEndTime());
+                } else if (AsrEvent.ASR_EVENT.COMMAND_RESULT == event.getEvent() || AsrEvent.ASR_EVENT.INITIAL_TIMEOUT == event.getEvent()) {
                     if (ASR_STATE.ASLEEP == asrState) {
                         continue;
                     }
 
-                    publishProgress("go to asleep!\n");
+                    Log.i(TAG, "Go to sleep!");
                     stopTimer();
                     transform(ASR_STATE.ASLEEP);
 
                     if (null != voiceCallback) {
                         voiceCallback.onState(asrState);
                     }
-                } else if (IAsrEventHandler.ASR_EVENT.OTHER_EVENT == event) {
-                    publishProgress(recognizerListener.getPublisherMessage());
                 }
             }
 
-            publishProgress("go to idle!\n");
+            Log.i(TAG, "Go to idle!\n");
             stopTimer();
             transform(ASR_STATE.IDLE);
 
@@ -291,6 +301,7 @@ public class WuwSampleEngine {
         }
 
         assetExtractor = new AsrAssetExtractor();
+        audioInQueue = new LinkedBlockingQueue<>();
     }
 
     public void setVoiceCallback(IVoiceCallback callback) {
@@ -351,7 +362,7 @@ public class WuwSampleEngine {
 
         if (null != wuwSampleHandleThread) {
 		    // unblock event queue
-            asrEventHandler.addEvent(AsrEventHandler.ASR_EVENT.UNQUALIFIED_RESULT);
+            asrEventQueue.addEvent(new AsrEvent());
 
             try {
                 wuwSampleHandleThread.join();
@@ -370,7 +381,7 @@ public class WuwSampleEngine {
             return;
         }
 
-        asrEventHandler.addEvent(IAsrEventHandler.ASR_EVENT.WUW_RESULT);
+        asrEventQueue.addEvent(new AsrEvent(AsrEvent.ASR_EVENT.WUW_RESULT));
     }
 
     public void sleep() {
@@ -380,7 +391,7 @@ public class WuwSampleEngine {
             return;
         }
 
-        asrEventHandler.addEvent(IAsrEventHandler.ASR_EVENT.COMMAND_RESULT);
+        asrEventQueue.addEvent(new AsrEvent(AsrEvent.ASR_EVENT.COMMAND_RESULT));
     }
 
     private void publishProgress(String... progress) {
@@ -396,22 +407,25 @@ public class WuwSampleEngine {
         Log.i(TAG, sb.toString());
     }
 
-    private void addApplications() {
-        int startTimeMs = asrResult.getEndTime();
+    private void resetRecognizer(int startTimeMs) {
+        Log.i(TAG, "reset recognizer @ " + startTimeMs + "ms");
+        try {
+            asrComponentsInitializer.getAsrManager().setApplications(null, asrConfigParam.getRecognizerName(), startTimeMs);
+        } catch (ResultCode rc) {
+            errorCheck(rc, "ERROR: Failed to reset recognizer");
+        }
 
-        asrResult.reset();
-        ((SampleRecognizerListener) asrComponentsInitializer.getRecognizerListener()).reset();
+    }
 
+    private void addApplications(int startTimeMs) {
         String applications[] = new String[asrConfigParam.getNbrConfiguredApplications()];
-        StringBuilder addedApplications = new StringBuilder();
-
         applications[0] = asrConfigParam.getWuwApplicationName();
-        addedApplications.append(asrConfigParam.getWuwApplicationName());
 
+        Log.i(TAG + "/addApps", "Add applications @ " + startTimeMs + "ms");
         try {
             asrComponentsInitializer.getAsrManager().setApplications(applications, asrConfigParam.getRecognizerName(), startTimeMs);
         } catch (ResultCode rc) {
-            errorCheck(rc, "ERROR: Failed to add applications!");
+            errorCheck(rc, "ERROR: Failed to add applications");
         }
     }
 
@@ -424,7 +438,7 @@ public class WuwSampleEngine {
         }
     }
 
-    private void printAsrConfiguratio() {
+    private void printAsrConfiguration() {
         publishProgress(":: Running with parameters:\n");
         publishProgress("configDir: " + asrConfigParam.getConfigDir() + "\n\n");
         publishProgress("audioScenario: " + asrConfigParam.getAudioScenarioName() + "\n");
@@ -432,7 +446,8 @@ public class WuwSampleEngine {
         publishProgress("application: " + asrConfigParam.getWuwApplicationName() + "\n");
         publishProgress("recognizer: " + asrConfigParam.getRecognizerName() + "\n");
         publishProgress("wuwStartRule: " + asrConfigParam.getWUwStartRule() + "\n");
-        publishProgress("confidenceThreshold: " + asrConfigParam.getWUWConfidenceThreshold() + "\n");
+        publishProgress("confidenceThreshold: " + AsrConfigParam.WUW_CONFIDENCE_THRESHOLD + "\n");
+        publishProgress("wordConfidenceThreshold: " + AsrConfigParam.WUW_WORD_CONFIDENCE_THRESHOLD + "\n");
     }
 
     private void startRecognizer() {
@@ -455,10 +470,10 @@ public class WuwSampleEngine {
 
     private void initAsr() {
         asrConfigParam = new AsrConfigParam(context.getExternalFilesDir(null).getAbsolutePath());
-        asrEventHandler = new AsrEventHandler();
-        asrResult = new AsrResult(this.asrConfigParam, asrEventHandler);
-        asrComponentsInitializer = new AsrComponentsInitializer(this.asrConfigParam, asrResult, asrEventHandler);
-        printAsrConfiguratio();
+        asrEventQueue = new ConcurrentAsrEventQueue();
+        asrResult = new AsrResultParser(this.asrConfigParam, asrEventQueue);
+        asrComponentsInitializer = new AsrComponentsInitializer(this.asrConfigParam, asrResult, asrEventQueue);
+        printAsrConfiguration();
     }
 
     private void startTimer() {
@@ -467,7 +482,7 @@ public class WuwSampleEngine {
             public void run() {
                 publishProgress("Command should be within " + timeoutMs + " ms after wake-up word for one-shot wuw case!\n");
                 publishProgress("<b>Initial timeout, wuw sample engine go to sleep!</b>");
-                asrEventHandler.addEvent(IAsrEventHandler.ASR_EVENT.INITIAL_TIMEOUT);
+                asrEventQueue.addEvent(new AsrEvent(AsrEvent.ASR_EVENT.INITIAL_TIMEOUT));
             }
         };
 

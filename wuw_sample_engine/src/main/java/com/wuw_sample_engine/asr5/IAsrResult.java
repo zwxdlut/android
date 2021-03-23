@@ -1,15 +1,9 @@
 package com.wuw_sample_engine.asr5;
 
-import nuance.common.ResultCode;
+import org.json.JSONException;
 
 public interface IAsrResult {
 
-    int getEndTime();
-
-    String getTopResult();
-
-    void parseResult(String result, ResultCode rc, String message);
-
-    void reset();
+    AsrEvent parseResult(String result);
 
 }
