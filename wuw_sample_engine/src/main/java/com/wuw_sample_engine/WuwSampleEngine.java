@@ -55,7 +55,7 @@ public class WuwSampleEngine {
     private WuwSampleHandleThread wuwSampleHandleThread = null;
     private AudioInHandleThread audioInHandleThread = null;
     private LinkedBlockingQueue<short[]> audioInQueue = null;
-    private VadApi vad = VadApi.getInstance();
+    private VadApi vad = null;
     private Timer timer = null;
     private FileOutputStream fos = null;
     private IVoiceCallback voiceCallback = null;
@@ -302,6 +302,7 @@ public class WuwSampleEngine {
 
         assetExtractor = new AsrAssetExtractor();
         audioInQueue = new LinkedBlockingQueue<>();
+        vad = VadApi.getInstance();
     }
 
     public void setVoiceCallback(IVoiceCallback callback) {
