@@ -309,20 +309,32 @@ public class WuwSampleEngine {
         voiceCallback = callback;
     }
 
-    public void extractAssetsFiles() throws IOException {
-        assetExtractor.extractAssetsFiles(context);
+    public boolean extractAssetsFiles() {
+        if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            Log.w(TAG, "extractAssetsFiles: no write external storage permission!");
+            return false;
+        }
+
+        try {
+            assetExtractor.extractAssetsFiles(context);
+        } catch (IOException e) {
+            Log.e(TAG, "extractAssetsFiles: " + e.getMessage() + " not found!\n Add asset to assets folder and rebuild application!");
+            return false;
+        }
+
+        return true;
     }
 
     public void start() {
         Log.i(TAG, "start: done = " + done);
 
         if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)) {
-            Log.i(TAG, "start: no record audio permission!");
+            Log.w(TAG, "start: no record audio permission!");
             return;
         }
 
         if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-            Log.i(TAG, "start: no write external storage permission!");
+            Log.w(TAG, "start: no write external storage permission!");
             return;
         }
 

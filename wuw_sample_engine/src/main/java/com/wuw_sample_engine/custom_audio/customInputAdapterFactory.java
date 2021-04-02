@@ -8,8 +8,8 @@
 
 package com.wuw_sample_engine.custom_audio;
 
-import nuance.audio.IAudioInputAdapterFactoryListener;
 import nuance.audio.IAudioInputAdapterFactory;
+import nuance.audio.IAudioInputAdapterFactoryListener;
 import nuance.common.LogZone;
 import nuance.common.ResultCode;
 

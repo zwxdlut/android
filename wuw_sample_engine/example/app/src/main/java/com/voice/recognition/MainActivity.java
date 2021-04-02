@@ -13,7 +13,6 @@ import androidx.core.app.ActivityCompat;
 
 import com.wuw_sample_engine.WuwSampleEngine;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -61,12 +60,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         engine = WuwSampleEngine.getInstance();
         engine.setVoiceCallback(voiceCallback);
 
-        try {
-            engine.extractAssetsFiles();
-        } catch (IOException e) {
-            Log.e(TAG, "init: " + e.getMessage() + " not found!\n Add asset to assets folder and rebuild application!");
-        }
-
         ActivityCompat.requestPermissions(this,
                 new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE},
                 PERMISSION_REQUEST);
@@ -88,6 +81,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (PackageManager.PERMISSION_GRANTED == grantResults[0]
                     && PackageManager.PERMISSION_GRANTED == grantResults[1]) {
                 Log.i(TAG, "onRequestPermissionsResult: permission granted, requestCode = " + requestCode);
+                if (!engine.extractAssetsFiles()) {
+                    Log.w(TAG, "onRequestPermissionsResult: extractAssetsFiles() failed!");
+                    finish();
+                }
             } else {
                 Log.w(TAG, "onRequestPermissionsResult: permission denied, requestCode = " + requestCode);
                 finish();
