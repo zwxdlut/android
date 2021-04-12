@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">camera_demo</string>
+    <string name="app_name">Camera</string>
     <string name="view_capture">Capture View</string>
     <string name="btn_open_camera">Open</string>
     <string name="btn_close_camera">Close</string>

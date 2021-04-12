@@ -1,4 +1,4 @@
-package com.media.camera;
+package com.camera;
 
 import android.content.Context;
 
@@ -22,6 +22,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        assertEquals("com.example.camera_control.test", appContext.getPackageName());
+        assertEquals("com.camera.example.camera_control.test", appContext.getPackageName());
     }
 }

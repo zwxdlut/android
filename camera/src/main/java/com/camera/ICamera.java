@@ -1,4 +1,4 @@
-package com.media.camera;
+package com.camera;
 
 import android.hardware.camera2.CameraDevice;
 import android.media.MediaRecorder;

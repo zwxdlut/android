@@ -1,4 +1,4 @@
-package com.media.camera;
+package com.camera;
 
 import org.junit.Test;
 

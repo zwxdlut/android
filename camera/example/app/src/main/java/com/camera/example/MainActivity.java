@@ -1,8 +1,4 @@
-package com.media.camera_demo;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
+package com.camera.example;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -19,8 +15,11 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
-import com.media.camera.CameraNativeFactory;
-import com.media.camera.ICamera;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+
+import com.camera.CameraController;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -28,9 +27,9 @@ import java.util.stream.Collectors;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG = "MainActivity";
     private static final int PERMISSION_REQUEST = 1;
-    //private CameraHelper camera = null;
-    private ICamera camera = null;
-    private String cameraIds[] = new String[0];
+    private CameraController camera = null;
+    //private ICamera camera = null;
+    private String[] cameraIds = null;
     private SurfaceView preView = null;
     private SurfaceHolder holder = null;
     private ImageView captureView = null;
@@ -40,7 +39,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
             int rotation = getWindowManager().getDefaultDisplay().getRotation();
-
             Log.i(TAG, "surfaceCreated: holder = " + holder + ", rotation = " + rotation);
             MainActivity.this.holder = holder;
         }
@@ -56,8 +54,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
-    //private CameraHelper.ICameraCallback cameraCallback = new CameraHelper.ICameraCallback() {
-    private ICamera.ICameraCallback cameraCallback = new ICamera.ICameraCallback() {
+    private CameraController.ICameraCallback cameraCallback = new CameraController.ICameraCallback() {
+    //private ICamera.ICameraCallback cameraCallback = new ICamera.ICameraCallback() {
         @Override
         public void onState(String cameraId, int state) {
             Log.i(TAG, "onState: cameraId = " + cameraId + ", state = " + state);
@@ -69,8 +67,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
-    //private CameraHelper.ICaptureCallback captureCallback = new CameraHelper.ICaptureCallback() {
-    private ICamera.ICaptureCallback captureCallback = new ICamera.ICaptureCallback() {
+    private CameraController.ICaptureCallback captureCallback = new CameraController.ICaptureCallback() {
+    //private ICamera.ICaptureCallback captureCallback = new ICamera.ICaptureCallback() {
         @Override
         public void onComplete(String cameraId, String path) {
             Log.i(TAG, "onComplete: capture cameraId = " + cameraId + ", path = " + path);
@@ -95,8 +93,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
-    //private CameraHelper.IRecordCallback recordCallback = new CameraHelper.IRecordCallback() {
-    private ICamera.IRecordCallback recordCallback = new ICamera.IRecordCallback() {
+    private CameraController.IRecordCallback recordCallback = new CameraController.IRecordCallback() {
+    //private ICamera.IRecordCallback recordCallback = new ICamera.IRecordCallback() {
         @Override
         public void onComplete(String cameraId, String path) {
             Log.i(TAG, "onComplete: record cameraId = " + cameraId + ", path = " + path);
@@ -111,11 +109,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        Log.i(TAG, "onCreate");
 
+        setContentView(R.layout.activity_main);
         ActivityCompat.requestPermissions(this,
                 new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO},
                 PERMISSION_REQUEST);
+    }
+
+    @Override
+    protected void onDestroy() {
+        Log.i(TAG, "onDestroy");
+        camera.close(cameraIds[0]);
+        super.onDestroy();
     }
 
     @Override
@@ -131,6 +137,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 init();
             } else {
                 Log.w(TAG, "onRequestPermissionsResult: permission denied requestCode = " + requestCode);
+                finish();
             }
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -139,11 +146,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View v) {
-        if (null == cameraIds || 0 >= cameraIds.length) {
-            Log.w(TAG, "onClick: no camera");
-            return;
-        }
-
         switch (v.getId()) {
             case R.id.btn_open_camera:
                 Log.i(TAG, "onClick: open = " + camera.open(cameraIds[0]));
@@ -181,13 +183,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void init() {
         // Initialize camera
-        //camera = CameraHelper.getInstance(this);
-        camera = new CameraNativeFactory().getCamera(this);
+        camera = CameraController.getInstance();
+        //camera = new CameraNativeFactory().getCamera(this);
         cameraIds = camera.getCameraIdList();
         camera.setCameraCallback(cameraCallback);
         camera.setCaptureCallback(captureCallback);
         camera.setRecordCallback(recordCallback);
-        Log.i(TAG, "init: camera count = " + cameraIds.length);
+
+        if (0 == cameraIds.length) {
+            Log.w(TAG, "init: no camera!");
+            finish();
+        } else {
+            Log.i(TAG, "init: camera count = " + cameraIds.length);
+        }
 
         // Initialize UI
         size = getMatchSize();

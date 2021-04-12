@@ -5,7 +5,7 @@ android {
     buildToolsVersion "30.0.0"
 
     defaultConfig {
-        applicationId "com.media.camera_demo"
+        applicationId "com.camera.example"
         minSdkVersion 23
         targetSdkVersion 29
         versionCode 1

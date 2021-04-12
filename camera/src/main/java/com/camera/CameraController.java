@@ -1,6 +1,7 @@
-package com.media.camera;
+package com.camera;
 
 import android.Manifest;
+import android.app.Application;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
@@ -44,6 +45,7 @@ import androidx.core.content.ContextCompat;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -59,8 +61,8 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class CameraNative implements ICamera {
-    private static final String TAG = "CameraNative";
+public class CameraController {
+    private static final String TAG = CameraController.class.getSimpleName();
     private static final int SENSOR_ORIENTATION_DEGREES = 90;
     private static final int SENSOR_ORIENTATION_INVERSE_DEGREES = 270;
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
@@ -80,7 +82,7 @@ public class CameraNative implements ICamera {
         INVERSE_ORIENTATIONS.append(Surface.ROTATION_270, 0);
     }
 
-    private static CameraNative instance = null;
+    private static CameraController instance = null;
     private Context context = null;
     private CameraManager cameraManager = null;
     private Map<String, Integer> sensorOrientations = new ArrayMap<>();
@@ -99,9 +101,9 @@ public class CameraNative implements ICamera {
     private ICaptureCallback captureCallback = null;
     private IRecordCallback recordCallback = null;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss", Locale.CHINESE);
-    private HandlerThread thread = null;
+    private HandlerThread handlerThread = null;
     private Handler handler = null;
-    private HandlerThread sessionThread = null;
+    private HandlerThread sessionHandlerThread = null;
     private Handler sessionHandler = null;
     private Map<String, Boolean> cameraFlags = new ArrayMap<>();
     private Map<String, Lock> cameraLocks = new ArrayMap<>();
@@ -346,6 +348,223 @@ public class CameraNative implements ICamera {
         }
     };
 
+    /**
+     * The result code returned by API.
+     */
+    public interface ResultCode {
+        /**
+         * The constant SUCCESS.
+         */
+        public static final int SUCCESS = 0;
+
+        /**
+         * The constant NO_CAMERA_PERMISSION.
+         */
+        public static final int NO_CAMERA_PERMISSION = -1;
+
+        /**
+         * The constant NO_WRITE_EXTERNAL_STORAGE_PERMISSION.
+         */
+        public static final int NO_WRITE_EXTERNAL_STORAGE_PERMISSION = -2;
+
+        /**
+         * The constant NO_RECORD_AUDIO_PERMISSION.
+         */
+        public static final int NO_RECORD_AUDIO_PERMISSION = -3;
+
+        /**
+         * The constant CAMERA_DISCONNECTED.
+         */
+        public static final int CAMERA_DISCONNECTED = -4;
+
+        /**
+         * The constant CAMERA_ERROR_OCCURRED.
+         */
+        public static final int CAMERA_ERROR_OCCURRED = -5;
+
+        /**
+         * The constant CAMERA_EXCEPTION.
+         */
+        public static final int CAMERA_EXCEPTION = -6;
+
+        /**
+         * The constant CAMERA_CAPTURE_SESSION_CONFIG_FAILED.
+         */
+        public static final int CAMERA_CAPTURE_SESSION_CONFIG_FAILED = -7;
+
+        /**
+         * The constant CAMERA_DEVICE_NULL.
+         */
+        public static final int CAMERA_DEVICE_NULL = -8;
+
+        /**
+         * The constant CAMERA_CAPTURE_SESSION_NULL.
+         */
+        public static final int CAMERA_CAPTURE_SESSION_NULL = -9;
+
+        /**
+         * The constant NO_PREVIEW_SURFACE.
+         */
+        public static final int NO_PREVIEW_SURFACE = -10;
+
+        /**
+         * The constant NO_IMAGE_READER.
+         */
+        public static final int NO_IMAGE_READER = -11;
+
+        /**
+         * The constant NO_MEDIA_RECORDER.
+         */
+        public static final int NO_MEDIA_RECORDER = -12;
+
+        /**
+         * The constant FAILED_WHILE_RECORDING.
+         */
+        public static final int FAILED_WHILE_RECORDING = -13;
+
+        /**
+         * The constant CREATE_DIRECTORY_FAILED.
+         */
+        public static final int CREATE_DIRECTORY_FAILED = -14;
+    }
+
+    /**
+     * The interface camera callback.
+     */
+    public interface ICameraCallback {
+        /**
+         * The camera state.
+         */
+        public interface State {
+            /**
+             * The constant CAMERA_CLOSED.
+             */
+            public static final int CAMERA_CLOSED = 0;
+
+            /**
+             * The constant CAMERA_OPENED.
+             */
+            public static final int CAMERA_OPENED = 1;
+
+            /**
+             * The constant CAMERA_DISCONNECTED.
+             */
+            public static final int CAMERA_DISCONNECTED = 2;
+        }
+
+        /**
+         * The camera error code.
+         */
+        public interface ErrorCode {
+            /**
+             * The constant CAMERA_IN_USE.
+             */
+            public static final int CAMERA_IN_USE = CameraDevice.StateCallback.ERROR_CAMERA_IN_USE;
+
+            /**
+             * The constant MAX_CAMERAS_IN_USE.
+             */
+            public static final int MAX_CAMERAS_IN_USE = CameraDevice.StateCallback.ERROR_MAX_CAMERAS_IN_USE;
+
+            /**
+             * The constant CAMERA_DISABLED.
+             */
+            public static final int CAMERA_DISABLED = CameraDevice.StateCallback.ERROR_CAMERA_DISABLED;
+
+            /**
+             * The constant CAMERA_DEVICE.
+             */
+            public static final int CAMERA_DEVICE = CameraDevice.StateCallback.ERROR_CAMERA_DEVICE;
+
+            /**
+             * The constant CAMERA_SERVICE.
+             */
+            public static final int CAMERA_SERVICE = CameraDevice.StateCallback.ERROR_CAMERA_SERVICE;
+        }
+
+        /**
+         * Called when the camera state changed.
+         *
+         * @param cameraId the camera id
+         * @param state the camera state:
+         * <ul>
+         * <li>{@link State#CAMERA_CLOSED}
+         * <li>{@link State#CAMERA_OPENED}
+         * <li>{@link State#CAMERA_DISCONNECTED}
+         * <ul/>
+         */
+        public void onState(String cameraId, int state);
+
+        /**
+         * Called when the camera error occurred.
+         *
+         * @param cameraId the camera id
+         * @param error the error code:
+         * <ul>
+         * <li>{@link ErrorCode#CAMERA_IN_USE}
+         * <li>{@link ErrorCode#MAX_CAMERAS_IN_USE}
+         * <li>{@link ErrorCode#CAMERA_DISABLED}
+         * <li>{@link ErrorCode#CAMERA_DEVICE}
+         * <li>{@link ErrorCode#CAMERA_SERVICE}
+         * <ul/>
+         */
+        public void onError(String cameraId, int error);
+    }
+
+    /**
+     * The interface capture callback.
+     */
+    public interface ICaptureCallback {
+        /**
+         * Called when the capture complete.
+         *
+         * @param cameraId the camera id
+         * @param path the captured file full path
+         */
+        public void onComplete(String cameraId, String path);
+    }
+
+    /**
+     * The interface record callback.
+     */
+    public interface IRecordCallback {
+        /**
+         * The error code while recording.
+         */
+        public interface ErrorCode {
+            /**
+             * The constant ERROR_UNKNOWN.
+             */
+            public static final int UNKNOWN = MediaRecorder.MEDIA_RECORDER_ERROR_UNKNOWN;
+
+            /**
+             * The constant ERROR_SERVER_DIED.
+             */
+            public static final int SERVER_DIED = MediaRecorder.MEDIA_ERROR_SERVER_DIED;
+        }
+
+        /**
+         * Called when the record complete.
+         *
+         * @param cameraId the camera id
+         * @param path the record file full path
+         */
+        public void onComplete(String cameraId, String path);
+
+        /**
+         * Called when error occurred while recording.
+         *
+         * @param cameraId the camera id
+         * @param what the type of error that has occurred:
+         * <ul>
+         * <li>{@link ErrorCode#UNKNOWN}
+         * <li>{@link ErrorCode#SERVER_DIED}
+         * <ul/>
+         * @param extra an extra code, specific to the error type
+         */
+        public void onError(String cameraId, int what, int extra);
+    }
+
     public static class CompareSizesByArea implements Comparator<Size> {
         @Override
         public int compare(Size lhs, Size rhs) {
@@ -367,20 +586,28 @@ public class CameraNative implements ICamera {
         }
     }
 
-    public static ICamera getInstance(Context context) {
-        if (null == instance) {
-            synchronized (CameraNative.class) {
-                if (null == instance) {
-                    instance = new CameraNative(context);
-                }
-            }
-        }
-
-        return instance;
+    private static class Builder {
+        private static CameraController instance = new CameraController();
     }
 
-    private CameraNative(Context context) {
-        this.context = context.getApplicationContext();
+    public static CameraController getInstance() {
+        return Builder.instance;
+    }
+
+    private CameraController() {
+        try {
+            //Application application = (Application) Class.forName("android.app.ActivityThread").getMethod("currentApplication").invoke(null, (Object[]) null);
+            Application application = (Application) Class.forName("android.app.AppGlobals").getMethod("getInitialApplication").invoke(null, (Object[]) null);
+
+            if (null != application) {
+                context = application.getApplicationContext();
+            } else {
+                throw new NullPointerException();
+            }
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
         cameraManager = (CameraManager) this.context.getSystemService(Context.CAMERA_SERVICE);
 
         File captureDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
@@ -388,9 +615,9 @@ public class CameraNative implements ICamera {
             captureDir = new File("/storage/emulated/0/Pictures");
             if (!captureDir.exists()) {
                 if (captureDir.mkdirs()) {
-                    Log.i(TAG, "CameraNative: make directory " + captureDir.getPath());
+                    Log.i(TAG, "CameraController: make directory " + captureDir.getPath());
                 } else {
-                    Log.e(TAG, "CameraNative: make directory " + captureDir.getPath() + " failed!");
+                    Log.e(TAG, "CameraController: make directory " + captureDir.getPath() + " failed!");
                 }
             }
         }
@@ -400,9 +627,9 @@ public class CameraNative implements ICamera {
             recordDir = new File("/storage/emulated/0/Movies");
             if (!recordDir.exists()) {
                 if (recordDir.mkdirs()) {
-                    Log.i(TAG, "CameraNative: make directory " + recordDir.getPath());
+                    Log.i(TAG, "CameraController: make directory " + recordDir.getPath());
                 } else {
-                    Log.e(TAG, "CameraNative: make directory " + recordDir.getPath() + " failed!");
+                    Log.e(TAG, "CameraController: make directory " + recordDir.getPath() + " failed!");
                 }
             }
         }
@@ -410,44 +637,41 @@ public class CameraNative implements ICamera {
         File thumbnailDir = new File(recordDir.getParentFile(), "Thumbnails");
         if (!thumbnailDir.exists()) {
             if (thumbnailDir.mkdirs()) {
-                Log.i(TAG, "CameraNative: make directory " + thumbnailDir.getPath());
+                Log.i(TAG, "CameraController: make directory " + thumbnailDir.getPath());
             } else {
-                Log.e(TAG, "CameraNative: make directory " + thumbnailDir.getPath() + " failed!");
+                Log.e(TAG, "CameraController: make directory " + thumbnailDir.getPath() + " failed!");
             }
         }
 
         String cameraIds[] = getCameraIdList();
-        if (null != cameraIds) {
-            for (String cameraId : cameraIds) {
-                try {
-                    CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(cameraId);
-                    Integer sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
-                    sensorOrientations.put(cameraId, sensorOrientation);
-                    Log.i(TAG, "CameraNative: camera " + cameraId + " sensor orientation =  " + sensorOrientation);
+        for (String cameraId : cameraIds) {
+            try {
+                CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(cameraId);
+                Integer sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+                sensorOrientations.put(cameraId, sensorOrientation);
+                Log.i(TAG, "CameraController: camera " + cameraId + " sensor orientation =  " + sensorOrientation);
 
-                    Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-                    Log.i(TAG, "CameraNative: camera " + cameraId + " facing =  " + facing);
+                Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
+                Log.i(TAG, "CameraController: camera " + cameraId + " facing =  " + facing);
 
-                    Integer level = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
-                    Log.i(TAG, "CameraNative: camera " + cameraId + " supported level =  " + level);
-                } catch (CameraAccessException e) {
-                    e.printStackTrace();
-                }
-
-                captureDirs.put(cameraId, captureDir.getPath());
-                recordDirs.put(cameraId, recordDir.getPath() + File.separator + "dummy.mp4");
-                thumbnailDirs.put(cameraId, thumbnailDir.getPath());
-                videoBps.put(cameraId, 3000000);
-                isRecordings.put(cameraId, false);
-                cameraFlags.put(cameraId, false);
-                cameraLocks.put(cameraId, new ReentrantLock());
-                cameraConditions.put(cameraId, cameraLocks.get(cameraId).newCondition());
-                captureResults.put(cameraId, new LinkedBlockingDeque<CaptureResult>());
+                Integer level = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
+                Log.i(TAG, "CameraController: camera " + cameraId + " supported level =  " + level);
+            } catch (CameraAccessException e) {
+                e.printStackTrace();
             }
+
+            captureDirs.put(cameraId, captureDir.getPath());
+            recordDirs.put(cameraId, recordDir.getPath() + File.separator + "dummy.mp4");
+            thumbnailDirs.put(cameraId, thumbnailDir.getPath());
+            videoBps.put(cameraId, 3000000);
+            isRecordings.put(cameraId, false);
+            cameraFlags.put(cameraId, false);
+            cameraLocks.put(cameraId, new ReentrantLock());
+            cameraConditions.put(cameraId, cameraLocks.get(cameraId).newCondition());
+            captureResults.put(cameraId, new LinkedBlockingDeque<CaptureResult>());
         }
     }
 
-    @Override
     public String[] getCameraIdList() {
         try {
             return cameraManager.getCameraIdList();
@@ -455,10 +679,9 @@ public class CameraNative implements ICamera {
             e.printStackTrace();
         }
 
-        return null;
+        return new String[0];
     }
 
-    @Override
     public Size[] getAvailablePreviewSizes(String cameraId) {
         try {
             StreamConfigurationMap map = cameraManager.getCameraCharacteristics(cameraId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
@@ -476,7 +699,6 @@ public class CameraNative implements ICamera {
         return null;
     }
 
-    @Override
     public Size[] getAvailableCaptureSizes(String cameraId) {
         try {
             StreamConfigurationMap map = cameraManager.getCameraCharacteristics(cameraId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
@@ -494,7 +716,6 @@ public class CameraNative implements ICamera {
         return null;
     }
 
-    @Override
     public Size[] getAvailableRecordSizes(String cameraId) {
         try {
             StreamConfigurationMap map = cameraManager.getCameraCharacteristics(cameraId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
@@ -512,20 +733,17 @@ public class CameraNative implements ICamera {
         return null;
     }
 
-    @Override
     public int setCameraCallback(ICameraCallback callback) {
         cameraCallback = callback;
         return ResultCode.SUCCESS;
     }
 
-    @Override
     public int setPreviewSurface(String cameraId, Surface surface) {
         Log.i(TAG, "setPreviewSurface: cameraId = " + cameraId);
         previewSurfaces.put(cameraId, surface);
         return ResultCode.SUCCESS;
     }
 
-    @Override
     public int setCaptureSize(String cameraId, int width, int height) {
         Log.i(TAG, "setCaptureSize: cameraId = " + cameraId + ", width = " + width + ", height = " + height);
 
@@ -542,7 +760,6 @@ public class CameraNative implements ICamera {
         return createCameraCaptureSession(cameraId, Collections.singletonList(imageReader.getSurface()));
     }
 
-    @Override
     public int setCaptureDir(String cameraId, String dir) {
         Log.i(TAG, "setCaptureDir: cameraId = " + cameraId + ", dir = " + dir);
 
@@ -561,27 +778,23 @@ public class CameraNative implements ICamera {
         return ResultCode.SUCCESS;
     }
 
-    @Override
     public int setCaptureCallback(ICaptureCallback callback) {
         captureCallback = callback;
         return ResultCode.SUCCESS;
     }
 
-    @Override
     public int setRecordSize(String cameraId, int width, int height) {
         Log.i(TAG, "setRecordSize: cameraId = " + cameraId + ", width = " + width + ", height = " + height);
         recordSizes.put(cameraId, new Size(width, height));
         return ResultCode.SUCCESS;
     }
 
-    @Override
     public int setVideoEncodingBps(String cameraId, int bps) {
         Log.i(TAG, "setVideoEncodingBps: cameraId = " + cameraId + ", bps = " + bps);
         videoBps.put(cameraId, bps);
         return ResultCode.SUCCESS;
     }
 
-    @Override
     public int setRecordDir(String cameraId, String dir) {
         Log.i(TAG, "setRecordDir: cameraId = " + cameraId + ", dir = " + dir);
 
@@ -608,13 +821,11 @@ public class CameraNative implements ICamera {
         return ResultCode.SUCCESS;
     }
 
-    @Override
     public int setRecordCallback(IRecordCallback callback) {
         recordCallback = callback;
         return ResultCode.SUCCESS;
     }
 
-    @Override
     public int open(final String cameraId) {
         Log.i(TAG, "open: cameraId = " + cameraId);
 
@@ -648,9 +859,9 @@ public class CameraNative implements ICamera {
             Log.i(TAG, "open: camera " + cameraId + " record size = " + size);
 
             cameraFlags.put(cameraId, false);
-            thread = new HandlerThread("CameraHandlerThread");
-            thread.start();
-            handler = new Handler(thread.getLooper());
+            handlerThread = new HandlerThread("CameraHandlerThread");
+            handlerThread.start();
+            handler = new Handler(handlerThread.getLooper());
             cameraManager.openCamera(cameraId, new CameraDevice.StateCallback() {
                 @Override
                 public void onOpened(@NonNull CameraDevice camera) {
@@ -708,21 +919,21 @@ public class CameraNative implements ICamera {
         return ResultCode.SUCCESS;
     }
 
-    @Override
     public int close(String cameraId) {
         Log.i(TAG, "close: cameraId = " + cameraId);
         stopRecord(cameraId);
         deleteCameraCaptureSession(cameraId);
         closeDevice(cameraId);
 
-        if (null != thread) {
-            thread.quitSafely();
+        if (null != handlerThread) {
+            handlerThread.quitSafely();
+
             try {
-                thread.join();
+                handlerThread.join();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } finally {
-                thread = null;
+                handlerThread = null;
                 handler = null;
             }
         }
@@ -736,7 +947,6 @@ public class CameraNative implements ICamera {
         return ResultCode.SUCCESS;
     }
 
-    @Override
     public int startPreview(String cameraId) {
         Log.i(TAG, "startPreview: cameraId = " + cameraId);
 
@@ -785,7 +995,6 @@ public class CameraNative implements ICamera {
         return ResultCode.SUCCESS;
     }
 
-    @Override
     public int stopPreview(String cameraId) {
         Log.i(TAG, "stopPreview: cameraId = " + cameraId);
 
@@ -806,7 +1015,6 @@ public class CameraNative implements ICamera {
         return ResultCode.SUCCESS;
     }
 
-    @Override
     public int capture(String cameraId, double latitude, double longitude) {
         Log.i(TAG, "capture: cameraId = " + cameraId + ", latitude = " + latitude + ", longitude = " + longitude);
 
@@ -848,12 +1056,10 @@ public class CameraNative implements ICamera {
         return ResultCode.SUCCESS;
     }
 
-    @Override
     public int startRecord(String cameraId) {
         return startRecord(cameraId, 0);
     }
 
-    @Override
     public int startRecord(String cameraId, int duration) {
         Log.i(TAG, "startRecord: cameraId = " + cameraId + ", duration = " + duration);
 
@@ -915,7 +1121,6 @@ public class CameraNative implements ICamera {
         return ResultCode.SUCCESS;
     }
 
-    @Override
     public int stopRecord(String cameraId) {
         Log.i(TAG, "stopRecord: cameraId = " + cameraId);
 
@@ -985,9 +1190,9 @@ public class CameraNative implements ICamera {
         final int[] ret = {ResultCode.SUCCESS};
 
         try {
-            sessionThread = new HandlerThread("SessionHandlerThread");
-            sessionThread.start();
-            sessionHandler = new Handler(sessionThread.getLooper());
+            sessionHandlerThread = new HandlerThread("SessionHandlerThread");
+            sessionHandlerThread.start();
+            sessionHandler = new Handler(sessionHandlerThread.getLooper());
             cameraFlags.put(cameraId, false);
             cameraDevice.createCaptureSession(surfaces, new CameraCaptureSession.StateCallback() {
                 @Override
@@ -1032,14 +1237,15 @@ public class CameraNative implements ICamera {
             }
         }
 
-        if (null != sessionThread) {
-            sessionThread.quitSafely();
+        if (null != sessionHandlerThread) {
+
+            sessionHandlerThread.quitSafely();
             try {
-                sessionThread.join();
+                sessionHandlerThread.join();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } finally {
-                sessionThread = null;
+                sessionHandlerThread = null;
                 sessionHandler = null;
             }
         }
@@ -1097,8 +1303,8 @@ public class CameraNative implements ICamera {
         MediaRecorder mediaRecorder = mediaRecorders.get(cameraId);
 
         if (null != mediaRecorder) {
-            synchronized (mediaRecorder) {
-                if (null != mediaRecorders.get(cameraId)) {
+            synchronized (mediaRecorders) {
+                if (null != (mediaRecorder = mediaRecorders.get(cameraId))) {
                     mediaRecorder.reset();
                     mediaRecorder.release();
                     mediaRecorders.remove(cameraId);
