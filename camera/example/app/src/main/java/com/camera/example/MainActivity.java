@@ -35,7 +35,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ImageView captureView = null;
     Size size = null;
 
-    private SurfaceHolder.Callback callback = new SurfaceHolder.Callback() {
+    private SurfaceHolder.Callback surfaceHolderCallback = new SurfaceHolder.Callback() {
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
             int rotation = getWindowManager().getDefaultDisplay().getRotation();
@@ -204,7 +204,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         params.topMargin = 0;
         preView = findViewById(R.id.view_preview);
         preView.setLayoutParams(params);
-        preView.getHolder().addCallback(callback);
+        preView.getHolder().addCallback(surfaceHolderCallback);
         captureView = findViewById(R.id.view_capture);
         findViewById(R.id.btn_open_camera).setOnClickListener(this);
         findViewById(R.id.btn_close_camera).setOnClickListener(this);
