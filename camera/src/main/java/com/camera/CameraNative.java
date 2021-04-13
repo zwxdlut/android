@@ -1,12 +1,14 @@
 package com.camera;
 
 import android.Manifest;
+import android.app.Application;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
+import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -35,7 +37,6 @@ import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.Surface;
-import android.view.SurfaceHolder;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
@@ -44,6 +45,7 @@ import androidx.core.content.ContextCompat;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -177,7 +179,7 @@ public class CameraNative implements ICamera {
                 e.printStackTrace();
             }
 
-            // Insert the video to MediaStore
+            // insert the video to MediaStore
             values.put(MediaStore.Video.Media.DATA, path);
             if (null != size) {
                 values.put(MediaStore.Video.Media.WIDTH, size.getWidth());
@@ -186,7 +188,7 @@ public class CameraNative implements ICamera {
             uri = context.getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
             Log.i(TAG, "onCaptureSequenceCompleted: insert the video to database, path = " + path + ", uri = " + uri);
 
-            // Insert the thumbnail to MediaStore
+            // insert the thumbnail to MediaStore
             if (null != path) {
                 if (null == thumbnail) {
                     thumbnail = ThumbnailUtils.createVideoThumbnail(path, MediaStore.Video.Thumbnails.FULL_SCREEN_KIND);
@@ -240,7 +242,7 @@ public class CameraNative implements ICamera {
 
             Image image = reader.acquireNextImage();
             ByteBuffer buffer = image.getPlanes()[0].getBuffer();
-            final byte bytes[] = new byte[buffer.remaining()];
+            final byte[] bytes = new byte[buffer.remaining()];
             final int width = reader.getWidth();
             final int height = reader.getHeight();
             final String cameraId = key;
@@ -253,7 +255,7 @@ public class CameraNative implements ICamera {
                 @Override
                 public void run() {
                     try {
-                        // Write the image data to the file
+                        // write the image data to file
                         FileOutputStream fos = new FileOutputStream(path);
                         fos.write(bytes);
                         fos.flush();
@@ -266,7 +268,7 @@ public class CameraNative implements ICamera {
                             CaptureResult captureResult = captureResultQueue.take();
                             Location location = captureResult.get(CaptureResult.JPEG_GPS_LOCATION);
 
-                            // Write the location to the image
+                            // write the location to image
                             if (null != location) {
                                 double latitude = location.getLatitude();
                                 double longitude = location.getLongitude();
@@ -279,7 +281,7 @@ public class CameraNative implements ICamera {
                             }
                         }
 
-                        // Insert the image to MediaStore
+                        // insert the image to MediaStore
                         values.put(MediaStore.Images.Media.DATA, path);
                         values.put(MediaStore.Images.Media.WIDTH, width);
                         values.put(MediaStore.Images.Media.HEIGHT, height);
@@ -337,7 +339,8 @@ public class CameraNative implements ICamera {
             }
 
             Log.e(TAG, "onError: cameraId = " + cameraId + ", what = " + what + ", extra = " + extra);
-            stopRecord(cameraId);
+            isRecordings.put(cameraId, false);
+            releaseRecorder(cameraId);
 
             if (null != recordCallback) {
                 recordCallback.onError(cameraId, what, extra);
@@ -367,20 +370,28 @@ public class CameraNative implements ICamera {
         }
     }
 
-    public static ICamera getInstance(Context context) {
-        if (null == instance) {
-            synchronized (CameraNative.class) {
-                if (null == instance) {
-                    instance = new CameraNative(context);
-                }
-            }
-        }
-
-        return instance;
+    private static class Builder {
+        private static CameraNative instance = new CameraNative();
     }
 
-    private CameraNative(Context context) {
-        this.context = context.getApplicationContext();
+    public static CameraNative getInstance() {
+        return CameraNative.Builder.instance;
+    }
+
+    private CameraNative() {
+        try {
+            //Application application = (Application) Class.forName("android.app.ActivityThread").getMethod("currentApplication").invoke(null, (Object[]) null);
+            Application application = (Application) Class.forName("android.app.AppGlobals").getMethod("getInitialApplication").invoke(null, (Object[]) null);
+
+            if (null != application) {
+                context = application.getApplicationContext();
+            } else {
+                throw new NullPointerException();
+            }
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
         cameraManager = (CameraManager) this.context.getSystemService(Context.CAMERA_SERVICE);
 
         File captureDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
@@ -466,7 +477,7 @@ public class CameraNative implements ICamera {
                 return null;
             }
 
-            return map.getOutputSizes(SurfaceHolder.class);
+            return map.getOutputSizes(SurfaceTexture.class);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -689,7 +700,8 @@ public class CameraNative implements ICamera {
                     String cameraId = camera.getId();
 
                     Log.i(TAG, "onError: cameraId = " + cameraId + ", error = " + error);
-                    stopRecord(cameraId);
+                    isRecordings.put(cameraId, false);
+                    releaseRecorder(cameraId);
                     deleteCameraCaptureSession(cameraId);
                     closeDevice(cameraId);
 

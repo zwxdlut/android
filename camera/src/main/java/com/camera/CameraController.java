@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
+import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -36,7 +37,6 @@ import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.Surface;
-import android.view.SurfaceHolder;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
@@ -179,7 +179,7 @@ public class CameraController {
                 e.printStackTrace();
             }
 
-            // Insert the video to MediaStore
+            // insert the video to MediaStore
             values.put(MediaStore.Video.Media.DATA, path);
             if (null != size) {
                 values.put(MediaStore.Video.Media.WIDTH, size.getWidth());
@@ -188,7 +188,7 @@ public class CameraController {
             uri = context.getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
             Log.i(TAG, "onCaptureSequenceCompleted: insert the video to database, path = " + path + ", uri = " + uri);
 
-            // Insert the thumbnail to MediaStore
+            // insert the thumbnail to MediaStore
             if (null != path) {
                 if (null == thumbnail) {
                     thumbnail = ThumbnailUtils.createVideoThumbnail(path, MediaStore.Video.Thumbnails.FULL_SCREEN_KIND);
@@ -242,7 +242,7 @@ public class CameraController {
 
             Image image = reader.acquireNextImage();
             ByteBuffer buffer = image.getPlanes()[0].getBuffer();
-            final byte bytes[] = new byte[buffer.remaining()];
+            final byte[] bytes = new byte[buffer.remaining()];
             final int width = reader.getWidth();
             final int height = reader.getHeight();
             final String cameraId = key;
@@ -255,7 +255,7 @@ public class CameraController {
                 @Override
                 public void run() {
                     try {
-                        // Write the image data to the file
+                        // write the image data to file
                         FileOutputStream fos = new FileOutputStream(path);
                         fos.write(bytes);
                         fos.flush();
@@ -268,7 +268,7 @@ public class CameraController {
                             CaptureResult captureResult = captureResultQueue.take();
                             Location location = captureResult.get(CaptureResult.JPEG_GPS_LOCATION);
 
-                            // Write the location to the image
+                            // write the location to image
                             if (null != location) {
                                 double latitude = location.getLatitude();
                                 double longitude = location.getLongitude();
@@ -281,7 +281,7 @@ public class CameraController {
                             }
                         }
 
-                        // Insert the image to MediaStore
+                        // insert the image to MediaStore
                         values.put(MediaStore.Images.Media.DATA, path);
                         values.put(MediaStore.Images.Media.WIDTH, width);
                         values.put(MediaStore.Images.Media.HEIGHT, height);
@@ -339,7 +339,8 @@ public class CameraController {
             }
 
             Log.e(TAG, "onError: cameraId = " + cameraId + ", what = " + what + ", extra = " + extra);
-            stopRecord(cameraId);
+            isRecordings.put(cameraId, false);
+            releaseRecorder(cameraId);
 
             if (null != recordCallback) {
                 recordCallback.onError(cameraId, what, extra);
@@ -691,7 +692,7 @@ public class CameraController {
                 return null;
             }
 
-            return map.getOutputSizes(SurfaceHolder.class);
+            return map.getOutputSizes(SurfaceTexture.class);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -902,7 +903,8 @@ public class CameraController {
                     String cameraId = camera.getId();
 
                     Log.i(TAG, "onError: cameraId = " + cameraId + ", error = " + error);
-                    stopRecord(cameraId);
+                    isRecordings.put(cameraId, false);
+                    releaseRecorder(cameraId);
                     deleteCameraCaptureSession(cameraId);
                     closeDevice(cameraId);
 
@@ -1238,8 +1240,8 @@ public class CameraController {
         }
 
         if (null != sessionHandlerThread) {
-
             sessionHandlerThread.quitSafely();
+
             try {
                 sessionHandlerThread.join();
             } catch (InterruptedException e) {

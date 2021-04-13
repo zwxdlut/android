@@ -11,5 +11,5 @@ public interface ICameraFactory {
      *
      * @return the camera instance
      */
-    public ICamera getCamera(Context context);
+    public ICamera getCamera();
 }
