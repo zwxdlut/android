@@ -839,14 +839,14 @@ public class CameraController {
             return ResultCode.NO_CAMERA_PERMISSION;
         }
 
-        if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-            Log.w(TAG, "open: no write external storage permission!");
-            return ResultCode.NO_WRITE_EXTERNAL_STORAGE_PERMISSION;
-        }
-
         if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)) {
             Log.w(TAG, "open: no record audio permission!");
             return ResultCode.NO_RECORD_AUDIO_PERMISSION;
+        }
+
+        if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            Log.w(TAG, "open: no write external storage permission!");
+            return ResultCode.NO_WRITE_EXTERNAL_STORAGE_PERMISSION;
         }
 
         close(cameraId);

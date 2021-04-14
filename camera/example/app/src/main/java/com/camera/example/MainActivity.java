@@ -30,51 +30,12 @@ import java.util.stream.Collectors;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int PERMISSION_REQUEST = 1;
+    private String[] cameraIds = null;
     private CameraController camera = null;
     //private ICamera camera = null;
-    private String[] cameraIds = null;
+    private Size previewSize = null;
     private Surface previewSurface = null;
     private ImageView captureView = null;
-    private Size previewSize = null;
-
-    private TextureView.SurfaceTextureListener surfaceTextureListener = new TextureView.SurfaceTextureListener() {
-        @Override
-        public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int width, int height) {
-            Log.i(TAG, "onSurfaceTextureAvailable: surfaceTexture = " + surfaceTexture + ", width = " + width + ", height = " + height);
-            previewSurface = new Surface(surfaceTexture);
-        }
-
-        @Override
-        public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture, int width, int height) {
-            Log.i(TAG, "onSurfaceTextureSizeChanged: surfaceTexture = " + surfaceTexture + ", width = " + width + ", height = " + height);
-            previewSurface = new Surface(surfaceTexture);
-        }
-
-        @Override
-        public boolean onSurfaceTextureDestroyed(SurfaceTexture surfaceTexture) {
-            Log.i(TAG, "onSurfaceTextureDestroyed: surfaceTexture = " + surfaceTexture);
-            previewSurface = null;
-            return true;
-        }
-
-        @Override
-        public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {
-            Log.i(TAG, "onSurfaceTextureUpdated: surfaceTexture = " + surfaceTexture);
-        }
-    };
-
-    private CameraController.ICameraCallback cameraCallback = new CameraController.ICameraCallback() {
-    //private ICamera.ICameraCallback cameraCallback = new ICamera.ICameraCallback() {
-        @Override
-        public void onState(String cameraId, int state) {
-            Log.i(TAG, "onState: cameraId = " + cameraId + ", state = " + state);
-        }
-
-        @Override
-        public void onError(String cameraId, int error) {
-            Log.i(TAG, "onError: cameraId = " + cameraId + ", error = " + error);
-        }
-    };
 
     private CameraController.ICaptureCallback captureCallback = new CameraController.ICaptureCallback() {
     //private ICamera.ICaptureCallback captureCallback = new ICamera.ICaptureCallback() {
@@ -121,6 +82,45 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
+    private TextureView.SurfaceTextureListener surfaceTextureListener = new TextureView.SurfaceTextureListener() {
+        @Override
+        public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int width, int height) {
+            Log.i(TAG, "onSurfaceTextureAvailable: surfaceTexture = " + surfaceTexture + ", width = " + width + ", height = " + height);
+            previewSurface = new Surface(surfaceTexture);
+        }
+
+        @Override
+        public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture, int width, int height) {
+            Log.i(TAG, "onSurfaceTextureSizeChanged: surfaceTexture = " + surfaceTexture + ", width = " + width + ", height = " + height);
+            previewSurface = new Surface(surfaceTexture);
+        }
+
+        @Override
+        public boolean onSurfaceTextureDestroyed(SurfaceTexture surfaceTexture) {
+            Log.i(TAG, "onSurfaceTextureDestroyed: surfaceTexture = " + surfaceTexture);
+            previewSurface = null;
+            return true;
+        }
+
+        @Override
+        public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {
+            Log.i(TAG, "onSurfaceTextureUpdated: surfaceTexture = " + surfaceTexture);
+        }
+    };
+
+    private CameraController.ICameraCallback cameraCallback = new CameraController.ICameraCallback() {
+        //private ICamera.ICameraCallback cameraCallback = new ICamera.ICameraCallback() {
+        @Override
+        public void onState(String cameraId, int state) {
+            Log.i(TAG, "onState: cameraId = " + cameraId + ", state = " + state);
+        }
+
+        @Override
+        public void onError(String cameraId, int error) {
+            Log.i(TAG, "onError: cameraId = " + cameraId + ", error = " + error);
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -128,14 +128,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         setContentView(R.layout.activity_main);
         ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO},
+                new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE},
                 PERMISSION_REQUEST);
     }
 
     @Override
     protected void onDestroy() {
         Log.i(TAG, "onDestroy");
+        camera.stopRecord(cameraIds[0]);
         camera.close(cameraIds[0]);
+        camera.setCameraCallback(null);
+        camera.setCaptureCallback(null);
+        camera.setRecordCallback(null);
         super.onDestroy();
     }
 
@@ -207,9 +211,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         camera = CameraController.getInstance();
         //camera = new CameraNativeFactory().getCamera();
         cameraIds = camera.getCameraIdList();
-        camera.setCameraCallback(cameraCallback);
-        camera.setCaptureCallback(captureCallback);
-        camera.setRecordCallback(recordCallback);
 
         if (0 == cameraIds.length) {
             Log.w(TAG, "init: no camera!");
@@ -217,6 +218,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else {
             Log.i(TAG, "init: camera count = " + cameraIds.length);
         }
+
+        camera.setCameraCallback(cameraCallback);
+        camera.setCaptureCallback(captureCallback);
+        camera.setRecordCallback(recordCallback);
 
         // initialize UI
         previewSize = getMatchPreviewSize();
