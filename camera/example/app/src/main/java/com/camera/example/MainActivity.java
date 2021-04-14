@@ -190,7 +190,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 // This is important because not all available record sizes are supported by the camera.
                 // We set 1280×720 just for test.
                 camera.setRecordSize(cameraIds[0], 1280, 720);
-                Log.i(TAG, "onClick: startRecord = " + camera.startRecord(cameraIds[0], 20000));
+                Log.i(TAG, "onClick: startRecord = " + camera.startRecord(cameraIds[0]));
                 break;
 
             case R.id.btn_stop_record:

@@ -317,8 +317,8 @@ public class CameraController {
             }
 
             Log.i(TAG, "onInfo: cameraId = " + cameraId + ", what = " + what + ", extra = " + extra);
-            isRecordings.put(cameraId, false);
             releaseRecorder(cameraId);
+            isRecordings.put(cameraId, false);
         }
     };
 
@@ -339,8 +339,8 @@ public class CameraController {
             }
 
             Log.e(TAG, "onError: cameraId = " + cameraId + ", what = " + what + ", extra = " + extra);
-            isRecordings.put(cameraId, false);
             releaseRecorder(cameraId);
+            isRecordings.put(cameraId, false);
 
             if (null != recordCallback) {
                 recordCallback.onError(cameraId, what, extra);
@@ -734,6 +734,11 @@ public class CameraController {
         return null;
     }
 
+    public boolean isRecording(String cameraId) {
+        Boolean  isRecording = isRecordings.get(cameraId);
+        return null != isRecording && isRecording;
+    }
+
     public int setCameraCallback(ICameraCallback callback) {
         cameraCallback = callback;
         return ResultCode.SUCCESS;
@@ -748,8 +753,7 @@ public class CameraController {
     public int setCaptureSize(String cameraId, int width, int height) {
         Log.i(TAG, "setCaptureSize: cameraId = " + cameraId + ", width = " + width + ", height = " + height);
 
-        Boolean  isRecording = isRecordings.get(cameraId);
-        if (null != isRecording && isRecording) {
+        if (isRecording(cameraId)) {
             return ResultCode.FAILED_WHILE_RECORDING;
         }
 
@@ -903,8 +907,8 @@ public class CameraController {
                     String cameraId = camera.getId();
 
                     Log.i(TAG, "onError: cameraId = " + cameraId + ", error = " + error);
-                    isRecordings.put(cameraId, false);
                     releaseRecorder(cameraId);
+                    isRecordings.put(cameraId, false);
                     deleteCameraCaptureSession(cameraId);
                     closeDevice(cameraId);
 
@@ -962,8 +966,7 @@ public class CameraController {
             return ResultCode.NO_IMAGE_READER;
         }
 
-        Boolean  isRecording = isRecordings.get(cameraId);
-        if (null != isRecording && isRecording) {
+        if (isRecording(cameraId)) {
             return ResultCode.FAILED_WHILE_RECORDING;
         }
 
@@ -1000,8 +1003,7 @@ public class CameraController {
     public int stopPreview(String cameraId) {
         Log.i(TAG, "stopPreview: cameraId = " + cameraId);
 
-        Boolean  isRecording = isRecordings.get(cameraId);
-        if (null != isRecording && isRecording) {
+        if (isRecording(cameraId)) {
             return ResultCode.FAILED_WHILE_RECORDING;
         }
 
@@ -1065,8 +1067,7 @@ public class CameraController {
     public int startRecord(String cameraId, int duration) {
         Log.i(TAG, "startRecord: cameraId = " + cameraId + ", duration = " + duration);
 
-        Boolean  isRecording = isRecordings.get(cameraId);
-        if (null != isRecording && isRecording) {
+        if (isRecording(cameraId)) {
             return ResultCode.FAILED_WHILE_RECORDING;
         }
 
@@ -1080,6 +1081,7 @@ public class CameraController {
             return ResultCode.NO_IMAGE_READER;
         }
 
+        isRecordings.put(cameraId, true);
         prepareRecorder(cameraId, duration);
 
         MediaRecorder mediaRecorder = mediaRecorders.get(cameraId);
@@ -1115,7 +1117,6 @@ public class CameraController {
             captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
             cameraCaptureSession.setRepeatingRequest(captureBuilder.build(), sessionRecordCallback, handler);
             mediaRecorder.start();
-            isRecordings.put(cameraId, true);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -1132,8 +1133,8 @@ public class CameraController {
             mediaRecorder.stop();
         }
 
-        isRecordings.put(cameraId, false);
         releaseRecorder(cameraId);
+        isRecordings.put(cameraId, false);
 
         return ResultCode.SUCCESS;
     }
@@ -1305,7 +1306,7 @@ public class CameraController {
         MediaRecorder mediaRecorder = mediaRecorders.get(cameraId);
 
         if (null != mediaRecorder) {
-            synchronized (mediaRecorders) {
+            synchronized (this) {
                 if (null != (mediaRecorder = mediaRecorders.get(cameraId))) {
                     mediaRecorder.reset();
                     mediaRecorder.release();

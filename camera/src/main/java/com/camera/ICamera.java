@@ -258,6 +258,14 @@ public interface ICamera {
     public Size[] getAvailableRecordSizes(String cameraId);
 
     /**
+     * Check if the camera is recording.
+     *
+     * @param cameraId the camera id
+     * @return True if the camera is recording, or false.
+     */
+    public boolean isRecording(String cameraId);
+
+    /**
      * Set the camera callback.
      *
      * @param callback the camera callback
