@@ -90,6 +90,7 @@ public class CameraNative implements ICamera {
     private Map<String, String> captureDirs = new ArrayMap<>();
     private Map<String, String> recordDirs = new ArrayMap<>();
     private Map<String, String> thumbnailDirs = new ArrayMap<>();
+    private Map<String, Size> captureSizes = new ArrayMap<>();
     private Map<String, Size> recordSizes = new ArrayMap<>();
     private Map<String, Integer> videoBps = new ArrayMap<>();
     private Map<String, Boolean> isRecordings = new ArrayMap<>();
@@ -431,15 +432,31 @@ public class CameraNative implements ICamera {
         for (String cameraId : cameraIds) {
             try {
                 CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(cameraId);
+
                 Integer sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
                 sensorOrientations.put(cameraId, sensorOrientation);
-                Log.i(TAG, "CameraNative: camera " + cameraId + " sensor orientation =  " + sensorOrientation);
+                Log.i(TAG, "CameraNative: cameraId = " + cameraId + ", sensor orientation =  " + sensorOrientation);
 
+                StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+                if (null != map) {
+                    Size size = Collections.max(Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)), new CompareSizesByArea());
+                    captureSizes.put(cameraId, size);
+                    Log.i(TAG, "CameraNative: cameraId = " + cameraId + ", capture size = " + size);
+                    
+                    size = Collections.max(Arrays.asList(map.getOutputSizes(MediaRecorder.class)), new CompareSizesByArea());
+                    recordSizes.put(cameraId, size);
+                    Log.i(TAG, "CameraNative: cameraId = " + cameraId + ", record size = " + size);
+                } else {
+                    captureSizes.put(cameraId, new Size(1280, 720));
+                    recordSizes.put(cameraId, new Size(1280, 720));
+                    Log.w(TAG, "CameraNative: cameraId = " + cameraId + ", the StreamConfigurationMap is null, use 1280¡Á720 as default!");
+                }
+                
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-                Log.i(TAG, "CameraNative: camera " + cameraId + " facing =  " + facing);
+                Log.i(TAG, "CameraNative: cameraId = " + cameraId + ", facing =  " + facing);
 
                 Integer level = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
-                Log.i(TAG, "CameraNative: camera " + cameraId + " supported level =  " + level);
+                Log.i(TAG, "CameraNative: cameraId = " + cameraId + ", supported level =  " + level);
             } catch (CameraAccessException e) {
                 e.printStackTrace();
             }
@@ -551,6 +568,7 @@ public class CameraNative implements ICamera {
         ImageReader imageReader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 2);
         imageReader.setOnImageAvailableListener(imageAvailableListener, handler);
         imageReaders.put(cameraId, imageReader);
+        captureSizes.put(cameraId, new Size(width, height));
         deleteCameraCaptureSession(cameraId);
 
         return createCameraCaptureSession(cameraId, Collections.singletonList(imageReader.getSurface()));
@@ -650,16 +668,10 @@ public class CameraNative implements ICamera {
         close(cameraId);
 
         try {
-            Size size = Collections.max(Arrays.asList(getAvailableCaptureSizes(cameraId)), new CompareSizesByArea());
+            Size size = captureSizes.get(cameraId);
             final ImageReader imageReader = ImageReader.newInstance(size.getWidth(), size.getHeight(), ImageFormat.JPEG, 2);
-
             imageReader.setOnImageAvailableListener(imageAvailableListener, handler);
             imageReaders.put(cameraId, imageReader);
-            Log.i(TAG, "open: camera " + cameraId + " capture size = " + size);
-
-            size = Collections.max(Arrays.asList(getAvailableRecordSizes(cameraId)), new CompareSizesByArea());
-            recordSizes.put(cameraId, size);
-            Log.i(TAG, "open: camera " + cameraId + " record size = " + size);
 
             cameraFlags.put(cameraId, false);
             handlerThread = new HandlerThread("CameraHandlerThread");
