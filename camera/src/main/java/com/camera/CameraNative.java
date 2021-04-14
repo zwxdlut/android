@@ -473,7 +473,7 @@ public class CameraNative implements ICamera {
             StreamConfigurationMap map = cameraManager.getCameraCharacteristics(cameraId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
 
             if (null == map) {
-                Log.e(TAG, "getAvailablePreviewSizes: camera no available size!");
+                Log.e(TAG, "getAvailablePreviewSizes: No camera available size!");
                 return null;
             }
 
@@ -491,7 +491,7 @@ public class CameraNative implements ICamera {
             StreamConfigurationMap map = cameraManager.getCameraCharacteristics(cameraId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
 
             if (null == map) {
-                Log.e(TAG, "getAvailableCaptureSizes: camera no available size!");
+                Log.e(TAG, "getAvailableCaptureSizes: No camera available size!");
                 return null;
             }
 
@@ -509,7 +509,7 @@ public class CameraNative implements ICamera {
             StreamConfigurationMap map = cameraManager.getCameraCharacteristics(cameraId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
 
             if (null == map) {
-                Log.e(TAG, "getAvailableRecordSizes: camera no available size!");
+                Log.e(TAG, "getAvailableRecordSizes: No camera available size!");
                 return null;
             }
 
@@ -845,7 +845,7 @@ public class CameraNative implements ICamera {
             WindowManager windowManager = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE));
 
             if (null != windowManager) {
-                captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(cameraId, windowManager.getDefaultDisplay().getRotation()));
+                captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(sensorOrientations.get(cameraId), windowManager.getDefaultDisplay().getRotation()));
             }
 
             location.setLatitude(latitude);
@@ -1037,7 +1037,7 @@ public class CameraNative implements ICamera {
             try {
                 cameraCaptureSession.abortCaptures();
                 cameraCaptureSession.stopRepeating();
-            } catch (CameraAccessException e) {
+            } catch (CameraAccessException | IllegalStateException e) {
                 e.printStackTrace();
             } finally {
                 cameraCaptureSession.close();
@@ -1121,9 +1121,7 @@ public class CameraNative implements ICamera {
         }
     }
 
-    private int getOrientation(String cameraId, int rotation) {
-        Integer sensorOrientation = sensorOrientations.get(cameraId);
-
+    private int getOrientation(Integer sensorOrientation, int rotation) {
         if (null == sensorOrientation) {
             sensorOrientation = 0;
         }
