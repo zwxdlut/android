@@ -1085,7 +1085,7 @@ public class CameraController {
     }
 
     public int startRecord(String cameraId, int duration, String name) {
-        Log.i(TAG, "startRecord: cameraId = " + cameraId + ", duration = " + duration);
+        Log.i(TAG, "startRecord: cameraId = " + cameraId + ", duration = " + duration + ", name = " + name);
 
         if (isRecording(cameraId)) {
             return ResultCode.FAILED_WHILE_RECORDING;
@@ -1275,11 +1275,11 @@ public class CameraController {
     }
 
     private void prepareRecorder(String cameraId, int duration, String name) {
-        Log.i(TAG, "prepareRecorder: cameraId = " + cameraId + ", duration = " + duration);
+        Log.i(TAG, "prepareRecorder: cameraId = " + cameraId + ", duration = " + duration + ", name = " + name);
 
         MediaRecorder mediaRecorder = new MediaRecorder();
         String path = recordDirs.get(cameraId).substring(0, recordDirs.get(cameraId).lastIndexOf(File.separator)) +
-                File.separator + (null != name && !name.isEmpty() ? name : dateFormat.format(new Date())) + ".mp4";
+                File.separator + (null != name && !name.isEmpty() ? name : dateFormat.format(new Date()) + ".mp4");
         Integer sensorOrientation = sensorOrientations.get(cameraId);
         WindowManager windowManager = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE));
 
