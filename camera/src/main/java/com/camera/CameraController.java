@@ -666,7 +666,7 @@ public class CameraController {
                 } else {
                     captureSizes.put(cameraId, new Size(1280, 720));
                     recordSizes.put(cameraId, new Size(1280, 720));
-                    Log.w(TAG, "CameraController: cameraId = " + cameraId + ", the StreamConfigurationMap is null, use 1280×720 as default!");
+                    Log.w(TAG, "CameraController: cameraId = " + cameraId + ", the StreamConfigurationMap is null, use 1280 * 720 as default!");
                 }
                 
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
@@ -1073,10 +1073,18 @@ public class CameraController {
     }
 
     public int startRecord(String cameraId) {
-        return startRecord(cameraId, 0);
+        return startRecord(cameraId, 0, null);
     }
 
     public int startRecord(String cameraId, int duration) {
+        return startRecord(cameraId, duration, null);
+    }
+
+    public int startRecord(String cameraId, String name) {
+        return startRecord(cameraId, 0, name);
+    }
+
+    public int startRecord(String cameraId, int duration, String name) {
         Log.i(TAG, "startRecord: cameraId = " + cameraId + ", duration = " + duration);
 
         if (isRecording(cameraId)) {
@@ -1094,7 +1102,7 @@ public class CameraController {
         }
 
         isRecordings.put(cameraId, true);
-        prepareRecorder(cameraId, duration);
+        prepareRecorder(cameraId, duration, name);
 
         MediaRecorder mediaRecorder = mediaRecorders.get(cameraId);
         if (null == mediaRecorder) {
@@ -1266,11 +1274,12 @@ public class CameraController {
         }
     }
 
-    private void prepareRecorder(String cameraId, int duration) {
+    private void prepareRecorder(String cameraId, int duration, String name) {
         Log.i(TAG, "prepareRecorder: cameraId = " + cameraId + ", duration = " + duration);
 
         MediaRecorder mediaRecorder = new MediaRecorder();
-        String path = recordDirs.get(cameraId).substring(0, recordDirs.get(cameraId).lastIndexOf(File.separator)) + File.separator + dateFormat.format(new Date()) + ".mp4";
+        String path = recordDirs.get(cameraId).substring(0, recordDirs.get(cameraId).lastIndexOf(File.separator)) +
+                File.separator + (null != name && !name.isEmpty() ? name : dateFormat.format(new Date())) + ".mp4";
         Integer sensorOrientation = sensorOrientations.get(cameraId);
         WindowManager windowManager = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE));
 

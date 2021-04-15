@@ -399,10 +399,29 @@ public interface ICamera {
      * Start record with max duration.
      *
      * @param cameraId the camera id
-     * @param duration the record max duration in ms
+     * @param duration the record max duration in ms (if zero or negative, disables the duration limit)
      * @return {@link ResultCode}
      */
     public int startRecord(String cameraId, int duration);
+
+    /**
+     * Start record with file name.
+     *
+     * @param cameraId the camera id
+     * @param name the record file name
+     * @return {@link ResultCode}
+     */
+    public int startRecord(String cameraId, String name);
+
+    /**
+     * Start record with max duration and file name.
+     *
+     * @param cameraId the camera id
+     * @param duration the record max duration in ms (if zero or negative, disables the duration limit)
+     * @param name the record file name
+     * @return {@link ResultCode}
+     */
+    public int startRecord(String cameraId, int duration, String name);
 
     /**
      * Stop record.
