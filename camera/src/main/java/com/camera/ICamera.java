@@ -1,6 +1,7 @@
 package com.camera;
 
 import android.hardware.camera2.CameraDevice;
+import android.location.Location;
 import android.media.MediaRecorder;
 import android.util.Size;
 import android.view.Surface;
@@ -12,7 +13,7 @@ public interface ICamera {
     /**
      * The result code returned by API.
      */
-    public interface ResultCode {
+    class ResultCode {
         /**
          * The constant SUCCESS.
          */
@@ -92,11 +93,11 @@ public interface ICamera {
     /**
      * The interface camera callback.
      */
-    public interface ICameraCallback {
+    interface ICameraCallback {
         /**
          * The camera state.
          */
-        public interface State {
+        class State {
             /**
              * The constant CAMERA_CLOSED.
              */
@@ -116,7 +117,7 @@ public interface ICamera {
         /**
          * The camera error code.
          */
-        public interface ErrorCode {
+        class ErrorCode {
             /**
              * The constant CAMERA_IN_USE.
              */
@@ -154,7 +155,7 @@ public interface ICamera {
          * <li>{@link State#CAMERA_DISCONNECTED}
          * <ul/>
          */
-        public void onState(String cameraId, int state);
+        void onState(String cameraId, int state);
 
         /**
          * Called when the camera error occurred.
@@ -169,30 +170,46 @@ public interface ICamera {
          * <li>{@link ErrorCode#CAMERA_SERVICE}
          * <ul/>
          */
-        public void onError(String cameraId, int error);
+        void onError(String cameraId, int error);
     }
 
     /**
      * The interface capture callback.
      */
-    public interface ICaptureCallback {
+    interface ICaptureCallback {
         /**
-         * Called when the capture complete.
+         * Called when the capture started.
          *
          * @param cameraId the camera id
-         * @param path the captured file full path
+         * @param path the capture file full path
          */
-        public void onComplete(String cameraId, String path);
+        void onStarted(String cameraId, String path);
+
+        /**
+         * Called when the capture completed.
+         *
+         * @param cameraId the camera id
+         * @param path the capture file full path
+         */
+        void onCompleted(String cameraId, String path);
+
+        /**
+         * Called when the capture failed.
+         *
+         * @param cameraId the camera id
+         * @param path the capture file full path
+         */
+        void onFailed(String cameraId, String path);
     }
 
     /**
      * The interface record callback.
      */
-    public interface IRecordCallback {
+    interface IRecordCallback {
         /**
          * The error code while recording.
          */
-        public interface ErrorCode {
+        class ErrorCode {
             /**
              * The constant ERROR_UNKNOWN.
              */
@@ -205,17 +222,18 @@ public interface ICamera {
         }
 
         /**
-         * Called when the record complete.
+         * Called when the record completed.
          *
          * @param cameraId the camera id
          * @param path the record file full path
          */
-        public void onComplete(String cameraId, String path);
+        void onCompleted(String cameraId, String path);
 
         /**
          * Called when error occurred while recording.
          *
          * @param cameraId the camera id
+         * @param path the record file full path
          * @param what the type of error that has occurred:
          * <ul>
          * <li>{@link ErrorCode#UNKNOWN}
@@ -223,7 +241,7 @@ public interface ICamera {
          * <ul/>
          * @param extra an extra code, specific to the error type
          */
-        public void onError(String cameraId, int what, int extra);
+        void onError(String cameraId, String path, int what, int extra);
     }
 
     /**
@@ -381,11 +399,37 @@ public interface ICamera {
      * Capture a picture.
      *
      * @param cameraId the camera id
-     * @param latitude the latitude
-     * @param longitude the longitude
      * @return {@link ResultCode}
      */
-    public int capture(String cameraId, double latitude, double longitude);
+    public int capture(String cameraId);
+
+    /**
+     * Capture a picture with file.
+     *
+     * @param cameraId the camera id
+     * @param name the capture file name
+     * @return {@link ResultCode}
+     */
+    public int capture(String cameraId, String name);
+
+    /**
+     * Capture a picture with location.
+     *
+     * @param cameraId the camera id
+     * @param location the location
+     * @return {@link ResultCode}
+     */
+    public int capture(String cameraId, Location location);
+
+    /**
+     * Capture a picture with file name and location.
+     *
+     * @param cameraId the camera id
+     * @param name the capture file name
+     * @param location the location
+     * @return {@link ResultCode}
+     */
+    public int capture(String cameraId, String name, Location location);
 
     /**
      * Start record.
@@ -394,15 +438,6 @@ public interface ICamera {
      * @return {@link ResultCode}
      */
     public int startRecord(String cameraId);
-
-    /**
-     * Start record with max duration.
-     *
-     * @param cameraId the camera id
-     * @param duration the record max duration in ms (if zero or negative, disables the duration limit)
-     * @return {@link ResultCode}
-     */
-    public int startRecord(String cameraId, int duration);
 
     /**
      * Start record with file name.
@@ -414,14 +449,23 @@ public interface ICamera {
     public int startRecord(String cameraId, String name);
 
     /**
-     * Start record with max duration and file name.
+     * Start record with max duration.
      *
      * @param cameraId the camera id
      * @param duration the record max duration in ms (if zero or negative, disables the duration limit)
-     * @param name the record file name
      * @return {@link ResultCode}
      */
-    public int startRecord(String cameraId, int duration, String name);
+    public int startRecord(String cameraId, int duration);
+
+    /**
+     * Start record with file name and max duration.
+     *
+     * @param cameraId the camera id
+     * @param name the record file name
+     * @param duration the record max duration in ms (if zero or negative, disables the duration limit)
+     * @return {@link ResultCode}
+     */
+    public int startRecord(String cameraId, String name, int duration);
 
     /**
      * Stop record.

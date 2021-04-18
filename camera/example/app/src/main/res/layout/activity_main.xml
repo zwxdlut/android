@@ -1,86 +1,88 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView  xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".MainActivity">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <RelativeLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".MainActivity">
 
-        <TextureView
-            android:id="@+id/tv_preview"
+        <RelativeLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content">
 
-        <ImageView
-            android:id="@+id/iv_capture"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_toEndOf="@id/tv_preview"
-            android:contentDescription="@string/view_capture"
-            android:visibility="gone"/>
+            <TextureView
+                android:id="@+id/tv_preview"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
 
-        <Button
-            android:id="@+id/btn_open_camera"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_open_camera"
-            android:layout_below="@id/tv_preview"/>
+            <ImageView
+                android:id="@+id/iv_capture"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@id/tv_preview"
+                android:contentDescription="@string/view_capture" />
 
-        <Button
-            android:id="@+id/btn_close_camera"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_close_camera"
-            android:layout_below="@id/btn_open_camera"/>
+            <Button
+                android:id="@+id/btn_open_camera"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_open_camera"
+                android:layout_below="@id/tv_preview"/>
 
-        <Button
-            android:id="@+id/btn_set_preview_surface"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_set_preview_surface"
-            android:layout_below="@id/btn_close_camera"/>
+            <Button
+                android:id="@+id/btn_close_camera"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_close_camera"
+                android:layout_below="@id/btn_open_camera"/>
 
-        <Button
-            android:id="@+id/btn_start_preview"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_start_preview"
-            android:layout_below="@id/tv_preview"
-            android:layout_toEndOf="@id/btn_open_camera"/>
+            <Button
+                android:id="@+id/btn_set_preview_surface"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_set_preview_surface"
+                android:layout_below="@id/btn_close_camera"/>
 
-        <Button
-            android:id="@+id/btn_stop_preview"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_stop_preview"
-            android:layout_toEndOf="@id/btn_close_camera"
-            android:layout_below="@id/btn_start_preview"/>
+            <Button
+                android:id="@+id/btn_start_preview"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_start_preview"
+                android:layout_below="@id/tv_preview"
+                android:layout_toEndOf="@id/btn_open_camera"/>
 
-        <Button
-            android:id="@+id/btn_capture"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_capture"
-            android:layout_below="@id/btn_stop_preview"
-            android:layout_toEndOf="@id/btn_set_preview_surface"/>
+            <Button
+                android:id="@+id/btn_stop_preview"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_stop_preview"
+                android:layout_toEndOf="@id/btn_close_camera"
+                android:layout_below="@id/btn_start_preview"/>
 
-        <Button
-            android:id="@+id/btn_start_record"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_start_record"
-            android:layout_below="@id/tv_preview"
-            android:layout_toEndOf="@id/btn_start_preview"/>
+            <Button
+                android:id="@+id/btn_capture"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_capture"
+                android:layout_below="@id/btn_stop_preview"
+                android:layout_toEndOf="@id/btn_set_preview_surface"/>
 
-        <Button
-            android:id="@+id/btn_stop_record"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_stop_record"
-            android:layout_below="@id/btn_start_record"
-            android:layout_toEndOf="@id/btn_stop_preview"/>
-    </RelativeLayout>
-</ScrollView>
+            <Button
+                android:id="@+id/btn_start_record"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_start_record"
+                android:layout_below="@id/tv_preview"
+                android:layout_toEndOf="@id/btn_start_preview"/>
+
+            <Button
+                android:id="@+id/btn_stop_record"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_stop_record"
+                android:layout_below="@id/btn_start_record"
+                android:layout_toEndOf="@id/btn_stop_preview"/>
+        </RelativeLayout>
+    </ScrollView>
+</layout>
