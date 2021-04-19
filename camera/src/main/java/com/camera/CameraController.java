@@ -1277,7 +1277,12 @@ public class CameraController {
             } catch (CameraAccessException | IllegalStateException e) {
                 e.printStackTrace();
             } finally {
-                cameraCaptureSession.close();
+                try {
+                    cameraCaptureSession.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
                 cameraCaptureSessions.remove(cameraId);
             }
         }
