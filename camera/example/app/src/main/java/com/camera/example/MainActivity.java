@@ -144,6 +144,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onDestroy() {
         Log.i(TAG, "onDestroy");
 
+        // de-initialize the camera
         camera.stopRecord(cameraIds[0]);
         camera.close(cameraIds[0]);
         camera.setCameraCallback(null);
@@ -237,7 +238,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // initialize the UI
         Size size = getMatchedPreviewSize();
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(size.getWidth(), size.getHeight());
-
         params.leftMargin = 0;
         params.topMargin = 0;
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
