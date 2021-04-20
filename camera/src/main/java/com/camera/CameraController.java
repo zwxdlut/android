@@ -1236,10 +1236,11 @@ public class CameraController {
         final int[] ret = {ResultCode.SUCCESS};
 
         try {
+            cameraFlags.put(cameraId, false);
             sessionHandlerThread = new HandlerThread("SessionHandlerThread");
             sessionHandlerThread.start();
             sessionHandler = new Handler(sessionHandlerThread.getLooper());
-            cameraFlags.put(cameraId, false);
+
             cameraDevice.createCaptureSession(surfaces, new CameraCaptureSession.StateCallback() {
                 @Override
                 public void onConfigured(@NonNull CameraCaptureSession session) {
@@ -1259,6 +1260,7 @@ public class CameraController {
                     notifyCamera(cameraId);
                 }
             }, sessionHandler);
+
             waitCamera(cameraId);
         } catch (CameraAccessException e) {
             e.printStackTrace();
