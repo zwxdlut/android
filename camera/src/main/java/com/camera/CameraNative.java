@@ -90,7 +90,7 @@ public class CameraNative implements ICamera {
     private Map<String, String> thumbnailDirs = new ArrayMap<>();
     private Map<String, Size> captureSizes = new ArrayMap<>();
     private Map<String, Size> recordSizes = new ArrayMap<>();
-    private Map<String, Location> locations = new ArrayMap<>();
+    private Map<String, Location> captureLocations = new ArrayMap<>();
     private Map<String, Integer> videoEncodingBps = new ArrayMap<>();
     private Map<String, Boolean> isRecordings = new ArrayMap<>();
     private Map<String, ImageReader> imageReaders = new ArrayMap<>();
@@ -284,7 +284,7 @@ public class CameraNative implements ICamera {
                     Log.i(TAG, "onImageAvailable: save the image data to file, path = " + path);
 
                     ContentValues values = new ContentValues();
-                    Location location = locations.get(cameraId);
+                    Location location = captureLocations.get(cameraId);
 
                     // write the location to image
                     if (null != location) {
@@ -869,7 +869,7 @@ public class CameraNative implements ICamera {
             }
 
             capturePaths.put(cameraId, path);
-            locations.put(cameraId, location);
+            captureLocations.put(cameraId, location);
             captureBuilder.addTarget(imageReader.getSurface());
             captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
             captureBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
