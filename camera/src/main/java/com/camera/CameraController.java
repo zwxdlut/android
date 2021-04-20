@@ -879,15 +879,16 @@ public class CameraController {
         close(cameraId);
 
         try {
+            cameraFlags.put(cameraId, false);
+            handlerThread = new HandlerThread("HandlerThread");
+            handlerThread.start();
+            handler = new Handler(handlerThread.getLooper());
+
             Size size = captureSizes.get(cameraId);
             final ImageReader imageReader = ImageReader.newInstance(size.getWidth(), size.getHeight(), ImageFormat.JPEG, 1);
             imageReader.setOnImageAvailableListener(imageAvailableListener, handler);
             imageReaders.put(cameraId, imageReader);
 
-            cameraFlags.put(cameraId, false);
-            handlerThread = new HandlerThread("CameraHandlerThread");
-            handlerThread.start();
-            handler = new Handler(handlerThread.getLooper());
             cameraManager.openCamera(cameraId, new CameraDevice.StateCallback() {
                 @Override
                 public void onOpened(@NonNull CameraDevice camera) {
@@ -952,6 +953,12 @@ public class CameraController {
         deleteCameraCaptureSession(cameraId);
         closeDevice(cameraId);
 
+        ImageReader imageReader = imageReaders.get(cameraId);
+        if (null != imageReader) {
+            imageReader.close();
+            imageReaders.remove(cameraId);
+        }
+
         if (null != handlerThread) {
             handlerThread.quitSafely();
 
@@ -963,12 +970,6 @@ public class CameraController {
                 handlerThread = null;
                 handler = null;
             }
-        }
-
-        ImageReader imageReader = imageReaders.get(cameraId);
-        if (null != imageReader) {
-            imageReader.close();
-            imageReaders.remove(cameraId);
         }
 
         return ResultCode.SUCCESS;
