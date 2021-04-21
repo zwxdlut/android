@@ -801,6 +801,7 @@ public class CameraController {
             if (captureDir.mkdirs()) {
                 Log.i(TAG, "setCaptureDir: make directory " + dir);
             } else {
+                Log.e(TAG, "setCaptureDir: make directory " + dir + " failed!");
                 return ResultCode.CREATE_DIRECTORY_FAILED;
             }
         }
@@ -835,6 +836,7 @@ public class CameraController {
             if (recordDir.mkdirs()) {
                 Log.i(TAG, "setRecordDir: make directory " + dir);
             } else {
+                Log.e(TAG, "setRecordDir: make directory " + dir + " failed!");
                 return ResultCode.CREATE_DIRECTORY_FAILED;
             }
         }
@@ -845,6 +847,7 @@ public class CameraController {
             if(thumbnailDir.mkdirs()) {
                 Log.i(TAG, "setRecordDir: make directory " + thumbnailDir.getPath());
             } else {
+                Log.e(TAG, "setRecordDir: make directory " + dir + " failed!");
                 return ResultCode.CREATE_DIRECTORY_FAILED;
             }
         }
