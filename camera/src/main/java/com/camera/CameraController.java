@@ -880,7 +880,7 @@ public class CameraController {
 
         try {
             cameraFlags.put(cameraId, false);
-            handlerThread = new HandlerThread("HandlerThread");
+            handlerThread = new HandlerThread("CameraHandlerThread");
             handlerThread.start();
             handler = new Handler(handlerThread.getLooper());
 
