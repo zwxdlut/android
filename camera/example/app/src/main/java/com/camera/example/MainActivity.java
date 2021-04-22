@@ -187,41 +187,42 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_open_camera:
-                Log.i(TAG, "onClick: open = " + camera.open(cameraIds[0]));
+                Log.i(TAG, "onClick: open() = " + camera.open(cameraIds[0]));
                 // This is important because not all available record sizes are supported by the camera.
                 // We set 1280×720 just for test.
                 camera.setRecordSize(cameraIds[0], 1280, 720);
                 break;
 
             case R.id.btn_close_camera:
-                Log.i(TAG, "onClick: close = " + camera.close(cameraIds[0]));
+                Log.i(TAG, "onClick: close() = " + camera.close(cameraIds[0]));
                 break;
 
             case R.id.btn_start_preview:
-                Log.i(TAG, "onClick: startPreview = " + camera.startPreview(cameraIds[0]));
+                Log.i(TAG, "onClick: startPreview() = " + camera.startPreview(cameraIds[0]));
                 break;
 
             case R.id.btn_stop_preview:
-                Log.i(TAG, "onClick: stopPreview = " + camera.stopPreview(cameraIds[0]));
+                Log.i(TAG, "onClick: stopPreview() = " + camera.stopPreview(cameraIds[0]));
                 break;
 
             case R.id.btn_capture:
                 Location location = new Location(LocationManager.PASSIVE_PROVIDER);
                 location.setLatitude(116.2353515625);
                 location.setLongitude(39.5379397452);
-                Log.i(TAG, "onClick: capture = " + camera.capture(cameraIds[0], location));
+                Log.i(TAG, "onClick: capture() = " + camera.capture(cameraIds[0], location));
                 break;
 
             case R.id.btn_set_preview_surface:
-                Log.i(TAG, "onClick: setPreviewSurface = " + camera.setPreviewSurface(cameraIds[0], previewSurface));
+                Log.i(TAG, "onClick: setPreviewSurface()");
+                camera.setPreviewSurface(cameraIds[0], previewSurface);
                 break;
 
             case R.id.btn_start_record:
-                Log.i(TAG, "onClick: startRecord = " + camera.startRecord(cameraIds[0]));
+                Log.i(TAG, "onClick: startRecord() = " + camera.startRecord(cameraIds[0]));
                 break;
 
             case R.id.btn_stop_record:
-                Log.i(TAG, "onClick: stopRecord = " + camera.stopRecord(cameraIds[0]));
+                Log.i(TAG, "onClick: stopRecord() = " + camera.stopRecord(cameraIds[0]));
                 break;
 
             default:

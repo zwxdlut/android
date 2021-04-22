@@ -83,11 +83,6 @@ public interface ICamera {
          * The constant FAILED_WHILE_RECORDING.
          */
         public static final int FAILED_WHILE_RECORDING = -13;
-
-        /**
-         * The constant CREATE_DIRECTORY_FAILED.
-         */
-        public static final int CREATE_DIRECTORY_FAILED = -14;
     }
 
     /**
@@ -279,7 +274,7 @@ public interface ICamera {
      * Check if the camera is recording.
      *
      * @param cameraId the camera id
-     * @return True if the camera is recording, or false.
+     * @return true while recording or false
      */
     public boolean isRecording(String cameraId);
 
@@ -287,18 +282,16 @@ public interface ICamera {
      * Set the camera callback.
      *
      * @param callback the camera callback
-     * @return {@link ResultCode}
      */
-    public int setCameraCallback(ICameraCallback callback);
+    public void setCameraCallback(ICameraCallback callback);
 
     /**
      * Set the preview surface.
      *
      * @param cameraId the camera id
      * @param previewSurface the preview surface
-     * @return {@link ResultCode}
      */
-    public int setPreviewSurface(String cameraId, Surface previewSurface);
+    public void setPreviewSurface(String cameraId, Surface previewSurface);
 
     /**
      * Set the capture size.
@@ -306,26 +299,24 @@ public interface ICamera {
      * @param cameraId the camera id
      * @param width the capture width
      * @param height the capture height
-     * @return {@link ResultCode}.
      */
-    public int setCaptureSize(String cameraId, int width, int height);
+    public void setCaptureSize(String cameraId, int width, int height);
 
     /**
      * Set the capture storage directory.
      *
      * @param cameraId the camera id
      * @param dir the capture storage directory
-     * @return {@link ResultCode}
+     * @return true if successful or false
      */
-    public int setCaptureDir(String cameraId, String dir);
+    public boolean setCaptureDir(String cameraId, String dir);
 
     /**
      * Set the capture callback.
      *
      * @param callback the capture callback
-     * @return {@link ResultCode}
      */
-    public int setCaptureCallback(ICaptureCallback callback);
+    public void setCaptureCallback(ICaptureCallback callback);
 
     /**
      * Set the record video size.
@@ -333,35 +324,32 @@ public interface ICamera {
      * @param cameraId the camera id
      * @param width the record video width
      * @param height the record video height
-     * @return {@link ResultCode}
      */
-    public int setRecordSize(String cameraId, int width, int height);
+    public void setRecordSize(String cameraId, int width, int height);
 
     /**
      * Set the video encoding bit rate.
      *
      * @param cameraId the camera id
      * @param bps the video encoding bit rate in bps
-     * @return {@link ResultCode}
      */
-    public int setVideoEncodingBps(String cameraId, int bps);
+    public void setVideoEncodingBps(String cameraId, int bps);
 
     /**
      * Set the record storage directory.
      *
      * @param cameraId the camera id
      * @param dir the record storage directory
-     * @return {@link ResultCode}
+     * @return true if successful or false
      */
-    public int setRecordDir(String cameraId, String dir);
+    public boolean setRecordDir(String cameraId, String dir);
 
     /**
      * Set the record callback.
      *
      * @param callback the record callback
-     * @return {@link ResultCode}
      */
-    public int setRecordCallback(IRecordCallback callback);
+    public void setRecordCallback(IRecordCallback callback);
 
     /**
      * Open the camera by id.

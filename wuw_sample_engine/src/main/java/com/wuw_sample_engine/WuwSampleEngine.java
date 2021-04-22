@@ -168,16 +168,16 @@ public class WuwSampleEngine {
                     errorCheck(event.getResultCode(), event.getMessage());
                     publishProgress("RESULT: " + event.getResult() + "\n");
                     publishProgress("EndTime: " + event.getEndTime() + "\n");
-                    Log.i(TAG, "Go to wake!");
+                    Log.i(TAG, "go to wake!");
 
                     if (ASR_STATE.AWAKE == asrState) {
-                        Log.i(TAG, "Has been awake!");
+                        Log.i(TAG, "has been awake!");
                         stopTimer();
                         transform(ASR_STATE.ASLEEP);
 
                         // avoid falling edge
                         if(asrEventQueue.removeEvent(new AsrEvent(AsrEvent.ASR_EVENT.COMMAND_RESULT))) {
-                            Log.i(TAG, "Remove event AsrEvent.ASR_EVENT.COMMAND_RESULT!");
+                            Log.i(TAG, "remove event AsrEvent.ASR_EVENT.COMMAND_RESULT!");
                         }
 
                         //continue;
@@ -205,7 +205,7 @@ public class WuwSampleEngine {
                         continue;
                     }
 
-                    Log.i(TAG, "Go to sleep!");
+                    Log.i(TAG, "go to sleep!");
                     stopTimer();
                     transform(ASR_STATE.ASLEEP);
 
@@ -215,7 +215,7 @@ public class WuwSampleEngine {
                 }
             }
 
-            Log.i(TAG, "Go to idle!\n");
+            Log.i(TAG, "go to idle!\n");
             stopTimer();
             transform(ASR_STATE.IDLE);
 
@@ -339,7 +339,7 @@ public class WuwSampleEngine {
         }
 
         if (!done) {
-            Log.i(TAG, "start: Asr has already been started!");
+            Log.i(TAG, "start: asr has already been started!");
             return;
         }
 
@@ -427,7 +427,6 @@ public class WuwSampleEngine {
         } catch (ResultCode rc) {
             errorCheck(rc, "ERROR: Failed to reset recognizer");
         }
-
     }
 
     private void addApplications(int startTimeMs) {

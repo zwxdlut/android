@@ -20,7 +20,6 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.location.Location;
-import android.location.LocationManager;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.MediaMetadataRetriever;
@@ -421,7 +420,7 @@ public class CameraNative implements ICamera {
             }
         }
 
-        String cameraIds[] = getCameraIdList();
+        String[] cameraIds = getCameraIdList();
         for (String cameraId : cameraIds) {
             try {
                 CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(cameraId);
@@ -482,7 +481,7 @@ public class CameraNative implements ICamera {
             StreamConfigurationMap map = cameraManager.getCameraCharacteristics(cameraId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
 
             if (null == map) {
-                Log.e(TAG, "getAvailablePreviewSizes: No camera available size!");
+                Log.e(TAG, "getAvailablePreviewSizes: no camera available size!");
                 return null;
             }
 
@@ -500,7 +499,7 @@ public class CameraNative implements ICamera {
             StreamConfigurationMap map = cameraManager.getCameraCharacteristics(cameraId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
 
             if (null == map) {
-                Log.e(TAG, "getAvailableCaptureSizes: No camera available size!");
+                Log.e(TAG, "getAvailableCaptureSizes: no camera available size!");
                 return null;
             }
 
@@ -518,7 +517,7 @@ public class CameraNative implements ICamera {
             StreamConfigurationMap map = cameraManager.getCameraCharacteristics(cameraId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
 
             if (null == map) {
-                Log.e(TAG, "getAvailableRecordSizes: No camera available size!");
+                Log.e(TAG, "getAvailableRecordSizes: no camera available size!");
                 return null;
             }
 
@@ -537,24 +536,22 @@ public class CameraNative implements ICamera {
     }
 
     @Override
-    public int setCameraCallback(ICameraCallback callback) {
+    public void setCameraCallback(ICameraCallback callback) {
         cameraCallback = callback;
-        return ResultCode.SUCCESS;
     }
 
     @Override
-    public int setPreviewSurface(String cameraId, Surface surface) {
+    public void setPreviewSurface(String cameraId, Surface surface) {
         Log.i(TAG, "setPreviewSurface: cameraId = " + cameraId);
         previewSurfaces.put(cameraId, surface);
-        return ResultCode.SUCCESS;
     }
 
     @Override
-    public int setCaptureSize(String cameraId, int width, int height) {
+    public void setCaptureSize(String cameraId, int width, int height) {
         Log.i(TAG, "setCaptureSize: cameraId = " + cameraId + ", width = " + width + ", height = " + height);
 
         if (isRecording(cameraId)) {
-            return ResultCode.FAILED_WHILE_RECORDING;
+            Log.e(TAG, "setCaptureSize: failed while recording!");
         }
 
         ImageReader imageReader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1);
@@ -563,11 +560,13 @@ public class CameraNative implements ICamera {
         captureSizes.put(cameraId, new Size(width, height));
         deleteCameraCaptureSession(cameraId);
 
-        return createCameraCaptureSession(cameraId, Collections.singletonList(imageReader.getSurface()));
+        if (ResultCode.SUCCESS != createCameraCaptureSession(cameraId, Collections.singletonList(imageReader.getSurface()))) {
+            Log.e(TAG, "setCaptureSize: failed because of createCameraCaptureSession() failed!");
+        }
     }
 
     @Override
-    public int setCaptureDir(String cameraId, String dir) {
+    public boolean setCaptureDir(String cameraId, String dir) {
         Log.i(TAG, "setCaptureDir: cameraId = " + cameraId + ", dir = " + dir);
 
         File captureDir = new File(dir);
@@ -577,37 +576,34 @@ public class CameraNative implements ICamera {
                 Log.i(TAG, "setCaptureDir: make directory " + dir);
             } else {
                 Log.e(TAG, "setCaptureDir: make directory " + dir + " failed!");
-                return ResultCode.CREATE_DIRECTORY_FAILED;
+                return false;
             }
         }
 
         capturePaths.put(cameraId, dir + File.separator + "dummy.jpg");
 
-        return ResultCode.SUCCESS;
+        return true;
     }
 
     @Override
-    public int setCaptureCallback(ICaptureCallback callback) {
+    public void setCaptureCallback(ICaptureCallback callback) {
         captureCallback = callback;
-        return ResultCode.SUCCESS;
     }
 
     @Override
-    public int setRecordSize(String cameraId, int width, int height) {
+    public void setRecordSize(String cameraId, int width, int height) {
         Log.i(TAG, "setRecordSize: cameraId = " + cameraId + ", width = " + width + ", height = " + height);
         recordSizes.put(cameraId, new Size(width, height));
-        return ResultCode.SUCCESS;
     }
 
     @Override
-    public int setVideoEncodingBps(String cameraId, int bps) {
+    public void setVideoEncodingBps(String cameraId, int bps) {
         Log.i(TAG, "setVideoEncodingBps: cameraId = " + cameraId + ", bps = " + bps);
         videoEncodingBps.put(cameraId, bps);
-        return ResultCode.SUCCESS;
     }
 
     @Override
-    public int setRecordDir(String cameraId, String dir) {
+    public boolean setRecordDir(String cameraId, String dir) {
         Log.i(TAG, "setRecordDir: cameraId = " + cameraId + ", dir = " + dir);
 
         File recordDir = new File(dir);
@@ -616,29 +612,28 @@ public class CameraNative implements ICamera {
                 Log.i(TAG, "setRecordDir: make directory " + dir);
             } else {
                 Log.e(TAG, "setRecordDir: make directory " + dir + " failed!");
-                return ResultCode.CREATE_DIRECTORY_FAILED;
+                return false;
             }
         }
         recordPaths.put(cameraId, dir + File.separator + "dummy.mp4");
 
-        File thumbnailDir = new File(recordDir.getParentFile(), "thumbnails");
+        File thumbnailDir = new File(recordDir.getParentFile(), "Thumbnails");
         if (!thumbnailDir.exists()) {
             if(thumbnailDir.mkdirs()) {
                 Log.i(TAG, "setRecordDir: make directory " + thumbnailDir.getPath());
             } else {
                 Log.e(TAG, "setRecordDir: make directory " + dir + " failed!");
-                return ResultCode.CREATE_DIRECTORY_FAILED;
+                return false;
             }
         }
         thumbnailDirs.put(cameraId, thumbnailDir.getPath());
 
-        return ResultCode.SUCCESS;
+        return true;
     }
 
     @Override
-    public int setRecordCallback(IRecordCallback callback) {
+    public void setRecordCallback(IRecordCallback callback) {
         recordCallback = callback;
-        return ResultCode.SUCCESS;
     }
 
     @Override
