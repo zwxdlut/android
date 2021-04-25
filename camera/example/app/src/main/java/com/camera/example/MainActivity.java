@@ -10,6 +10,7 @@ import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Size;
@@ -28,7 +29,9 @@ import com.camera.CameraNativeFactory;
 import com.camera.ICamera;
 import com.camera.example.databinding.ActivityMainBinding;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -61,23 +64,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         @Override
-        public void onCompleted(String cameraId, String path) {
+        public void onCompleted(String cameraId, final String path) {
             Log.i(TAG, "onCompleted: cameraId = " + cameraId + ", path = " + path);
-
-            Bitmap srcBitmap = BitmapFactory.decodeFile(path);
-            Matrix matrix = new Matrix();
-            Rect rect = new Rect();
-
-            getWindowManager().getDefaultDisplay().getRectSize(rect);
-            matrix.postScale((float) (rect.width() - binding.tvPreview.getWidth()) / srcBitmap.getWidth(),
-                    (float) binding.tvPreview.getHeight() / srcBitmap.getHeight());
-            Log.i(TAG, "onCompleted: bitmap width = " + srcBitmap.getWidth() + ", bitmap height = " + srcBitmap.getHeight());
-            Log.i(TAG, "onCompleted: matrix = " + matrix);
-            final Bitmap bitmap = Bitmap.createBitmap(srcBitmap, 0, 0, srcBitmap.getWidth(), srcBitmap.getHeight(), matrix, true);
-
             binding.ivCapture.post(new Runnable() {
                 @Override
                 public void run() {
+                    Bitmap srcBitmap = BitmapFactory.decodeFile(path);
+                    Matrix matrix = new Matrix();
+                    Rect rect = new Rect();
+
+                    getWindowManager().getDefaultDisplay().getRectSize(rect);
+                    matrix.postScale((float) (rect.width() - binding.tvPreview.getWidth()) / srcBitmap.getWidth(),
+                            (float) binding.tvPreview.getHeight() / srcBitmap.getHeight());
+                    Log.i(TAG, "onCompleted: bitmap width = " + srcBitmap.getWidth() + ", bitmap height = " + srcBitmap.getHeight());
+                    Log.i(TAG, "onCompleted: matrix = " + matrix);
+                    Bitmap bitmap = Bitmap.createBitmap(srcBitmap, 0, 0, srcBitmap.getWidth(), srcBitmap.getHeight(), matrix, true);
                     binding.ivCapture.setImageBitmap(bitmap);
                 }
             });
@@ -135,9 +136,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate");
 
-        ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                PERMISSION_REQUEST);
+        List<String> permissions = new ArrayList<>();
+
+        permissions.add(Manifest.permission.CAMERA);
+        permissions.add(Manifest.permission.RECORD_AUDIO);
+        permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            permissions.add(Manifest.permission.ACCESS_MEDIA_LOCATION);
+        }
+
+        ActivityCompat.requestPermissions(this, permissions.toArray(new String[0]), PERMISSION_REQUEST);
     }
 
     @Override
@@ -160,9 +169,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 + ", grantResults = " + Arrays.stream(grantResults).boxed().collect(Collectors.toList()));
 
         if (requestCode == PERMISSION_REQUEST) {
-            if (PackageManager.PERMISSION_GRANTED == grantResults[0]
-                    && PackageManager.PERMISSION_GRANTED == grantResults[1]
-                    && PackageManager.PERMISSION_GRANTED == grantResults[2]) {
+            boolean isGranted = true;
+
+            for (int result : grantResults) {
+                if (PackageManager.PERMISSION_GRANTED != result) {
+                    isGranted = false;
+                    break;
+                }
+            }
+
+            if (isGranted) {
                 Log.i(TAG, "onRequestPermissionsResult: permission granted requestCode = " + requestCode);
                 camera = CameraController.getInstance();
                 //camera = new CameraNativeFactory().getCamera();
@@ -209,6 +225,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Location location = new Location(LocationManager.PASSIVE_PROVIDER);
                 location.setLatitude(116.2353515625);
                 location.setLongitude(39.5379397452);
+                location.setAltitude(100);
                 Log.i(TAG, "onClick: capture() = " + camera.capture(cameraIds[0], location));
                 break;
 

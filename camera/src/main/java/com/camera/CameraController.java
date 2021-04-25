@@ -20,12 +20,14 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.location.Location;
+import android.media.ExifInterface;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaRecorder;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -45,6 +47,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -89,6 +92,7 @@ public class CameraController {
     private Map<String, String> thumbnailDirs = new ArrayMap<>();
     private Map<String, Size> captureSizes = new ArrayMap<>();
     private Map<String, Size> recordSizes = new ArrayMap<>();
+    private Map<String, Long> recordTimes = new ArrayMap<>();
     private Map<String, Location> captureLocations = new ArrayMap<>();
     private Map<String, Integer> videoEncodingBps = new ArrayMap<>();
     private Map<String, Boolean> isRecordings = new ArrayMap<>();
@@ -99,7 +103,8 @@ public class CameraController {
     private Map<String, Boolean> cameraFlags = new ArrayMap<>();
     private Map<String, Lock> cameraLocks = new ArrayMap<>();
     private Map<String, Condition> cameraConditions = new ArrayMap<>();
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss", Locale.CHINESE);
+    private SimpleDateFormat nameDateFormat = new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault());
+    private SimpleDateFormat exifDateFormat = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss", Locale.getDefault());
     private HandlerThread handlerThread = null;
     private Handler handler = null;
     private HandlerThread sessionHandlerThread = null;
@@ -115,6 +120,7 @@ public class CameraController {
 
             String cameraId = findCameraId(session);
             if(null == cameraId) {
+                Log.e(TAG, "onCaptureStarted: don't find camera id!");
                 return;
             }
 
@@ -132,6 +138,7 @@ public class CameraController {
 
             String cameraId = findCameraId(session);
             if(null == cameraId) {
+                Log.e(TAG, "onCaptureCompleted: don't find camera id!");
                 return;
             }
 
@@ -144,6 +151,7 @@ public class CameraController {
 
             String cameraId = findCameraId(session);
             if(null == cameraId) {
+                Log.e(TAG, "onCaptureFailed: don't find camera id!");
                 return;
             }
 
@@ -163,6 +171,7 @@ public class CameraController {
 
             final String cameraId = findCameraId(session);
             if(null == cameraId) {
+                Log.e(TAG, "onCaptureSequenceCompleted: don't find camera id!");
                 return;
             }
 
@@ -173,17 +182,20 @@ public class CameraController {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
+                    Log.i(TAG, "onCaptureSequenceCompleted.SaveRecordThread: +");
+
                     // for MediaMetadataRetriever
                     releaseRecorder(cameraId);
 
                     Size size = recordSizes.get(cameraId);
-                    MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-                    Bitmap thumbnail = null;
                     ContentValues values = new ContentValues();
+                    Bitmap thumbnail = null;
                     Uri uri = null;
 
                     // insert the video to MediaStore
                     try {
+                        MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+
                         mmr.setDataSource(path);
                         values.put(MediaStore.Video.Media.DURATION, mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
                         thumbnail = mmr.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
@@ -198,6 +210,7 @@ public class CameraController {
                     }
 
                     values.put(MediaStore.Video.Media.DATA, path);
+                    values.put(MediaStore.Video.Media.DATE_TAKEN, recordTimes.get(cameraId));
                     uri = context.getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
                     Log.i(TAG, "onCaptureSequenceCompleted: insert the video to database, uri = " + uri);
 
@@ -216,6 +229,7 @@ public class CameraController {
                                 thumbnail.compress(Bitmap.CompressFormat.JPEG, 100, fos);
                                 fos.flush();
                                 fos.close();
+                                Log.i(TAG, "onCaptureSequenceCompleted: save the video thumbnail to file, thumbnailPath = " + thumbnailPath);
 
                                 values.clear();
                                 values.put(MediaStore.Video.Thumbnails.DATA, thumbnailPath);
@@ -223,12 +237,14 @@ public class CameraController {
                                 values.put(MediaStore.Video.Thumbnails.WIDTH, thumbnail.getWidth());
                                 values.put(MediaStore.Video.Thumbnails.HEIGHT, thumbnail.getHeight());
                                 Uri thumbnailUri = context.getContentResolver().insert(MediaStore.Video.Thumbnails.EXTERNAL_CONTENT_URI, values);
-                                Log.i(TAG, "onCaptureSequenceCompleted: insert the video thumbnail to database, thumbnailPath = " + thumbnailPath + ", thumbnailUri = " + thumbnailUri);
+                                Log.i(TAG, "onCaptureSequenceCompleted: insert the video thumbnail to database, thumbnailUri = " + thumbnailUri);
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
                         }
                     }
+
+                    Log.i(TAG, "onCaptureSequenceCompleted.SaveRecordThread: -");
                 }
             }, "SaveRecordThread").start();
 
@@ -254,6 +270,8 @@ public class CameraController {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
+                    Log.i(TAG, "onImageAvailable.SaveImageThread: +");
+
                     String cameraId = null;
 
                     // find the camera id
@@ -269,6 +287,10 @@ public class CameraController {
                     }
 
                     String path = capturePaths.get(cameraId);
+                    if (null == path) {
+                        Log.e(TAG, "onImageAvailable: The capture path is null!");
+                        return;
+                    }
 
                     // save the image data to file
                     try {
@@ -285,15 +307,58 @@ public class CameraController {
                     ContentValues values = new ContentValues();
                     Location location = captureLocations.get(cameraId);
 
-                    // write the location to image
-                    if (null != location) {
-                        double latitude = location.getLatitude();
-                        double longitude = location.getLongitude();
-                        values.put(MediaStore.Images.Media.LATITUDE, latitude);
-                        values.put(MediaStore.Images.Media.LONGITUDE, longitude);
+                    // extract the image file information
+                    try {
+                        ExifInterface exif = new ExifInterface(path);
+                        String dateTime = exif.getAttribute(ExifInterface.TAG_DATETIME);
+
+                        // save the date time
+                        if (null != dateTime) {
+                            try {
+                                Date date = exifDateFormat.parse(dateTime);
+
+                                if (null != date) {
+                                    values.put(MediaStore.Images.Media.DATE_TAKEN, date.getTime());
+                                }
+                            } catch (ParseException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        // save the location to image
+                        if (null != location) {
+                            float[] latLong = new float[2];
+
+                            if (!exif.getLatLong(latLong)) {
+                                double latitude = location.getLatitude();
+                                double longitude = location.getLongitude();
+
+                                Log.w(TAG, "onImageAvailable: save the coordinate to file!");
+                                exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE, ConvertUtil.decimalToDMS(latitude));
+                                exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE_REF, latitude > 0 ? "N" : "S");
+                                exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE, ConvertUtil.decimalToDMS(longitude));
+                                exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF, longitude > 0 ? "E" : "W");
+                                exif.saveAttributes();
+                            }
+
+                            if (location.hasAltitude() && -1 == exif.getAltitude(-1)) {
+                                double altitude = location.getAltitude();
+                                Log.w(TAG, "onImageAvailable: save the altitude to file!");
+                                exif.setAttribute(ExifInterface.TAG_GPS_ALTITUDE, Double.toString(Math.abs(altitude)) + "/1");
+                                exif.setAttribute(ExifInterface.TAG_GPS_ALTITUDE_REF, altitude >= 0 ? "0" : "1");
+                                exif.saveAttributes();
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
 
                     // insert the image file to MediaStore
+                    if (null != location) {
+                        values.put(MediaStore.Images.Media.LATITUDE, location.getLatitude());
+                        values.put(MediaStore.Images.Media.LONGITUDE, location.getLongitude());
+                    }
+
                     values.put(MediaStore.Images.Media.DATA, path);
                     values.put(MediaStore.Images.Media.WIDTH, reader.getWidth());
                     values.put(MediaStore.Images.Media.HEIGHT, reader.getHeight());
@@ -303,6 +368,8 @@ public class CameraController {
                     if (null != captureCallback) {
                         captureCallback.onCompleted(cameraId, path);
                     }
+
+                    Log.i(TAG, "onImageAvailable.SaveImageThread: -");
                 }
             }, "SaveImageThread").start();
         }
@@ -580,15 +647,114 @@ public class CameraController {
         }
     }
 
-    public static class ConvertUtils {
-        public static String convertToDegree(double gpsInfo) {
-            return Location.convert(gpsInfo, Location.FORMAT_SECONDS);
+    public static class ConvertUtil {
+        public static String coordinateToDMS(double coordinate) {
+            return Location.convert(coordinate, Location.FORMAT_SECONDS);
         }
 
-        public static Double convertToCoordinate(String stringDMS) {
-            if (stringDMS == null) return null;
+        public static double DMSToCoordinate(String stringDMS) {
+            if (stringDMS == null) return 0;
             String[] split = stringDMS.split(":", 3);
             return Double.parseDouble(split[0]) + Double.parseDouble(split[1]) / 60 + Double.parseDouble(split[2]) / 3600;
+        }
+
+        /**
+         * 浮点型经纬度值转成度分秒格式
+         *
+         * @param coord
+         * @return
+         */
+        public static String decimalToDMS(double coord) {
+            String output,degrees,minutes,seconds;
+
+            // gets the modulus the coordinate divided by one (MOD1).
+            // in other words gets all the numbers after the decimal point.
+            // e.g. mod := -79.982195 % 1 == 0.982195
+            //
+            // next get the integer part of the coord. On other words the whole
+            // number part.
+            // e.g. intPart := -79
+
+            double mod = coord % 1;
+            int intPart = (int) coord;
+
+            // set degrees to the value of intPart
+            // e.g. degrees := "-79"
+
+            degrees = String.valueOf(intPart);
+
+            // next times the MOD1 of degrees by 60 so we can find the integer part
+            // for minutes.
+            // get the MOD1 of the new coord to find the numbers after the decimal
+            // point.
+            // e.g. coord := 0.982195 * 60 == 58.9317
+            // mod := 58.9317 % 1 == 0.9317
+            //
+            // next get the value of the integer part of the coord.
+            // e.g. intPart := 58
+
+            coord = mod * 60;
+            mod = coord % 1;
+            intPart = (int) coord;
+            if (intPart < 0) {
+                // Convert number to positive if it's negative.
+                intPart *= -1;
+            }
+
+            // set minutes to the value of intPart.
+            // e.g. minutes = "58"
+            minutes = String.valueOf(intPart);
+
+            // do the same again for minutes
+            // e.g. coord := 0.9317 * 60 == 55.902
+            // e.g. intPart := 55
+            coord = mod * 60;
+            intPart = (int) coord;
+            if (intPart < 0) {
+                // Convert number to positive if it's negative.
+                intPart *= -1;
+            }
+
+            // set seconds to the value of intPart.
+            // e.g. seconds = "55"
+            seconds = String.valueOf(intPart);
+
+            // I used this format for android but you can change it
+            // to return in whatever format you like
+            // e.g. output = "-79/1,58/1,56/1"
+            output = degrees + "/1," + minutes + "/1," + seconds + "/1";
+
+            // Standard output of D°M′S″
+            // output = degrees + "°" + minutes + "'" + seconds + "\"";
+            return output;
+        }
+
+        public static float convertRationalLatLonToFloat(String rationalString, String ref) {
+            try {
+                String [] parts = rationalString.split(",");
+
+                String [] pair;
+                pair = parts[0].split("/");
+                double degrees = Double.parseDouble(pair[0].trim())
+                        / Double.parseDouble(pair[1].trim());
+
+                pair = parts[1].split("/");
+                double minutes = Double.parseDouble(pair[0].trim())
+                        / Double.parseDouble(pair[1].trim());
+
+                pair = parts[2].split("/");
+                double seconds = Double.parseDouble(pair[0].trim())
+                        / Double.parseDouble(pair[1].trim());
+
+                double result = degrees + (minutes / 60.0) + (seconds / 3600.0);
+                if ((ref.equals("S") || ref.equals("W"))) {
+                    return (float) -result;
+                }
+                return (float) result;
+            } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+                // Not valid
+                throw new IllegalArgumentException();
+            }
         }
     }
 
@@ -838,7 +1004,7 @@ public class CameraController {
             if(thumbnailDir.mkdirs()) {
                 Log.i(TAG, "setRecordDir: make directory " + thumbnailDir.getPath());
             } else {
-                Log.e(TAG, "setRecordDir: make directory " + dir + " failed!");
+                Log.e(TAG, "setRecordDir: make directory " + thumbnailDir.getPath() + " failed!");
                 return false;
             }
         }
@@ -867,6 +1033,13 @@ public class CameraController {
         if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
             Log.w(TAG, "open: no write external storage permission!");
             return ResultCode.NO_WRITE_EXTERNAL_STORAGE_PERMISSION;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_MEDIA_LOCATION)) {
+                Log.w(TAG, "open: no access media location!");
+                return ResultCode.NO_WRITE_EXTERNAL_STORAGE_PERMISSION;
+            }
         }
 
         close(cameraId);
@@ -1068,7 +1241,7 @@ public class CameraController {
             CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             WindowManager windowManager = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE));
             String path = capturePaths.get(cameraId).substring(0, capturePaths.get(cameraId).lastIndexOf(File.separator)) +
-                    File.separator + (null != name && !name.isEmpty() ? name : dateFormat.format(new Date()) + ".jpg");
+                    File.separator + (null != name && !name.isEmpty() ? name : nameDateFormat.format(new Date()) + ".jpg");
 
             if (null != windowManager) {
                 captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(sensorOrientations.get(cameraId), windowManager.getDefaultDisplay().getRotation()));
@@ -1302,7 +1475,7 @@ public class CameraController {
 
         MediaRecorder mediaRecorder = new MediaRecorder();
         String path = recordPaths.get(cameraId).substring(0, recordPaths.get(cameraId).lastIndexOf(File.separator)) +
-                File.separator + (null != name && !name.isEmpty() ? name : dateFormat.format(new Date()) + ".mp4");
+                File.separator + (null != name && !name.isEmpty() ? name : nameDateFormat.format(new Date()) + ".mp4");
         Integer sensorOrientation = sensorOrientations.get(cameraId);
         WindowManager windowManager = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE));
 
@@ -1340,6 +1513,7 @@ public class CameraController {
             e.printStackTrace();
         }
 
+        recordTimes.put(cameraId, System.currentTimeMillis());
         recordPaths.put(cameraId, path);
         mediaRecorders.put(cameraId, mediaRecorder);
     }
