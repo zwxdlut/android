@@ -244,13 +244,13 @@ public class CameraNative implements ICamera {
                         }
                     }
 
+                    if (null != recordCallback) {
+                        recordCallback.onCompleted(cameraId, path);
+                    }
+
                     Log.i(TAG, "onCaptureSequenceCompleted.SaveRecordThread: -");
                 }
             }, "SaveRecordThread").start();
-
-            if (null != recordCallback) {
-                recordCallback.onCompleted(cameraId, path);
-            }
         }
     };
 

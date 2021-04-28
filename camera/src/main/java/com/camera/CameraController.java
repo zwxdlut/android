@@ -244,13 +244,13 @@ public class CameraController {
                         }
                     }
 
+                    if (null != recordCallback) {
+                        recordCallback.onCompleted(cameraId, path);
+                    }
+
                     Log.i(TAG, "onCaptureSequenceCompleted.SaveRecordThread: -");
                 }
             }, "SaveRecordThread").start();
-
-            if (null != recordCallback) {
-                recordCallback.onCompleted(cameraId, path);
-            }
         }
     };
 
