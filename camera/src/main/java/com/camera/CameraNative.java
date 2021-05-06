@@ -1148,31 +1148,20 @@ public class CameraNative implements ICamera {
 
     private void notifyCamera(String cameraId) {
         Lock lock = cameraLocks.get(cameraId);
-        Condition condition = cameraConditions.get(cameraId);
-
-        if (null == lock || null == condition) {
-            return;
-        }
 
         lock.lock();
         cameraFlags.put(cameraId, true);
-        condition.signalAll();
+        cameraConditions.get(cameraId).signalAll();
         lock.unlock();
     }
 
     private void waitCamera(String cameraId) {
         Lock lock = cameraLocks.get(cameraId);
-        Condition condition = cameraConditions.get(cameraId);
-        Boolean cameraFlag = cameraFlags.get(cameraId);
-
-        if (null == lock || null == condition || null == cameraFlag) {
-            return;
-        }
 
         try {
             lock.lock();
-            if (!cameraFlag) {
-                condition.await();
+            if (!cameraFlags.get(cameraId)) {
+                cameraConditions.get(cameraId).await();
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
