@@ -757,9 +757,13 @@ public class CameraController {
             Log.e(TAG, "CameraController: can't get external movies directory!");
         }
 
-        File thumbnailDir = context.getExternalFilesDir("Thumbnails");
-        if (null == thumbnailDir || !thumbnailDir.exists()) {
-            Log.e(TAG, "CameraController: can't get external thumbnails directory!");
+        File thumbnailDir = new File(context.getExternalFilesDir(null), "Thumbnails");
+        if (!thumbnailDir.exists()) {
+            if (thumbnailDir.mkdirs()) {
+                Log.e(TAG, "CameraController: make directory " + thumbnailDir.getPath());
+            } else {
+                Log.e(TAG, "CameraController: make directory " + thumbnailDir.getPath() + " failed!");
+            }
         }
 
         String[] cameraIds = getCameraIdList();
@@ -903,7 +907,7 @@ public class CameraController {
 
         if (!captureDir.exists()) {
             if (captureDir.mkdirs()) {
-                Log.i(TAG, "setCaptureDir: make directory " + dir);
+                Log.e(TAG, "setCaptureDir: make directory " + dir);
             } else {
                 Log.e(TAG, "setCaptureDir: make directory " + dir + " failed!");
                 return false;
@@ -934,7 +938,7 @@ public class CameraController {
         File recordDir = new File(dir);
         if (!recordDir.exists()) {
             if (recordDir.mkdirs()) {
-                Log.i(TAG, "setRecordDir: make directory " + dir);
+                Log.e(TAG, "setRecordDir: make directory " + dir);
             } else {
                 Log.e(TAG, "setRecordDir: make directory " + dir + " failed!");
                 return false;
@@ -945,7 +949,7 @@ public class CameraController {
         File thumbnailDir = new File(recordDir.getParentFile(), "Thumbnails");
         if (!thumbnailDir.exists()) {
             if(thumbnailDir.mkdirs()) {
-                Log.i(TAG, "setRecordDir: make directory " + thumbnailDir.getPath());
+                Log.e(TAG, "setRecordDir: make directory " + thumbnailDir.getPath());
             } else {
                 Log.e(TAG, "setRecordDir: make directory " + thumbnailDir.getPath() + " failed!");
                 return false;

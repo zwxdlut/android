@@ -558,9 +558,13 @@ public class CameraNative implements ICamera {
             Log.e(TAG, "CameraNative: can't get external movies directory!");
         }
 
-        File thumbnailDir = context.getExternalFilesDir("Thumbnails");
-        if (null == thumbnailDir || !thumbnailDir.exists()) {
-            Log.e(TAG, "CameraNative: can't get external thumbnails directory!");
+        File thumbnailDir = new File(context.getExternalFilesDir(null), "Thumbnails");
+        if (!thumbnailDir.exists()) {
+            if (thumbnailDir.mkdirs()) {
+                Log.i(TAG, "CameraNative: make directory " + thumbnailDir.getPath());
+            } else {
+                Log.e(TAG, "CameraNative: make directory " + thumbnailDir.getPath() + " failed!");
+            }
         }
 
         String[] cameraIds = getCameraIdList();
