@@ -202,6 +202,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
+            case R.id.btn_set_preview_surface:
+                Log.i(TAG, "onClick: setPreviewSurface()");
+                camera.setPreviewSurface(cameraIds[0], previewSurface);
+                break;
+
             case R.id.btn_open_camera:
                 Log.i(TAG, "onClick: open() = " + camera.open(cameraIds[0]));
                 break;
@@ -219,16 +224,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
 
             case R.id.btn_capture:
-                Location location = new Location(LocationManager.PASSIVE_PROVIDER);
+                Location location = new Location(LocationManager.GPS_PROVIDER);
                 location.setLatitude(116.2353515625);
                 location.setLongitude(39.5379397452);
                 location.setAltitude(100);
                 Log.i(TAG, "onClick: capture() = " + camera.capture(cameraIds[0], location));
-                break;
-
-            case R.id.btn_set_preview_surface:
-                Log.i(TAG, "onClick: setPreviewSurface()");
-                camera.setPreviewSurface(cameraIds[0], previewSurface);
                 break;
 
             case R.id.btn_start_record:
@@ -249,8 +249,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         camera.setCameraCallback(cameraCallback);
         camera.setCaptureCallback(captureCallback);
         camera.setRecordCallback(recordCallback);
-        // This is important because not all available record sizes are supported by the camera.
+        // This is important because not all available sizes are supported by the camera.
         // We set 1280×720 just for test.
+        camera.setCaptureSize(cameraIds[0], 1280, 720);
         camera.setRecordSize(cameraIds[0], 1280, 720);
 
         // initialize the UI

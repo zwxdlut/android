@@ -35,54 +35,24 @@ public interface ICamera {
         public static final int NO_RECORD_AUDIO_PERMISSION = -3;
 
         /**
-         * The constant CAMERA_DISCONNECTED.
-         */
-        public static final int CAMERA_DISCONNECTED = -4;
-
-        /**
-         * The constant CAMERA_ERROR_OCCURRED.
-         */
-        public static final int CAMERA_ERROR_OCCURRED = -5;
-
-        /**
          * The constant CAMERA_EXCEPTION.
          */
-        public static final int CAMERA_EXCEPTION = -6;
+        public static final int CAMERA_EXCEPTION = -4;
 
         /**
-         * The constant CAMERA_CAPTURE_SESSION_CONFIG_FAILED.
+         * The constant NO_CAMERA_DEVICE.
          */
-        public static final int CAMERA_CAPTURE_SESSION_CONFIG_FAILED = -7;
-
-        /**
-         * The constant CAMERA_DEVICE_NULL.
-         */
-        public static final int CAMERA_DEVICE_NULL = -8;
-
-        /**
-         * The constant CAMERA_CAPTURE_SESSION_NULL.
-         */
-        public static final int CAMERA_CAPTURE_SESSION_NULL = -9;
+        public static final int NO_CAMERA_DEVICE = -5;
 
         /**
          * The constant NO_PREVIEW_SURFACE.
          */
-        public static final int NO_PREVIEW_SURFACE = -10;
-
-        /**
-         * The constant NO_IMAGE_READER.
-         */
-        public static final int NO_IMAGE_READER = -11;
-
-        /**
-         * The constant NO_MEDIA_RECORDER.
-         */
-        public static final int NO_MEDIA_RECORDER = -12;
+        public static final int NO_PREVIEW_SURFACE = -6;
 
         /**
          * The constant FAILED_WHILE_RECORDING.
          */
-        public static final int FAILED_WHILE_RECORDING = -13;
+        public static final int FAILED_WHILE_RECORDING = -7;
     }
 
     /**
@@ -328,14 +298,6 @@ public interface ICamera {
     public void setRecordSize(String cameraId, int width, int height);
 
     /**
-     * Set the video encoding bit rate.
-     *
-     * @param cameraId the camera id
-     * @param bps the video encoding bit rate in bps
-     */
-    public void setVideoEncodingBps(String cameraId, int bps);
-
-    /**
      * Set the record storage directory.
      *
      * @param cameraId the camera id
@@ -343,6 +305,14 @@ public interface ICamera {
      * @return true if successful or false
      */
     public boolean setRecordDir(String cameraId, String dir);
+
+    /**
+     * Set the video encoding bit rate.
+     *
+     * @param cameraId the camera id
+     * @param bps the video encoding bit rate in bps
+     */
+    public void setVideoEncodingRate(String cameraId, int bps);
 
     /**
      * Set the record callback.
