@@ -214,7 +214,7 @@ public interface ICamera {
      *
      * @return the camera id list
      */
-    public String[] getCameraIdList();
+    String[] getCameraIdList();
 
     /**
      * Get the available preview sizes.
@@ -222,7 +222,7 @@ public interface ICamera {
      * @param cameraId the camera id
      * @return the available preview sizes
      */
-    public Size[] getAvailablePreviewSizes(String cameraId);
+    Size[] getAvailablePreviewSizes(String cameraId);
 
     /**
      * Get the available capture sizes.
@@ -230,7 +230,7 @@ public interface ICamera {
      * @param cameraId the camera id
      * @return the available capture sizes
      */
-    public Size[] getAvailableCaptureSizes(String cameraId);
+    Size[] getAvailableCaptureSizes(String cameraId);
 
     /**
      * Get the available record sizes.
@@ -238,7 +238,7 @@ public interface ICamera {
      * @param cameraId the camera id
      * @return the available record sizes
      */
-    public Size[] getAvailableRecordSizes(String cameraId);
+    Size[] getAvailableRecordSizes(String cameraId);
 
     /**
      * Check if the camera is recording.
@@ -246,14 +246,14 @@ public interface ICamera {
      * @param cameraId the camera id
      * @return true while recording or false
      */
-    public boolean isRecording(String cameraId);
+    boolean isRecording(String cameraId);
 
     /**
      * Set the camera callback.
      *
      * @param callback the camera callback
      */
-    public void setCameraCallback(ICameraCallback callback);
+    void setCameraCallback(ICameraCallback callback);
 
     /**
      * Set the preview surface.
@@ -261,7 +261,7 @@ public interface ICamera {
      * @param cameraId the camera id
      * @param previewSurface the preview surface
      */
-    public void setPreviewSurface(String cameraId, Surface previewSurface);
+    void setPreviewSurface(String cameraId, Surface previewSurface);
 
     /**
      * Set the capture size.
@@ -270,7 +270,7 @@ public interface ICamera {
      * @param width the capture width
      * @param height the capture height
      */
-    public void setCaptureSize(String cameraId, int width, int height);
+    void setCaptureSize(String cameraId, int width, int height);
 
     /**
      * Set the capture storage directory.
@@ -279,14 +279,14 @@ public interface ICamera {
      * @param dir the capture storage directory
      * @return true if successful or false
      */
-    public boolean setCaptureDir(String cameraId, String dir);
+    boolean setCaptureDir(String cameraId, String dir);
 
     /**
      * Set the capture callback.
      *
      * @param callback the capture callback
      */
-    public void setCaptureCallback(ICaptureCallback callback);
+    void setCaptureCallback(ICaptureCallback callback);
 
     /**
      * Set the record video size.
@@ -295,7 +295,7 @@ public interface ICamera {
      * @param width the record video width
      * @param height the record video height
      */
-    public void setRecordSize(String cameraId, int width, int height);
+    void setRecordSize(String cameraId, int width, int height);
 
     /**
      * Set the record storage directory.
@@ -304,7 +304,15 @@ public interface ICamera {
      * @param dir the record storage directory
      * @return true if successful or false
      */
-    public boolean setRecordDir(String cameraId, String dir);
+    boolean setRecordDir(String cameraId, String dir);
+
+    /**
+     * Set the audio mute.
+     *
+     * @param cameraId the camera id
+     * @param isMute if the audio is mute
+     */
+    void setAudioMute(String cameraId, boolean isMute);
 
     /**
      * Set the video encoding bit rate.
@@ -312,14 +320,14 @@ public interface ICamera {
      * @param cameraId the camera id
      * @param bps the video encoding bit rate in bps
      */
-    public void setVideoEncodingRate(String cameraId, int bps);
+    void setVideoEncodingRate(String cameraId, int bps);
 
     /**
      * Set the record callback.
      *
      * @param callback the record callback
      */
-    public void setRecordCallback(IRecordCallback callback);
+    void setRecordCallback(IRecordCallback callback);
 
     /**
      * Open the camera by id.
@@ -327,7 +335,7 @@ public interface ICamera {
      * @param cameraId the camera id
      * @return {@link ResultCode}
      */
-    public int open(String cameraId);
+    int open(String cameraId);
 
     /**
      * Close the camera by id.
@@ -335,7 +343,7 @@ public interface ICamera {
      * @param cameraId the camera id
      * @return {@link ResultCode}
      */
-    public int close(String cameraId);
+    int close(String cameraId);
 
     /**
      * Start the preview.
@@ -343,7 +351,7 @@ public interface ICamera {
      * @param cameraId the camera id
      * @return {@link ResultCode}
      */
-    public int startPreview(String cameraId);
+    int startPreview(String cameraId);
 
     /**
      * Stop the preview.
@@ -351,7 +359,7 @@ public interface ICamera {
      * @param cameraId the camera id
      * @return {@link ResultCode}
      */
-    public int stopPreview(String cameraId);
+    int stopPreview(String cameraId);
 
     /**
      * Capture a picture.
@@ -359,7 +367,7 @@ public interface ICamera {
      * @param cameraId the camera id
      * @return {@link ResultCode}
      */
-    public int capture(String cameraId);
+    int capture(String cameraId);
 
     /**
      * Capture a picture with file.
@@ -368,7 +376,7 @@ public interface ICamera {
      * @param name the capture file name
      * @return {@link ResultCode}
      */
-    public int capture(String cameraId, String name);
+    int capture(String cameraId, String name);
 
     /**
      * Capture a picture with location.
@@ -377,7 +385,7 @@ public interface ICamera {
      * @param location the location
      * @return {@link ResultCode}
      */
-    public int capture(String cameraId, Location location);
+    int capture(String cameraId, Location location);
 
     /**
      * Capture a picture with file name and location.
@@ -387,7 +395,7 @@ public interface ICamera {
      * @param location the location
      * @return {@link ResultCode}
      */
-    public int capture(String cameraId, String name, Location location);
+    int capture(String cameraId, String name, Location location);
 
     /**
      * Start record.
@@ -395,7 +403,7 @@ public interface ICamera {
      * @param cameraId the camera id
      * @return {@link ResultCode}
      */
-    public int startRecord(String cameraId);
+    int startRecord(String cameraId);
 
     /**
      * Start record with file name.
@@ -404,7 +412,7 @@ public interface ICamera {
      * @param name the record file name
      * @return {@link ResultCode}
      */
-    public int startRecord(String cameraId, String name);
+    int startRecord(String cameraId, String name);
 
     /**
      * Start record with max duration.
@@ -413,7 +421,7 @@ public interface ICamera {
      * @param duration the record max duration in ms (if zero or negative, disables the duration limit)
      * @return {@link ResultCode}
      */
-    public int startRecord(String cameraId, int duration);
+    int startRecord(String cameraId, int duration);
 
     /**
      * Start record with file name and max duration.
@@ -423,7 +431,7 @@ public interface ICamera {
      * @param duration the record max duration in ms (if zero or negative, disables the duration limit)
      * @return {@link ResultCode}
      */
-    public int startRecord(String cameraId, String name, int duration);
+    int startRecord(String cameraId, String name, int duration);
 
     /**
      * Stop record.
@@ -431,5 +439,5 @@ public interface ICamera {
      * @param cameraId the camera id
      * @return {@link ResultCode}
      */
-    public int stopRecord(String cameraId);
+    int stopRecord(String cameraId);
 }

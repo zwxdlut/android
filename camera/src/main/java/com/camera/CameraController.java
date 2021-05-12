@@ -91,9 +91,10 @@ public class CameraController {
     private Map<String, Size> captureSizes = new ArrayMap<>();
     private Map<String, Size> recordSizes = new ArrayMap<>();
     private Map<String, Location> captureLocations = new ArrayMap<>();
+    private Map<String, Boolean> isRecordings = new ArrayMap<>();
+    private Map<String, Boolean> audioMutes = new ArrayMap<>();
     private Map<String, Integer> videoEncodingRate = new ArrayMap<>();
     private Map<String, Long> recordTimes = new ArrayMap<>();
-    private Map<String, Boolean> isRecordings = new ArrayMap<>();
     private Map<String, Surface[]> surfaces = new ArrayMap<>();
     private Map<String, Surface> previewSurfaces = new ArrayMap<>();
     private Map<String, ImageReader> imageReaders = new ArrayMap<>();
@@ -802,6 +803,7 @@ public class CameraController {
             capturePaths.put(cameraId, captureDir.getPath() + File.separator + "dummy.jpg");
             recordPaths.put(cameraId, recordDir.getPath() + File.separator + "dummy.mp4");
             thumbnailDirs.put(cameraId, thumbnailDir.getPath());
+            audioMutes.put(cameraId, false);
             videoEncodingRate.put(cameraId, 3000000);
             isRecordings.put(cameraId, false);
             surfaces.put(cameraId, new Surface[]{null, null, null});
@@ -958,6 +960,11 @@ public class CameraController {
         thumbnailDirs.put(cameraId, thumbnailDir.getPath());
 
         return true;
+    }
+
+    public void setAudioMute(String cameraId, boolean isMute) {
+        Log.i(TAG, "setAudioMute: cameraId = " + cameraId + ", isMute = " + isMute);
+        audioMutes.put(cameraId, isMute);
     }
 
     public void setVideoEncodingRate(String cameraId, int bps) {
@@ -1434,7 +1441,10 @@ public class CameraController {
         Integer sensorOrientation = sensorOrientations.get(cameraId);
         WindowManager windowManager = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE));
 
-        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        if (!audioMutes.get(cameraId)) {
+            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        }
+
         mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
         mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         mediaRecorder.setOutputFile(path);
@@ -1442,7 +1452,11 @@ public class CameraController {
         mediaRecorder.setVideoFrameRate(30);
         mediaRecorder.setVideoSize(recordSizes.get(cameraId).getWidth(), recordSizes.get(cameraId).getHeight());
         mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+
+        if (!audioMutes.get(cameraId)) {
+            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+        }
+
         mediaRecorder.setMaxDuration(duration);
         mediaRecorder.setOnInfoListener(recordInfoListener);
         mediaRecorder.setOnErrorListener(recordErrorListener);
