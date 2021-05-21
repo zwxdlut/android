@@ -1,7 +1,5 @@
 package com.camera;
 
-import android.content.Context;
-
 /**
  * The interface camera factory.
  */
@@ -11,5 +9,5 @@ public interface ICameraFactory {
      *
      * @return the camera instance
      */
-    public ICamera getCamera();
+    ICamera getCamera();
 }

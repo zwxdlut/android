@@ -2,6 +2,7 @@ package com.camera;
 
 import android.Manifest;
 import android.app.Application;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
@@ -24,12 +25,12 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaRecorder;
-import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.util.ArrayMap;
 import android.util.Log;
@@ -45,6 +46,7 @@ import androidx.exifinterface.media.ExifInterface;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.text.ParseException;
@@ -82,19 +84,25 @@ public class CameraNative implements ICamera {
         INVERSE_ORIENTATIONS.append(Surface.ROTATION_270, 0);
     }
 
+    private String publicDir = null;
+    private String privateDir = null;
     private Context context = null;
     private CameraManager cameraManager = null;
     private Map<String, Integer> sensorOrientations = new ArrayMap<>();
+    private Map<String, Boolean> isCapturePublicDirs = new ArrayMap<>();
+    private Map<String, Boolean> isRecordPublicDirs = new ArrayMap<>();
+    private Map<String, String> captureRelativeDirs = new ArrayMap<>();
+    private Map<String, String> recordRelativeDirs = new ArrayMap<>();
     private Map<String, String> capturePaths = new ArrayMap<>();
     private Map<String, String> recordPaths = new ArrayMap<>();
-    private Map<String, String> thumbnailDirs = new ArrayMap<>();
+    private Map<String, Uri> recorddUri = new ArrayMap<>();
     private Map<String, Size> captureSizes = new ArrayMap<>();
     private Map<String, Size> recordSizes = new ArrayMap<>();
     private Map<String, Location> captureLocations = new ArrayMap<>();
+    private Map<String, Long> recordTimes = new ArrayMap<>();
     private Map<String, Boolean> isRecordings = new ArrayMap<>();
     private Map<String, Boolean> audioMutes = new ArrayMap<>();
-    private Map<String, Integer> videoEncodingRate = new ArrayMap<>();
-    private Map<String, Long> recordTimes = new ArrayMap<>();
+    private Map<String, Integer> videoEncodingRates = new ArrayMap<>();
     private Map<String, Surface[]> surfaces = new ArrayMap<>();
     private Map<String, Surface> previewSurfaces = new ArrayMap<>();
     private Map<String, ImageReader> imageReaders = new ArrayMap<>();
@@ -153,7 +161,7 @@ public class CameraNative implements ICamera {
             }
 
             String path = capturePaths.get(cameraId);
-            Log.w(TAG, "onCaptureFailed: cameraId = " + cameraId + ", path = " + path);
+            Log.e(TAG, "onCaptureFailed: cameraId = " + cameraId + ", path = " + path);
 
             if (null != captureCallback) {
                 captureCallback.onFailed(cameraId, path);
@@ -175,6 +183,9 @@ public class CameraNative implements ICamera {
             final String path = recordPaths.get(cameraId);
             Log.i(TAG, "onCaptureSequenceCompleted: cameraId = " + cameraId + ", path = " + path +
                     ", sequenceId = " + sequenceId + ", frameNumber = " + frameNumber);
+            if(null == path) {
+                return;
+            }
 
             new Thread(new Runnable() {
                 @Override
@@ -184,59 +195,112 @@ public class CameraNative implements ICamera {
                     // for MediaMetadataRetriever
                     releaseRecorder(cameraId);
 
-                    Size size = recordSizes.get(cameraId);
-                    ContentValues values = new ContentValues();
-                    Bitmap thumbnail = null;
-                    Uri uri = null;
+                    if ((Build.VERSION.SDK_INT > Build.VERSION_CODES.Q
+                            || (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q && !Environment.isExternalStorageLegacy()))
+                            && isRecordPublicDirs.get(cameraId)) {
+                        ContentResolver resolver = context.getContentResolver();
+                        ContentValues values = new ContentValues();
+                        Uri uri = recorddUri.get(cameraId);
 
-                    // insert the video to database
-                    try {
+                        if (null != uri) {
+                            try {
+                                ParcelFileDescriptor pfd = resolver.openFileDescriptor(uri, "r");
+
+                                if (null != pfd) {
+                                    MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+
+                                    // update the size and duration to database
+                                    mmr.setDataSource(pfd.getFileDescriptor());
+                                    values.clear();
+                                    values.put(MediaStore.Video.Media.SIZE, pfd.getStatSize());
+                                    values.put(MediaStore.Video.Media.DURATION, mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+                                    resolver.update(uri, values, null, null);
+                                    Log.i(TAG, "onCaptureSequenceCompleted.SaveRecordThread: update the size and duration to database");
+                                    pfd.close();
+                                }
+                            } catch (RuntimeException | IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !isRecordPublicDirs.get(cameraId)){
                         MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+                        Bitmap thumbnail = null;
 
                         mmr.setDataSource(path);
-                        values.put(MediaStore.Video.Media.DURATION, mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
                         thumbnail = mmr.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
-                        Log.i(TAG, "onCaptureSequenceCompleted: the video thumbnail(MediaMetadataRetriever) = " + thumbnail);
-                    } catch (RuntimeException e) {
-                        e.printStackTrace();
-                    }
+                        Log.i(TAG, "onCaptureSequenceCompleted.SaveRecordThread: the video thumbnail(MediaMetadataRetriever) = " + thumbnail);
 
-                    if (null != size) {
-                        values.put(MediaStore.Video.Media.WIDTH, size.getWidth());
-                        values.put(MediaStore.Video.Media.HEIGHT, size.getHeight());
-                    }
+                        if (null != thumbnail) {
+                            String thumbnailPath = path.substring(0, path.lastIndexOf('.')) + ".jpg";
 
-                    values.put(MediaStore.Video.Media.DATA, path);
-                    values.put(MediaStore.Video.Media.DATE_TAKEN, recordTimes.get(cameraId));
-                    uri = context.getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
-                    Log.i(TAG, "onCaptureSequenceCompleted: insert the video to database, uri = " + uri);
-
-                    // save the video thumbnail and insert it to database
-                    if (null != path) {
-                        if (null == thumbnail) {
-                            thumbnail = ThumbnailUtils.createVideoThumbnail(path, MediaStore.Video.Thumbnails.FULL_SCREEN_KIND);
-                            Log.i(TAG, "onCaptureSequenceCompleted: the video thumbnail(ThumbnailUtils) = " + thumbnail);
-                        }
-
-                        if (null != thumbnail && null != uri) {
+                            // write the video thumbnail to file
                             try {
-                                String thumbnailPath = thumbnailDirs.get(cameraId) + path.substring(path.lastIndexOf(File.separator), path.lastIndexOf('.')) + ".jpg";
                                 FileOutputStream fos = new FileOutputStream(thumbnailPath);
 
                                 thumbnail.compress(Bitmap.CompressFormat.JPEG, 100, fos);
                                 fos.flush();
                                 fos.close();
-                                Log.i(TAG, "onCaptureSequenceCompleted: save the video thumbnail, thumbnailPath = " + thumbnailPath);
-
-                                values.clear();
-                                values.put(MediaStore.Video.Thumbnails.DATA, thumbnailPath);
-                                values.put(MediaStore.Video.Thumbnails.VIDEO_ID, ContentUris.parseId(uri));
-                                values.put(MediaStore.Video.Thumbnails.WIDTH, thumbnail.getWidth());
-                                values.put(MediaStore.Video.Thumbnails.HEIGHT, thumbnail.getHeight());
-                                Uri thumbnailUri = context.getContentResolver().insert(MediaStore.Video.Thumbnails.EXTERNAL_CONTENT_URI, values);
-                                Log.i(TAG, "onCaptureSequenceCompleted: insert the video thumbnail to database, thumbnailUri = " + thumbnailUri);
+                                Log.i(TAG, "onCaptureSequenceCompleted.SaveRecordThread: write the video thumbnail to file, thumbnailPath = " + thumbnailPath);
                             } catch (IOException e) {
                                 e.printStackTrace();
+                            }
+                        }
+                    } else {
+                        String name = path.substring(path.lastIndexOf(File.separator) + 1);
+                        File file = new File(path);
+                        MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+                        ContentResolver resolver = context.getContentResolver();
+                        ContentValues values = new ContentValues();
+                        Uri uri = null;
+
+                        mmr.setDataSource(path);
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            values.put(MediaStore.Video.Media.RELATIVE_PATH, recordRelativeDirs.get(cameraId));
+                        }
+
+                        values.put(MediaStore.Video.Media.DATA, path);
+                        values.put(MediaStore.Video.Media.DISPLAY_NAME, name);
+                        values.put(MediaStore.Video.Media.TITLE,  name.substring(0, name.lastIndexOf(".")));
+                        values.put(MediaStore.Video.Media.WIDTH, recordSizes.get(cameraId).getWidth());
+                        values.put(MediaStore.Video.Media.HEIGHT, recordSizes.get(cameraId).getHeight());
+                        values.put(MediaStore.Video.Media.SIZE, file.length());
+                        values.put(MediaStore.Video.Media.DATE_TAKEN, recordTimes.get(cameraId));
+                        values.put(MediaStore.Video.Media.DURATION, mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+                        uri = resolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
+                        Log.i(TAG, "onCaptureSequenceCompleted.SaveRecordThread: insert the video to database, uri = " + uri);
+
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                            Bitmap thumbnail = mmr.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
+
+                            Log.i(TAG, "onCaptureSequenceCompleted.SaveRecordThread: the video thumbnail(MediaMetadataRetriever) = " + thumbnail);
+
+                            if (null != thumbnail) {
+                                try {
+                                    String thumbnailPath = path.substring(0, path.lastIndexOf('.')) + ".jpg";
+                                    FileOutputStream fos = new FileOutputStream(thumbnailPath);
+
+                                    // write the video thumbnail to file
+                                    thumbnail.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+                                    fos.flush();
+                                    fos.close();
+                                    Log.i(TAG, "onCaptureSequenceCompleted.SaveRecordThread: write the video thumbnail to file, thumbnailPath = " + thumbnailPath);
+
+                                    if (null != uri) {
+                                        Uri thumbnailUri = null;
+
+                                        // insert the video thumbnail to database
+                                        values.clear();
+                                        values.put(MediaStore.Video.Thumbnails.DATA, thumbnailPath);
+                                        values.put(MediaStore.Video.Thumbnails.VIDEO_ID, ContentUris.parseId(uri));
+                                        values.put(MediaStore.Video.Thumbnails.WIDTH, thumbnail.getWidth());
+                                        values.put(MediaStore.Video.Thumbnails.HEIGHT, thumbnail.getHeight());
+                                        thumbnailUri = resolver.insert(MediaStore.Video.Thumbnails.EXTERNAL_CONTENT_URI, values);
+                                        Log.i(TAG, "onCaptureSequenceCompleted.SaveRecordThread: insert the video thumbnail to database, thumbnailUri = " + thumbnailUri);
+                                    }
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
                             }
                         }
                     }
@@ -255,6 +319,7 @@ public class CameraNative implements ICamera {
         @Override
         public void onImageAvailable(final ImageReader reader) {
             Log.i(TAG, "onImageAvailable: width = " + reader.getWidth() + ", height = " + reader.getHeight());
+
             // Must call acquireNextImage() and close(),
             // or it will block the thread and the preview surface.
             Image image = reader.acquireNextImage();
@@ -263,103 +328,114 @@ public class CameraNative implements ICamera {
             buffer.get(bytes);
             image.close();
 
+            final String cameraId = findCameraId(reader);
+            if(null == cameraId) {
+                Log.e(TAG, "onImageAvailable: don't find camera id!");
+                return;
+            }
+
+            final String path = capturePaths.get(cameraId);
+            Log.i(TAG, "onImageAvailable: cameraId = " + cameraId + ", path = " + path);
+            if(null == path) {
+                return;
+            }
+
             new Thread(new Runnable() {
                 @Override
                 public void run() {
                     Log.i(TAG, "onImageAvailable.SaveImageThread: +");
 
-                    String cameraId = null;
-
-                    // find the camera id
-                    for (Map.Entry<String, ImageReader> entry : imageReaders.entrySet()) {
-                        if(reader.equals(entry.getValue())){
-                            cameraId = entry.getKey();
-                            break;
-                        }
-                    }
-
-                    if(null == cameraId) {
-                        return;
-                    }
-
-                    String path = capturePaths.get(cameraId);
-                    if (null == path) {
-                        Log.e(TAG, "onImageAvailable: The capture path is null!");
-                        return;
-                    }
-
-                    // save the image
-                    try {
-                        FileOutputStream fos = new FileOutputStream(path);
-                        fos.write(bytes);
-                        fos.flush();
-                        fos.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    Log.i(TAG, "onImageAvailable: save the image, path = " + path);
-
-                    ContentValues values = new ContentValues();
                     Location location = captureLocations.get(cameraId);
+                    
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !isCapturePublicDirs.get(cameraId)) {
+                        try {
+                            FileOutputStream fos = new FileOutputStream(path);
 
-                    // extract the image information
-                    try {
-                        ExifInterface exif = new ExifInterface(path);
-                        String dateTime = exif.getAttribute(ExifInterface.TAG_DATETIME);
+                            // write the image to file
+                            fos.write(bytes);
+                            fos.flush();
+                            fos.close();
+                            Log.i(TAG, "onImageAvailable.SaveImageThread: write the image to file, path = " + path);
 
-                        // save the date time to image
-                        if (null != dateTime) {
+                            // write the location to image file
+                            writeImageLocation(new ExifInterface(path), location);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        String name = path.substring(path.lastIndexOf(File.separator) + 1);
+                        String title = name.substring(0, name.lastIndexOf("."));
+                        ContentResolver resolver = context.getContentResolver();
+                        ContentValues values = new ContentValues();
+                        Uri uri = null;
+
+                        // insert the image to database
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            values.put(MediaStore.Images.Media.RELATIVE_PATH, captureRelativeDirs.get(cameraId));
+                        }
+                        
+                        if (null != location) {
+                            values.put(MediaStore.Images.Media.LATITUDE, location.getLatitude());
+                            values.put(MediaStore.Images.Media.LONGITUDE, location.getLongitude());
+                        }
+                        
+                        values.put(MediaStore.Images.Media.DATA, path);
+                        values.put(MediaStore.Images.Media.DISPLAY_NAME, name);
+                        values.put(MediaStore.Images.Media.TITLE, title);
+                        values.put(MediaStore.Images.Media.SIZE, bytes.length);
+                        values.put(MediaStore.Images.Media.WIDTH, reader.getWidth());
+                        values.put(MediaStore.Images.Media.HEIGHT, reader.getHeight());
+                        uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                        Log.i(TAG, "onImageAvailable.SaveImageThread: insert the image to database, uri = " + uri);
+
+                        if (null != uri) {
                             try {
-                                Date date = exifDateFormat.parse(dateTime);
+                                OutputStream os = resolver.openOutputStream(uri);
 
-                                if (null != date) {
-                                    values.put(MediaStore.Images.Media.DATE_TAKEN, date.getTime());
+                                if (null != os) {
+                                    // write the image to file
+                                    os.write(bytes);
+                                    os.flush();
+                                    os.close();
+                                    Log.i(TAG, "onImageAvailable.SaveImageThread: write the image to file, path = " + path);
+
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                        uri = MediaStore.setRequireOriginal(uri);
+                                    }
+                                    
+                                    ParcelFileDescriptor pfd = resolver.openFileDescriptor(uri, "rw");
+
+                                    if (null != pfd) {
+                                        ExifInterface exif = new ExifInterface(pfd.getFileDescriptor());
+                                        String dateTime = exif.getAttribute(ExifInterface.TAG_DATETIME);
+
+                                        // update the date time to database
+                                        if (null != dateTime) {
+                                            try {
+                                                Date date = exifDateFormat.parse(dateTime);
+
+                                                if (null != date) {
+                                                    values.clear();
+                                                    values.put(MediaStore.Images.Media.DATE_TAKEN, date.getTime());
+                                                    resolver.update(uri, values, null, null);
+                                                    Log.i(TAG, "onImageAvailable.SaveImageThread: update the date time to database");
+                                                }
+                                            } catch (ParseException e) {
+                                                e.printStackTrace();
+                                            }
+                                        }
+
+                                        // write the location to image file
+                                        writeImageLocation(exif, location);
+
+                                        pfd.close();
+                                    }
                                 }
-                            } catch (ParseException e) {
+                            } catch (IOException e) {
                                 e.printStackTrace();
                             }
                         }
-
-                        // save the location to image
-                        if (null != location) {
-                            float[] latLong = new float[2];
-
-                            if (!exif.getLatLong(latLong)) {
-                                double latitude = location.getLatitude();
-                                double longitude = location.getLongitude();
-
-                                Log.w(TAG, "onImageAvailable: save the coordinate to image!");
-                                exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE, ConvertUtil.decimalToDMS(latitude));
-                                exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE_REF, latitude > 0 ? "N" : "S");
-                                exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE, ConvertUtil.decimalToDMS(longitude));
-                                exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF, longitude > 0 ? "E" : "W");
-                                exif.saveAttributes();
-                            }
-
-                            if (location.hasAltitude() && -1 == exif.getAltitude(-1)) {
-                                double altitude = location.getAltitude();
-                                Log.w(TAG, "onImageAvailable: save the altitude to image!");
-                                exif.setAttribute(ExifInterface.TAG_GPS_ALTITUDE, Double.toString(Math.abs(altitude)) + "/1");
-                                exif.setAttribute(ExifInterface.TAG_GPS_ALTITUDE_REF, altitude >= 0 ? "0" : "1");
-                                exif.saveAttributes();
-                            }
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
                     }
-
-                    // insert the image to database
-                    if (null != location) {
-                        values.put(MediaStore.Images.Media.LATITUDE, location.getLatitude());
-                        values.put(MediaStore.Images.Media.LONGITUDE, location.getLongitude());
-                    }
-
-                    values.put(MediaStore.Images.Media.DATA, path);
-                    values.put(MediaStore.Images.Media.WIDTH, reader.getWidth());
-                    values.put(MediaStore.Images.Media.HEIGHT, reader.getHeight());
-                    Uri uri = context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-                    Log.i(TAG, "onImageAvailable: insert the image to database, uri = " + uri);
 
                     if (null != captureCallback) {
                         captureCallback.onCompleted(cameraId, path);
@@ -370,7 +446,7 @@ public class CameraNative implements ICamera {
             }, "SaveImageThread").start();
         }
     };
-
+    
     private MediaRecorder.OnInfoListener recordInfoListener = new MediaRecorder.OnInfoListener() {
         @Override
         public void onInfo(MediaRecorder mr, int what, int extra) {
@@ -496,28 +572,32 @@ public class CameraNative implements ICamera {
             return output;
         }
 
-        public static float convertRationalLatLonToFloat(String rationalString, String ref) {
+        public static double convertRationalLatLonToDouble(String rationalString, String ref) {
             try {
-                String [] parts = rationalString.split(",");
+                String [] parts = rationalString.split(",", -1);
 
                 String [] pair;
-                pair = parts[0].split("/");
+                pair = parts[0].split("/", -1);
                 double degrees = Double.parseDouble(pair[0].trim())
                         / Double.parseDouble(pair[1].trim());
 
-                pair = parts[1].split("/");
+                pair = parts[1].split("/", -1);
                 double minutes = Double.parseDouble(pair[0].trim())
                         / Double.parseDouble(pair[1].trim());
 
-                pair = parts[2].split("/");
+                pair = parts[2].split("/", -1);
                 double seconds = Double.parseDouble(pair[0].trim())
                         / Double.parseDouble(pair[1].trim());
 
                 double result = degrees + (minutes / 60.0) + (seconds / 3600.0);
                 if ((ref.equals("S") || ref.equals("W"))) {
-                    return (float) -result;
+                    return -result;
+                } else if (ref.equals("N") || ref.equals("E")) {
+                    return result;
+                } else {
+                    // Not valid
+                    throw new IllegalArgumentException();
                 }
-                return (float) result;
             } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
                 // Not valid
                 throw new IllegalArgumentException();
@@ -526,7 +606,7 @@ public class CameraNative implements ICamera {
     }
 
     private static class Builder {
-        private static CameraNative instance = new CameraNative();
+        private static final CameraNative instance = new CameraNative();
     }
 
     public static CameraNative getInstance() {
@@ -547,24 +627,47 @@ public class CameraNative implements ICamera {
             e.printStackTrace();
         }
 
-        cameraManager = (CameraManager) this.context.getSystemService(Context.CAMERA_SERVICE);
+        cameraManager = (CameraManager)context.getSystemService(Context.CAMERA_SERVICE);
+        publicDir = Environment.getExternalStorageDirectory().getAbsolutePath();
+        privateDir = context.getExternalFilesDir(null).getAbsolutePath();
 
-        File captureDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        if (null == captureDir || !captureDir.exists()) {
-            Log.e(TAG, "CameraNative: can't get external pictures directory!");
-        }
-
-        File recordDir = context.getExternalFilesDir(Environment.DIRECTORY_MOVIES);
-        if (null == recordDir || !recordDir.exists()) {
-            Log.e(TAG, "CameraNative: can't get external movies directory!");
-        }
-
-        File thumbnailDir = new File(context.getExternalFilesDir(null), "Thumbnails");
-        if (!thumbnailDir.exists()) {
-            if (thumbnailDir.mkdirs()) {
-                Log.i(TAG, "CameraNative: make directory " + thumbnailDir.getPath());
+        File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        if (!dir.exists()) {
+            if (dir.mkdir()) {
+                Log.e(TAG, "CameraController: make external storage public pictures directory!");
             } else {
-                Log.e(TAG, "CameraNative: make directory " + thumbnailDir.getPath() + " failed!");
+                Log.e(TAG, "CameraController: make external storage public pictures directory failed!");
+            }
+        }
+
+        dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES);
+        if (!dir.exists()) {
+            if (dir.mkdir()) {
+                Log.e(TAG, "CameraController: make external storage public movies directory!");
+            } else {
+                Log.e(TAG, "CameraController: make external storage public movies directory failed!");
+            }
+        }
+
+        dir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        if (null == dir) {
+            Log.e(TAG, "CameraController: no external storage private pictures directory!");
+        } else if (!dir.exists()) {
+            if (dir.mkdir()) {
+                Log.e(TAG, "CameraController: make external storage private pictures directory!");
+            } else {
+                Log.e(TAG, "CameraController: make external storage private pictures directory failed!");
+            }
+        }
+
+        dir = context.getExternalFilesDir(Environment.DIRECTORY_MOVIES);
+        if (null == dir) {
+            Log.e(TAG, "CameraController: no external storage private movies directory!");
+        } else if (!dir.exists()) {
+            if (dir.mkdir()) {
+                Log.e(TAG, "CameraController: make external storage private movies directory!");
+            } else {
+                Log.e(TAG, "CameraController: make external storage private movies directory failed!");
             }
         }
 
@@ -589,7 +692,7 @@ public class CameraNative implements ICamera {
                 } else {
                     captureSizes.put(cameraId, new Size(1280, 720));
                     recordSizes.put(cameraId, new Size(1280, 720));
-                    Log.w(TAG, "CameraNative: cameraId = " + cameraId + ", the StreamConfigurationMap is null, use 1280 * 720 as default!");
+                    Log.e(TAG, "CameraNative: cameraId = " + cameraId + ", the StreamConfigurationMap is null, use 1280 * 720 as default!");
                 }
                 
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
@@ -600,12 +703,13 @@ public class CameraNative implements ICamera {
             } catch (CameraAccessException e) {
                 e.printStackTrace();
             }
-
-            capturePaths.put(cameraId, captureDir.getPath() + File.separator + "dummy.jpg");
-            recordPaths.put(cameraId, recordDir.getPath() + File.separator + "dummy.mp4");
-            thumbnailDirs.put(cameraId, thumbnailDir.getPath());
+            
+            isCapturePublicDirs.put(cameraId, true);
+            isRecordPublicDirs.put(cameraId, true);
+            captureRelativeDirs.put(cameraId, Environment.DIRECTORY_PICTURES);
+            recordRelativeDirs.put(cameraId, Environment.DIRECTORY_MOVIES);
             audioMutes.put(cameraId, false);
-            videoEncodingRate.put(cameraId, 3000000);
+            videoEncodingRates.put(cameraId, 3000000);
             isRecordings.put(cameraId, false);
             surfaces.put(cameraId, new Surface[]{null, null, null});
         }
@@ -694,6 +798,36 @@ public class CameraNative implements ICamera {
     }
 
     @Override
+    public boolean setCaptureRelativeDir(String cameraId, String dir, boolean isPublic) {
+        Log.i(TAG, "setCaptureRelativeDir: cameraId = " + cameraId + ", dir = " + dir + ", isPublic = " + isPublic);
+
+        if (null == dir) {
+            return false;
+        }
+
+        File path = new File(isPublic ? publicDir : privateDir, dir);
+
+        if (!path.exists()) {
+            if (path.mkdirs()) {
+                Log.e(TAG, "setCaptureRelativeDir: make directory " + path.getAbsolutePath());
+            } else {
+                Log.e(TAG, "setCaptureRelativeDir: make directory " + path.getAbsolutePath() + " failed!");
+
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
+                        || (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q && Environment.isExternalStorageLegacy())
+                        || !isPublic) {
+                    return false;
+                }
+            }
+        }
+
+        isCapturePublicDirs.put(cameraId, isPublic);
+        captureRelativeDirs.put(cameraId, dir);
+
+        return true;
+    }
+
+    @Override
     public void setCaptureSize(String cameraId, int width, int height) {
         Log.i(TAG, "setCaptureSize: cameraId = " + cameraId + ", width = " + width + ", height = " + height);
 
@@ -708,71 +842,44 @@ public class CameraNative implements ICamera {
     }
 
     @Override
-    public boolean setCaptureDir(String cameraId, String dir) {
-        Log.i(TAG, "setCaptureDir: cameraId = " + cameraId + ", dir = " + dir);
+    public void setCaptureCallback(ICaptureCallback callback) {
+        captureCallback = callback;
+    }
+
+    @Override
+    public boolean setRecordRelativeDir(String cameraId, String dir, boolean isPublic) {
+        Log.i(TAG, "setRecordRelativeDir: cameraId = " + cameraId + ", dir = " + dir + ", isPublic = " + isPublic);
 
         if (null == dir) {
             return false;
         }
 
-        File captureDir = new File(dir);
+        File path = new File(isPublic ? publicDir : privateDir, dir);
 
-        if (!captureDir.exists()) {
-            if (captureDir.mkdirs()) {
-                Log.e(TAG, "setCaptureDir: make directory " + dir);
+        if (!path.exists()) {
+            if (path.mkdirs()) {
+                Log.e(TAG, "setRecordRelativeDir: make directory " + path.getAbsolutePath());
             } else {
-                Log.e(TAG, "setCaptureDir: make directory " + dir + " failed!");
-                return false;
+                Log.e(TAG, "setRecordRelativeDir: make directory " + path.getAbsolutePath() + " failed!");
+
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
+                        || (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q && Environment.isExternalStorageLegacy())
+                        || !isPublic) {
+                    return false;
+                }
             }
         }
 
-        capturePaths.put(cameraId, dir + File.separator + "dummy.jpg");
+        isRecordPublicDirs.put(cameraId, isPublic);
+        recordRelativeDirs.put(cameraId, dir);
 
         return true;
-    }
-
-    @Override
-    public void setCaptureCallback(ICaptureCallback callback) {
-        captureCallback = callback;
     }
 
     @Override
     public void setRecordSize(String cameraId, int width, int height) {
         Log.i(TAG, "setRecordSize: cameraId = " + cameraId + ", width = " + width + ", height = " + height);
         recordSizes.put(cameraId, new Size(width, height));
-    }
-
-    @Override
-    public boolean setRecordDir(String cameraId, String dir) {
-        Log.i(TAG, "setRecordDir: cameraId = " + cameraId + ", dir = " + dir);
-
-        if (null == dir) {
-            return false;
-        }
-
-        File recordDir = new File(dir);
-        if (!recordDir.exists()) {
-            if (recordDir.mkdirs()) {
-                Log.e(TAG, "setRecordDir: make directory " + dir);
-            } else {
-                Log.e(TAG, "setRecordDir: make directory " + dir + " failed!");
-                return false;
-            }
-        }
-        recordPaths.put(cameraId, dir + File.separator + "dummy.mp4");
-
-        File thumbnailDir = new File(recordDir.getParentFile(), "Thumbnails");
-        if (!thumbnailDir.exists()) {
-            if(thumbnailDir.mkdirs()) {
-                Log.e(TAG, "setRecordDir: make directory " + thumbnailDir.getPath());
-            } else {
-                Log.e(TAG, "setRecordDir: make directory " + thumbnailDir.getPath() + " failed!");
-                return false;
-            }
-        }
-        thumbnailDirs.put(cameraId, thumbnailDir.getPath());
-
-        return true;
     }
 
     @Override
@@ -784,7 +891,7 @@ public class CameraNative implements ICamera {
     @Override
     public void setVideoEncodingRate(String cameraId, int bps) {
         Log.i(TAG, "setVideoEncodingRate: cameraId = " + cameraId + ", bps = " + bps);
-        videoEncodingRate.put(cameraId, bps);
+        videoEncodingRates.put(cameraId, bps);
     }
 
     @Override
@@ -797,24 +904,29 @@ public class CameraNative implements ICamera {
         Log.i(TAG, "open: cameraId = " + cameraId);
 
         if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)) {
-            Log.w(TAG, "open: no camera permission!");
-            return ResultCode.NO_CAMERA_PERMISSION;
+            Log.e(TAG, "open: no camera permission!");
+            return ResultCode.NO_PERMISSION;
         }
 
         if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)) {
-            Log.w(TAG, "open: no record audio permission!");
-            return ResultCode.NO_RECORD_AUDIO_PERMISSION;
+            Log.e(TAG, "open: no record audio permission!");
+            return ResultCode.NO_PERMISSION;
         }
 
         if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-            Log.w(TAG, "open: no write external storage permission!");
-            return ResultCode.NO_WRITE_EXTERNAL_STORAGE_PERMISSION;
+            Log.e(TAG, "open: no write external storage permission!");
+            return ResultCode.NO_PERMISSION;
+        }
+
+        if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            Log.e(TAG, "open: no read external storage permission!");
+            return ResultCode.NO_PERMISSION;
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_MEDIA_LOCATION)) {
-                Log.w(TAG, "open: no access media location!");
-                return ResultCode.NO_WRITE_EXTERNAL_STORAGE_PERMISSION;
+                Log.e(TAG, "open: no access media location permission!");
+                return ResultCode.NO_PERMISSION;
             }
         }
         
@@ -1144,7 +1256,11 @@ public class CameraNative implements ICamera {
 
         stopPreview(cameraId);
         isRecordings.put(cameraId, true);
-        prepareRecorder(cameraId, name, duration);
+
+        if (!prepareRecorder(cameraId, name, duration)) {
+            isRecordings.put(cameraId, false);
+            return ResultCode.RECORDER_ERROR;
+        }
 
         final MediaRecorder mediaRecorder = mediaRecorders.get(cameraId);
         final Surface previewSurface = previewSurfaces.get(cameraId);
@@ -1238,14 +1354,14 @@ public class CameraNative implements ICamera {
         try {
             CaptureRequest.Builder captureBuilder = cameraDevices.get(cameraId).createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             WindowManager windowManager = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE));
-            String path = capturePaths.get(cameraId).substring(0, capturePaths.get(cameraId).lastIndexOf(File.separator)) +
-                    File.separator + (null != name && !name.isEmpty() ? name : nameDateFormat.format(new Date()) + ".jpg");
 
             if (null != windowManager) {
                 captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(sensorOrientations.get(cameraId), windowManager.getDefaultDisplay().getRotation()));
             }
 
-            capturePaths.put(cameraId, path);
+            capturePaths.put(cameraId, (isCapturePublicDirs.get(cameraId) ? publicDir : privateDir)
+                    + File.separator + captureRelativeDirs.get(cameraId) + File.separator
+                    + (null != name && !name.isEmpty() ? name : nameDateFormat.format(new Date()) + ".jpg"));
             captureLocations.put(cameraId, location);
             captureBuilder.addTarget(surfaces.get(cameraId)[SURFACE_CAPTURE]);
             captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
@@ -1261,59 +1377,142 @@ public class CameraNative implements ICamera {
         return ResultCode.SUCCESS;
     }
 
-    private void prepareRecorder(String cameraId, String name, int duration) {
+    private boolean prepareRecorder(String cameraId, String name, int duration) {
         Log.i(TAG, "prepareRecorder: cameraId = " + cameraId + ", name = " + name + ", duration = " + duration);
 
-        MediaRecorder mediaRecorder = new MediaRecorder();
-        String path = recordPaths.get(cameraId).substring(0, recordPaths.get(cameraId).lastIndexOf(File.separator)) +
-                File.separator + (null != name && !name.isEmpty() ? name : nameDateFormat.format(new Date()) + ".mp4");
+        long time = System.currentTimeMillis();
+        String displayName = (null != name && !name.isEmpty() ? name : nameDateFormat.format(new Date(time)) + ".mp4");
+        String path = (isRecordPublicDirs.get(cameraId) ? publicDir : privateDir)
+                + File.separator + recordRelativeDirs.get(cameraId)
+                + File.separator + displayName;
+        Size size = recordSizes.get(cameraId);
         Integer sensorOrientation = sensorOrientations.get(cameraId);
         WindowManager windowManager = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE));
+        MediaRecorder mediaRecorder = new MediaRecorder();
 
-        if (!audioMutes.get(cameraId)) {
-            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        }
+        Log.i(TAG, "prepareRecorder: path = " + path);
 
-        mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
-        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        mediaRecorder.setOutputFile(path);
-        mediaRecorder.setVideoEncodingBitRate(videoEncodingRate.get(cameraId));
-        mediaRecorder.setVideoFrameRate(30);
-        mediaRecorder.setVideoSize(recordSizes.get(cameraId).getWidth(), recordSizes.get(cameraId).getHeight());
-        mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+        if ((Build.VERSION.SDK_INT > Build.VERSION_CODES.Q
+                || (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q && !Environment.isExternalStorageLegacy()))
+                && isRecordPublicDirs.get(cameraId)) {
+            ContentResolver resolver = context.getContentResolver();
+            ContentValues values = new ContentValues();
+            Uri uri = null;
 
-        if (!audioMutes.get(cameraId)) {
-            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-        }
+            values.put(MediaStore.Video.Media.DATA, path);
+            values.put(MediaStore.Video.Media.DISPLAY_NAME, displayName);
+            values.put(MediaStore.Video.Media.TITLE,  displayName.substring(0, displayName.lastIndexOf(".")));
+            values.put(MediaStore.Video.Media.WIDTH, size.getWidth());
+            values.put(MediaStore.Video.Media.HEIGHT, size.getHeight());
+            values.put(MediaStore.Video.Media.DATE_TAKEN, time);
+            values.put(MediaStore.Video.Media.RELATIVE_PATH, recordRelativeDirs.get(cameraId));
+            uri = resolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
+            Log.i(TAG, "prepareRecorder: insert the video to database, uri = " + uri);
 
-        mediaRecorder.setMaxDuration(duration);
-        mediaRecorder.setOnInfoListener(recordInfoListener);
-        mediaRecorder.setOnErrorListener(recordErrorListener);
-
-        if (null != sensorOrientation && null != windowManager) {
-            int rotation = windowManager.getDefaultDisplay().getRotation();
-
-            switch (sensorOrientation) {
-                case SENSOR_ORIENTATION_DEGREES:
-                    mediaRecorder.setOrientationHint(ORIENTATIONS.get(rotation));
-                    break;
-                case SENSOR_ORIENTATION_INVERSE_DEGREES:
-                    mediaRecorder.setOrientationHint(INVERSE_ORIENTATIONS.get(rotation));
-                    break;
-                default:
-                    break;
+            if (null == uri) {
+                return false;
             }
+
+            try {
+                ParcelFileDescriptor pfd = resolver.openFileDescriptor(uri, "w");
+
+                if (null == pfd) {
+                    return false;
+                }
+
+                if (!audioMutes.get(cameraId)) {
+                    mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+                }
+
+                mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
+                mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+                mediaRecorder.setOutputFile(pfd.getFileDescriptor());
+                mediaRecorder.setVideoEncodingBitRate(videoEncodingRates.get(cameraId));
+                mediaRecorder.setVideoFrameRate(30);
+                mediaRecorder.setVideoSize(size.getWidth(), size.getHeight());
+                mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+
+                if (!audioMutes.get(cameraId)) {
+                    mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+                }
+
+                mediaRecorder.setMaxDuration(duration);
+                mediaRecorder.setOnInfoListener(recordInfoListener);
+                mediaRecorder.setOnErrorListener(recordErrorListener);
+
+                if (null != sensorOrientation && null != windowManager) {
+                    int rotation = windowManager.getDefaultDisplay().getRotation();
+
+                    switch (sensorOrientation) {
+                        case SENSOR_ORIENTATION_DEGREES:
+                            mediaRecorder.setOrientationHint(ORIENTATIONS.get(rotation));
+                            break;
+                        case SENSOR_ORIENTATION_INVERSE_DEGREES:
+                            mediaRecorder.setOrientationHint(INVERSE_ORIENTATIONS.get(rotation));
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                mediaRecorder.prepare();
+                pfd.close();
+                recorddUri.put(cameraId, uri);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        } else {
+            if (!audioMutes.get(cameraId)) {
+                mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            }
+
+            mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
+            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+            mediaRecorder.setOutputFile(path);
+            mediaRecorder.setVideoEncodingBitRate(videoEncodingRates.get(cameraId));
+            mediaRecorder.setVideoFrameRate(30);
+            mediaRecorder.setVideoSize(size.getWidth(), size.getHeight());
+            mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+
+            if (!audioMutes.get(cameraId)) {
+                mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+            }
+
+            mediaRecorder.setMaxDuration(duration);
+            mediaRecorder.setOnInfoListener(recordInfoListener);
+            mediaRecorder.setOnErrorListener(recordErrorListener);
+
+            if (null != sensorOrientation && null != windowManager) {
+                int rotation = windowManager.getDefaultDisplay().getRotation();
+
+                switch (sensorOrientation) {
+                    case SENSOR_ORIENTATION_DEGREES:
+                        mediaRecorder.setOrientationHint(ORIENTATIONS.get(rotation));
+                        break;
+                    case SENSOR_ORIENTATION_INVERSE_DEGREES:
+                        mediaRecorder.setOrientationHint(INVERSE_ORIENTATIONS.get(rotation));
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            try {
+                mediaRecorder.prepare();
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+
+            recorddUri.put(cameraId, null);
         }
 
-        try {
-            mediaRecorder.prepare();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        recordTimes.put(cameraId, System.currentTimeMillis());
+        recordTimes.put(cameraId, time);
         recordPaths.put(cameraId, path);
         mediaRecorders.put(cameraId, mediaRecorder);
+
+        return true;
     }
 
     private void releaseRecorder(String cameraId) {
@@ -1331,7 +1530,7 @@ public class CameraNative implements ICamera {
             }
         }
     }
-    
+
     private String findCameraId(CameraCaptureSession session) {
         for (Map.Entry<String, CameraCaptureSession> entry : cameraCaptureSessions.entrySet()) {
             if(session.equals(entry.getValue())){
@@ -1339,6 +1538,16 @@ public class CameraNative implements ICamera {
             }
         }
         
+        return null;
+    }
+
+    private String findCameraId(ImageReader reader) {
+        for (Map.Entry<String, ImageReader> entry : imageReaders.entrySet()) {
+            if(reader.equals(entry.getValue())){
+                return entry.getKey();
+            }
+        }
+
         return null;
     }
 
@@ -1380,5 +1589,44 @@ public class CameraNative implements ICamera {
         int jpegOrientation = (sensorOrientation + deviceOrientation + 360) % 360;
 
         return jpegOrientation;
+    }
+
+    private void writeImageLocation(ExifInterface exif, Location location) {
+        if (null == exif || null == location) {
+            return;
+        }
+
+        double[] latLong = exif.getLatLong();
+
+        if (null == latLong) {
+            double latitude = location.getLatitude();
+            double longitude = location.getLongitude();
+
+            Log.e(TAG, "writeImageLocation: save the coordinate to image!");
+            exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE, ConvertUtil.decimalToDMS(latitude));
+            exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE_REF, latitude > 0 ? "N" : "S");
+            exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE, ConvertUtil.decimalToDMS(longitude));
+            exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF, longitude > 0 ? "E" : "W");
+
+            try {
+                exif.saveAttributes();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (location.hasAltitude() && -1 == exif.getAltitude(-1)) {
+            double altitude = location.getAltitude();
+
+            Log.e(TAG, "writeImageLocation: save the altitude to image!");
+            exif.setAttribute(ExifInterface.TAG_GPS_ALTITUDE, Double.toString(Math.abs(altitude)) + "/1");
+            exif.setAttribute(ExifInterface.TAG_GPS_ALTITUDE_REF, altitude >= 0 ? "0" : "1");
+
+            try {
+                exif.saveAttributes();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

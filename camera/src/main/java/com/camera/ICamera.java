@@ -1,8 +1,10 @@
 package com.camera;
 
+import android.content.Context;
 import android.hardware.camera2.CameraDevice;
 import android.location.Location;
 import android.media.MediaRecorder;
+import android.os.Environment;
 import android.util.Size;
 import android.view.Surface;
 
@@ -20,39 +22,34 @@ public interface ICamera {
         public static final int SUCCESS = 0;
 
         /**
-         * The constant NO_CAMERA_PERMISSION.
+         * The constant NO_PERMISSION.
          */
-        public static final int NO_CAMERA_PERMISSION = -1;
-
-        /**
-         * The constant NO_WRITE_EXTERNAL_STORAGE_PERMISSION.
-         */
-        public static final int NO_WRITE_EXTERNAL_STORAGE_PERMISSION = -2;
-
-        /**
-         * The constant NO_RECORD_AUDIO_PERMISSION.
-         */
-        public static final int NO_RECORD_AUDIO_PERMISSION = -3;
+        public static final int NO_PERMISSION = -1;
 
         /**
          * The constant CAMERA_EXCEPTION.
          */
-        public static final int CAMERA_EXCEPTION = -4;
+        public static final int CAMERA_EXCEPTION = -2;
 
         /**
          * The constant NO_CAMERA_DEVICE.
          */
-        public static final int NO_CAMERA_DEVICE = -5;
+        public static final int NO_CAMERA_DEVICE = -3;
 
         /**
          * The constant NO_PREVIEW_SURFACE.
          */
-        public static final int NO_PREVIEW_SURFACE = -6;
+        public static final int NO_PREVIEW_SURFACE = -4;
 
         /**
          * The constant FAILED_WHILE_RECORDING.
          */
-        public static final int FAILED_WHILE_RECORDING = -7;
+        public static final int FAILED_WHILE_RECORDING = -5;
+        
+        /**
+         * The constant RECORDER_ERROR.
+         */
+        public static final int RECORDER_ERROR = -6;
     }
 
     /**
@@ -264,6 +261,24 @@ public interface ICamera {
     void setPreviewSurface(String cameraId, Surface previewSurface);
 
     /**
+     * Set the capture relative storage directory.
+     *
+     * Relative path of this capture item within the storage device where it
+     * is persisted. For example, an item stored at
+     * {@code /storage/emulated/0/Pictures/IMG1024.JPG} would have a
+     * path of {@code Pictures}.
+     *
+     * @param cameraId the camera id
+     * @param dir the capture relative storage directory
+     * @param isPublic Indicate if the directory is under public directory.
+     *                 For public, the root directory is
+     *                 {@link Environment#getExternalStorageDirectory()},
+     *                 and for private, it is {@link Context#getExternalFilesDir(String)}.
+     * @return true if successful or false
+     */
+    boolean setCaptureRelativeDir(String cameraId, String dir, boolean isPublic);
+
+    /**
      * Set the capture size.
      *
      * @param cameraId the camera id
@@ -273,20 +288,29 @@ public interface ICamera {
     void setCaptureSize(String cameraId, int width, int height);
 
     /**
-     * Set the capture storage directory.
-     *
-     * @param cameraId the camera id
-     * @param dir the capture storage directory
-     * @return true if successful or false
-     */
-    boolean setCaptureDir(String cameraId, String dir);
-
-    /**
      * Set the capture callback.
      *
      * @param callback the capture callback
      */
     void setCaptureCallback(ICaptureCallback callback);
+
+    /**
+     * Set the record relative storage directory.
+     *
+     * Relative path of this record item within the storage device where it
+     * is persisted. For example, an item stored at
+     * {@code /storage/emulated/0/Movies/VID1024.MP4} would have a
+     * path of {@code Movies}.
+     *
+     * @param cameraId the camera id
+     * @param dir the record relative storage directory
+     * @param isPublic Indicate if the directory is under public directory.
+     *                 For public, the root directory is
+     *                 {@link Environment#getExternalStorageDirectory()},
+     *                 and for private, it is {@link Context#getExternalFilesDir(String)}.
+     * @return true if successful or false
+     */
+    boolean setRecordRelativeDir(String cameraId, String dir, boolean isPublic);
 
     /**
      * Set the record video size.
@@ -296,15 +320,6 @@ public interface ICamera {
      * @param height the record video height
      */
     void setRecordSize(String cameraId, int width, int height);
-
-    /**
-     * Set the record storage directory.
-     *
-     * @param cameraId the camera id
-     * @param dir the record storage directory
-     * @return true if successful or false
-     */
-    boolean setRecordDir(String cameraId, String dir);
 
     /**
      * Set the audio mute.

@@ -1,8 +1,9 @@
 package com.camera.example;
 
 import android.Manifest;
+import android.content.ContentUris;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
+import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.Rect;
@@ -10,8 +11,10 @@ import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -69,24 +72,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             binding.ivCapture.post(new Runnable() {
                 @Override
                 public void run() {
-                    Bitmap srcBitmap = BitmapFactory.decodeFile(path);
-                    Matrix matrix = new Matrix();
                     Rect rect = new Rect();
-
                     getWindowManager().getDefaultDisplay().getRectSize(rect);
-                    matrix.postScale((float) (rect.width() - binding.tvPreview.getWidth()) / srcBitmap.getWidth(),
-                            (float) binding.tvPreview.getHeight() / srcBitmap.getHeight());
-                    Log.i(TAG, "onCompleted: bitmap width = " + srcBitmap.getWidth() + ", bitmap height = " + srcBitmap.getHeight());
-                    Log.i(TAG, "onCompleted: matrix = " + matrix);
-                    Bitmap bitmap = Bitmap.createBitmap(srcBitmap, 0, 0, srcBitmap.getWidth(), srcBitmap.getHeight(), matrix, true);
-                    binding.ivCapture.setImageBitmap(bitmap);
+                    RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
+                            rect.width() - binding.tvPreview.getWidth(), binding.tvPreview.getHeight());
+
+                    params.leftMargin = binding.tvPreview.getWidth();
+                    params.topMargin = 0;
+                    binding.ivCapture.setLayoutParams(params);
+
+                    Cursor cursor = getContentResolver().query(
+                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                            new String[] {MediaStore.Images.Media._ID},
+                            MediaStore.Images.Media.DATA + " LIKE '%" + path + "%'",
+                            null,
+                            null);
+
+                    if (null != cursor) {
+                        if (cursor.moveToNext()) {
+                            Uri uri = ContentUris.withAppendedId(
+                                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                    cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)));
+
+                            Log.i(TAG, "onCompleted: the image uri = " + uri);
+                            binding.ivCapture.setImageURI(uri);
+                        } else {
+                            Log.e(TAG, "onCompleted: no items!");
+                            binding.ivCapture.setImageBitmap(BitmapFactory.decodeFile(path));
+                        }
+
+                        cursor.close();
+                    } else {
+                        Log.e(TAG, "onCompleted: The cursor is null!");
+                        binding.ivCapture.setImageBitmap(BitmapFactory.decodeFile(path));
+                    }
                 }
             });
         }
 
         @Override
         public void onFailed(String cameraId, String path) {
-            Log.w(TAG, "onFailed: cameraId = " + cameraId + ", path = " + path);
+            Log.e(TAG, "onFailed: cameraId = " + cameraId + ", path = " + path);
         }
     };
 
@@ -127,7 +153,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         @Override
         public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {
-            Log.i(TAG, "onSurfaceTextureUpdated: surfaceTexture = " + surfaceTexture);
+            //Log.i(TAG, "onSurfaceTextureUpdated: surfaceTexture = " + surfaceTexture);
         }
     };
 
@@ -141,6 +167,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         permissions.add(Manifest.permission.CAMERA);
         permissions.add(Manifest.permission.RECORD_AUDIO);
         permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             permissions.add(Manifest.permission.ACCESS_MEDIA_LOCATION);
@@ -189,10 +216,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     init();
                     return;
                 } else {
-                    Log.w(TAG, "onRequestPermissionsResult: no camera!");
+                    Log.e(TAG, "onRequestPermissionsResult: no camera!");
                 }
             } else {
-                Log.w(TAG, "onRequestPermissionsResult: permission denied requestCode = " + requestCode);
+                Log.e(TAG, "onRequestPermissionsResult: permission denied requestCode = " + requestCode);
             }
 
             finish();
@@ -249,6 +276,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         camera.setCameraCallback(cameraCallback);
         camera.setCaptureCallback(captureCallback);
         camera.setRecordCallback(recordCallback);
+//        camera.setCaptureRelativeDir(cameraIds[0], "Pictures", false);
+//        camera.setRecordRelativeDir(cameraIds[0], "Movies", false);
         // This is important because not all available sizes are supported by the camera.
         // We set 1280×720 just for test.
         camera.setCaptureSize(cameraIds[0], 1280, 720);
