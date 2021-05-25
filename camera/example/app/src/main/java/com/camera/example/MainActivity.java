@@ -214,15 +214,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (0 < cameraIds.length) {
                     Log.i(TAG, "onRequestPermissionsResult: camera count = " + cameraIds.length);
                     init();
-                    return;
                 } else {
                     Log.e(TAG, "onRequestPermissionsResult: no camera!");
+                    finish();
                 }
             } else {
                 Log.e(TAG, "onRequestPermissionsResult: permission denied requestCode = " + requestCode);
+                finish();
             }
-
-            finish();
         }
     }
 
