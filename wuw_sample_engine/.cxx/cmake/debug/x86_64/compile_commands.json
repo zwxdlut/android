@@ -1,7 +1,0 @@
-[
-{
-  "directory": "D:/code/android_examples/wuw_sample_engine/.cxx/cmake/debug/x86_64",
-  "command": "D:\\android\\sdk\\ndk\\21.0.6113669\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=x86_64-none-linux-android23 --gcc-toolchain=D:/android/sdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=D:/android/sdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dvad_api_jni_EXPORTS -ID:/code/android_examples/wuw_sample_engine/src/main/cpp/inc  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -std=c++11 -O0 -fno-limit-debug-info  -fPIC   -o CMakeFiles\\vad_api_jni.dir\\src\\vad_api_jni.cc.o -c D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\src\\vad_api_jni.cc",
-  "file": "D:\\code\\android_examples\\wuw_sample_engine\\src\\main\\cpp\\src\\vad_api_jni.cc"
-}
-]

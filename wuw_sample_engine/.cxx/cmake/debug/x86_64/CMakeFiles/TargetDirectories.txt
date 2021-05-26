@@ -1,3 +1,0 @@
-D:/code/android_examples/wuw_sample_engine/.cxx/cmake/debug/x86_64/CMakeFiles/vad_api_jni.dir
-D:/code/android_examples/wuw_sample_engine/.cxx/cmake/debug/x86_64/CMakeFiles/edit_cache.dir
-D:/code/android_examples/wuw_sample_engine/.cxx/cmake/debug/x86_64/CMakeFiles/rebuild_cache.dir
