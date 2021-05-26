@@ -9,7 +9,7 @@ import android.util.Size;
 import android.view.Surface;
 
 /**
- * The interface camera.
+ * The ICamera interface provides control and operation of the cameras.
  */
 public interface ICamera {
     /**
@@ -256,9 +256,9 @@ public interface ICamera {
      * Set the preview surface.
      *
      * @param cameraId the camera id
-     * @param previewSurface the preview surface
+     * @param surface the preview surface
      */
-    void setPreviewSurface(String cameraId, Surface previewSurface);
+    void setPreviewSurface(String cameraId, Surface surface);
 
     /**
      * Set the capture relative storage directory.
@@ -361,7 +361,7 @@ public interface ICamera {
     int close(String cameraId);
 
     /**
-     * Start the preview.
+     * Start preview.
      *
      * @param cameraId the camera id
      * @return {@link ResultCode}
@@ -369,7 +369,7 @@ public interface ICamera {
     int startPreview(String cameraId);
 
     /**
-     * Stop the preview.
+     * Stop preview.
      *
      * @param cameraId the camera id
      * @return {@link ResultCode}

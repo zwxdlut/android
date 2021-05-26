@@ -60,6 +60,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * The CameraNative class provides control and operation of the native cameras.
+ */
 public class CameraNative implements ICamera {
     private static final String TAG = CameraNative.class.getSimpleName();
     private static final int SURFACE_PREVIEW = 0;
@@ -481,6 +484,9 @@ public class CameraNative implements ICamera {
         }
     };
 
+    /**
+     * The comparator for sizes by area.
+     */
     public static class CompareSizesByArea implements Comparator<Size> {
         @Override
         public int compare(Size lhs, Size rhs) {
@@ -490,6 +496,9 @@ public class CameraNative implements ICamera {
         }
     }
 
+    /**
+     * The tool for coordinate conversation.
+     */
     public static class ConvertUtil {
         public static String coordinateToDMS(double coordinate) {
             return Location.convert(coordinate, Location.FORMAT_SECONDS);
@@ -609,6 +618,9 @@ public class CameraNative implements ICamera {
         private static final CameraNative instance = new CameraNative();
     }
 
+    /**
+     * Get the singleton of class CameraNative.
+     */
     public static CameraNative getInstance() {
         return CameraNative.Builder.instance;
     }

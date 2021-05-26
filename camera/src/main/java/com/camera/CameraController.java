@@ -60,6 +60,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * The CameraController class provides control and operation of the cameras.
+ */
 public class CameraController {
     private static final String TAG = CameraController.class.getSimpleName();
     private static final int SURFACE_PREVIEW = 0;
@@ -675,6 +678,9 @@ public class CameraController {
         void onError(String cameraId, String path, int what, int extra);
     }
 
+    /**
+     * The comparator for sizes by area.
+     */
     public static class CompareSizesByArea implements Comparator<Size> {
         @Override
         public int compare(Size lhs, Size rhs) {
@@ -684,6 +690,9 @@ public class CameraController {
         }
     }
 
+    /**
+     * The tool for coordinate conversation.
+     */
     public static class ConvertUtil {
         public static String coordinateToDMS(double coordinate) {
             return Location.convert(coordinate, Location.FORMAT_SECONDS);
@@ -803,6 +812,9 @@ public class CameraController {
         private static final CameraController instance = new CameraController();
     }
 
+    /**
+     * Get the singleton of class CameraController.
+     */
     public static CameraController getInstance() {
         return Builder.instance;
     }
@@ -909,6 +921,11 @@ public class CameraController {
         }
     }
 
+    /**
+     * Get the camera id list.
+     *
+     * @return the camera id list
+     */
     public String[] getCameraIdList() {
         try {
             return cameraManager.getCameraIdList();
@@ -919,6 +936,12 @@ public class CameraController {
         return new String[0];
     }
 
+    /**
+     * Get the available preview sizes.
+     *
+     * @param cameraId the camera id
+     * @return the available preview sizes
+     */
     public Size[] getAvailablePreviewSizes(String cameraId) {
         try {
             StreamConfigurationMap map = cameraManager.getCameraCharacteristics(cameraId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
@@ -936,6 +959,12 @@ public class CameraController {
         return null;
     }
 
+    /**
+     * Get the available capture sizes.
+     *
+     * @param cameraId the camera id
+     * @return the available capture sizes
+     */
     public Size[] getAvailableCaptureSizes(String cameraId) {
         try {
             StreamConfigurationMap map = cameraManager.getCameraCharacteristics(cameraId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
@@ -953,6 +982,12 @@ public class CameraController {
         return null;
     }
 
+    /**
+     * Get the available record sizes.
+     *
+     * @param cameraId the camera id
+     * @return the available record sizes
+     */
     public Size[] getAvailableRecordSizes(String cameraId) {
         try {
             StreamConfigurationMap map = cameraManager.getCameraCharacteristics(cameraId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
@@ -970,20 +1005,53 @@ public class CameraController {
         return null;
     }
 
+    /**
+     * Check if the camera is recording.
+     *
+     * @param cameraId the camera id
+     * @return true while recording or false
+     */
     public boolean isRecording(String cameraId) {
         Boolean  isRecording = isRecordings.get(cameraId);
         return null != isRecording && isRecording;
     }
 
+    /**
+     * Set the camera callback.
+     *
+     * @param callback the camera callback
+     */
     public void setCameraCallback(ICameraCallback callback) {
         cameraCallback = callback;
     }
 
+    /**
+     * Set the preview surface.
+     *
+     * @param cameraId the camera id
+     * @param surface the preview surface
+     */
     public void setPreviewSurface(String cameraId, Surface surface) {
         Log.i(TAG, "setPreviewSurface: cameraId = " + cameraId);
         previewSurfaces.put(cameraId, surface);
     }
 
+    /**
+     * Set the capture relative storage directory.
+     *
+     * Relative path of this capture item within the storage device where it
+     * is persisted. For example, an item stored at
+     * {@code /storage/emulated/0/Pictures/IMG1024.JPG} would have a
+     * path of {@code Pictures}.
+     *
+     * @param cameraId the camera id
+     * @param dir the capture relative storage directory
+     * @param isPublic Indicate if the directory is under public directory.
+     *                 For public, the root directory is
+     *                 {@link Environment#getExternalStorageDirectory()},
+     *                 and for private, it is {@link Context#getExternalFilesDir(String)}.
+     * @return true if successful or false
+     */
     public boolean setCaptureRelativeDir(String cameraId, String dir, boolean isPublic) {
         Log.i(TAG, "setCaptureRelativeDir: cameraId = " + cameraId + ", dir = " + dir + ", isPublic = " + isPublic);
 
@@ -1013,6 +1081,13 @@ public class CameraController {
         return true;
     }
 
+    /**
+     * Set the capture size.
+     *
+     * @param cameraId the camera id
+     * @param width the capture width
+     * @param height the capture height
+     */
     public void setCaptureSize(String cameraId, int width, int height) {
         Log.i(TAG, "setCaptureSize: cameraId = " + cameraId + ", width = " + width + ", height = " + height);
 
@@ -1026,10 +1101,31 @@ public class CameraController {
         captureSizes.put(cameraId, new Size(width, height));
     }
 
+    /**
+     * Set the capture callback.
+     *
+     * @param callback the capture callback
+     */
     public void setCaptureCallback(ICaptureCallback callback) {
         captureCallback = callback;
     }
 
+    /**
+     * Set the record relative storage directory.
+     *
+     * Relative path of this record item within the storage device where it
+     * is persisted. For example, an item stored at
+     * {@code /storage/emulated/0/Movies/VID1024.MP4} would have a
+     * path of {@code Movies}.
+     *
+     * @param cameraId the camera id
+     * @param dir the record relative storage directory
+     * @param isPublic Indicate if the directory is under public directory.
+     *                 For public, the root directory is
+     *                 {@link Environment#getExternalStorageDirectory()},
+     *                 and for private, it is {@link Context#getExternalFilesDir(String)}.
+     * @return true if successful or false
+     */
     public boolean setRecordRelativeDir(String cameraId, String dir, boolean isPublic) {
         Log.i(TAG, "setRecordRelativeDir: cameraId = " + cameraId + ", dir = " + dir + ", isPublic = " + isPublic);
 
@@ -1059,25 +1155,55 @@ public class CameraController {
         return true;
     }
 
+    /**
+     * Set the record video size.
+     *
+     * @param cameraId the camera id
+     * @param width the record video width
+     * @param height the record video height
+     */
     public void setRecordSize(String cameraId, int width, int height) {
         Log.i(TAG, "setRecordSize: cameraId = " + cameraId + ", width = " + width + ", height = " + height);
         recordSizes.put(cameraId, new Size(width, height));
     }
 
+    /**
+     * Set the audio mute.
+     *
+     * @param cameraId the camera id
+     * @param isMute if the audio is mute
+     */
     public void setAudioMute(String cameraId, boolean isMute) {
         Log.i(TAG, "setAudioMute: cameraId = " + cameraId + ", isMute = " + isMute);
         audioMutes.put(cameraId, isMute);
     }
 
+    /**
+     * Set the video encoding bit rate.
+     *
+     * @param cameraId the camera id
+     * @param bps the video encoding bit rate in bps
+     */
     public void setVideoEncodingRate(String cameraId, int bps) {
         Log.i(TAG, "setVideoEncodingRate: cameraId = " + cameraId + ", bps = " + bps);
         videoEncodingRates.put(cameraId, bps);
     }
 
+    /**
+     * Set the record callback.
+     *
+     * @param callback the record callback
+     */
     public void setRecordCallback(IRecordCallback callback) {
         recordCallback = callback;
     }
 
+    /**
+     * Open the camera by id.
+     *
+     * @param cameraId the camera id
+     * @return {@link ICamera.ResultCode}
+     */
     public int open(final String cameraId) {
         Log.i(TAG, "open: cameraId = " + cameraId);
 
@@ -1172,6 +1298,12 @@ public class CameraController {
         return ResultCode.SUCCESS;
     }
 
+    /**
+     * Close the camera by id.
+     *
+     * @param cameraId the camera id
+     * @return {@link ICamera.ResultCode}
+     */
     public int close(String cameraId) {
         Log.i(TAG, "close: cameraId = " + cameraId);
         
@@ -1250,6 +1382,12 @@ public class CameraController {
         return ResultCode.SUCCESS;
     }
 
+    /**
+     * Start preview.
+     *
+     * @param cameraId the camera id
+     * @return {@link ICamera.ResultCode}
+     */
     public int startPreview(String cameraId) {
         Log.i(TAG, "startPreview: cameraId = " + cameraId);
 
@@ -1310,6 +1448,12 @@ public class CameraController {
         return ResultCode.SUCCESS;
     }
 
+    /**
+     * Stop preview.
+     *
+     * @param cameraId the camera id
+     * @return {@link ICamera.ResultCode}
+     */
     public int stopPreview(String cameraId) {
         Log.i(TAG, "stopPreview: cameraId = " + cameraId);
 
@@ -1330,18 +1474,46 @@ public class CameraController {
         return ResultCode.SUCCESS;
     }
 
+    /**
+     * Capture a picture.
+     *
+     * @param cameraId the camera id
+     * @return {@link ICamera.ResultCode}
+     */
     public int capture(String cameraId) {
         return capture(cameraId, null, null);
     }
 
+    /**
+     * Capture a picture with file.
+     *
+     * @param cameraId the camera id
+     * @param name the capture file name
+     * @return {@link ICamera.ResultCode}
+     */
     public int capture(String cameraId, String name) {
         return capture(cameraId, name, null);
     }
 
+    /**
+     * Capture a picture with location.
+     *
+     * @param cameraId the camera id
+     * @param location the location
+     * @return {@link ICamera.ResultCode}
+     */
     public int capture(String cameraId, Location location) {
         return capture(cameraId, null, location);
     }
 
+    /**
+     * Capture a picture with file name and location.
+     *
+     * @param cameraId the camera id
+     * @param name the capture file name
+     * @param location the location
+     * @return {@link ICamera.ResultCode}
+     */
     public int capture(String cameraId, final String name, final Location location) {
         Log.i(TAG, "capture: cameraId = " + cameraId + ", name = " + name + ", location = " + location);
 
@@ -1397,18 +1569,46 @@ public class CameraController {
         return ResultCode.SUCCESS;
     }
 
+    /**
+     * Start record.
+     *
+     * @param cameraId the camera id
+     * @return {@link ICamera.ResultCode}
+     */
     public int startRecord(String cameraId) {
         return startRecord(cameraId, null, 0);
     }
 
+    /**
+     * Start record with file name.
+     *
+     * @param cameraId the camera id
+     * @param name the record file name
+     * @return {@link ICamera.ResultCode}
+     */
     public int startRecord(String cameraId, String name) {
         return startRecord(cameraId, name, 0);
     }
 
+    /**
+     * Start record with max duration.
+     *
+     * @param cameraId the camera id
+     * @param duration the record max duration in ms (if zero or negative, disables the duration limit)
+     * @return {@link ICamera.ResultCode}
+     */
     public int startRecord(String cameraId, int duration) {
         return startRecord(cameraId, null, duration);
     }
 
+    /**
+     * Start record with file name and max duration.
+     *
+     * @param cameraId the camera id
+     * @param name the record file name
+     * @param duration the record max duration in ms (if zero or negative, disables the duration limit)
+     * @return {@link ICamera.ResultCode}
+     */
     public int startRecord(String cameraId, String name, int duration) {
         Log.i(TAG, "startRecord: cameraId = " + cameraId + ", name = " + name + ", duration = " + duration);
 
@@ -1484,6 +1684,12 @@ public class CameraController {
         return ResultCode.SUCCESS;
     }
 
+    /**
+     * Stop record.
+     *
+     * @param cameraId the camera id
+     * @return {@link ICamera.ResultCode}
+     */
     public int stopRecord(String cameraId) {
         Log.i(TAG, "stopRecord: cameraId = " + cameraId);
 

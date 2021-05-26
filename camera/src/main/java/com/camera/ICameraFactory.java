@@ -1,7 +1,7 @@
 package com.camera;
 
 /**
- * The interface camera factory.
+ * The ICameraFactory interface creates camera instance.
  */
 public interface ICameraFactory {
     /**
