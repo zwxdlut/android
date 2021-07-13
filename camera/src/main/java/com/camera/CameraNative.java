@@ -645,7 +645,7 @@ public class CameraNative implements ICamera {
 
         File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
         if (!dir.exists()) {
-            if (dir.mkdir()) {
+            if (dir.mkdirs()) {
                 Log.e(TAG, "CameraController: make external storage public pictures directory!");
             } else {
                 Log.e(TAG, "CameraController: make external storage public pictures directory failed!");
@@ -654,7 +654,7 @@ public class CameraNative implements ICamera {
 
         dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES);
         if (!dir.exists()) {
-            if (dir.mkdir()) {
+            if (dir.mkdirs()) {
                 Log.e(TAG, "CameraController: make external storage public movies directory!");
             } else {
                 Log.e(TAG, "CameraController: make external storage public movies directory failed!");
@@ -665,7 +665,7 @@ public class CameraNative implements ICamera {
         if (null == dir) {
             Log.e(TAG, "CameraController: no external storage private pictures directory!");
         } else if (!dir.exists()) {
-            if (dir.mkdir()) {
+            if (dir.mkdirs()) {
                 Log.e(TAG, "CameraController: make external storage private pictures directory!");
             } else {
                 Log.e(TAG, "CameraController: make external storage private pictures directory failed!");
@@ -676,7 +676,7 @@ public class CameraNative implements ICamera {
         if (null == dir) {
             Log.e(TAG, "CameraController: no external storage private movies directory!");
         } else if (!dir.exists()) {
-            if (dir.mkdir()) {
+            if (dir.mkdirs()) {
                 Log.e(TAG, "CameraController: make external storage private movies directory!");
             } else {
                 Log.e(TAG, "CameraController: make external storage private movies directory failed!");
@@ -1336,7 +1336,11 @@ public class CameraNative implements ICamera {
         MediaRecorder mediaRecorder = mediaRecorders.get(cameraId);
 
         if (null != mediaRecorder) {
-            mediaRecorder.stop();
+            try {
+                mediaRecorder.stop();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         releaseRecorder(cameraId);

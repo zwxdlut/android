@@ -1696,7 +1696,11 @@ public class CameraController {
         MediaRecorder mediaRecorder = mediaRecorders.get(cameraId);
 
         if (null != mediaRecorder) {
-            mediaRecorder.stop();
+            try {
+                mediaRecorder.stop();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         releaseRecorder(cameraId);
