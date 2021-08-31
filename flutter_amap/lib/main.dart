@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Map Demo',
+      title: 'Map Demo',
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -57,8 +57,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  late MapControl _mapControl;
-
   @override
   Widget build(BuildContext context) {
     print("_MyHomePageState::build");
@@ -101,12 +99,13 @@ class _MyHomePageState extends State<MyHomePage> {
   // 地图相关
   /////////////////////////////////////////////////////////////////////////////////////
 
+  late MapControl _mapControl;
+
   Future<void> _onMapViewCreate(MapControl mapControl) async {
     print("_MyHomePageState::_onCreate");
 
     SmartDialog.showLoading(
       msg: '算路中...',
-      background: Colors.blue,
     );
 
     var route = {

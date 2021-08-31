@@ -60,6 +60,7 @@ public class MyMapView implements PlatformView, MethodChannel.MethodCallHandler,
     private Marker mEndMarker = null;
     private AMap aMap = null;
     private AMapNavi mapNavi = null;
+    private MyLocationStyle locationStyle = new MyLocationStyle();
     private List<NaviLatLng> startList = new ArrayList<NaviLatLng>();
     private List<NaviLatLng> endList = new ArrayList<NaviLatLng>();
     private List<NaviLatLng> wayPointList = new ArrayList<NaviLatLng>();
@@ -94,6 +95,10 @@ public class MyMapView implements PlatformView, MethodChannel.MethodCallHandler,
         aMap.setTrafficEnabled(true);
         aMap.setMapType(type);
         aMap.addOnMapClickListener(this);
+        aMap.setOnMyLocationChangeListener(this);
+        aMap.setMyLocationStyle(locationStyle.myLocationType(MyLocationStyle.LOCATION_TYPE_LOCATE));
+        aMap.getUiSettings().setMyLocationButtonEnabled(true);
+        aMap.setMyLocationEnabled(true);
 
         mapNavi = AMapNavi.getInstance(context);
         mapNavi.addAMapNaviListener(this);
@@ -110,6 +115,7 @@ public class MyMapView implements PlatformView, MethodChannel.MethodCallHandler,
         Log.e(TAG, "dispose");
         routeOverlays.clear();
         mapNavi.removeAMapNaviListener(this);
+        aMap.setOnMyLocationChangeListener(null);
         aMap.removeOnMapClickListener(this);
         mapView.onDestroy();
         eventChannelPlugin.cancel();
@@ -120,13 +126,9 @@ public class MyMapView implements PlatformView, MethodChannel.MethodCallHandler,
         Log.e(TAG, "onMethodCall-" + call.method);
 
         if ("startLocation".equals(call.method)) {
-            MyLocationStyle locationStyle = new MyLocationStyle();
             locationStyle.myLocationType(MyLocationStyle.LOCATION_TYPE_LOCATION_ROTATE_NO_CENTER);
             locationStyle.interval(2000);
-            aMap.setOnMyLocationChangeListener(this);
             aMap.setMyLocationStyle(locationStyle);
-            aMap.getUiSettings().setMyLocationButtonEnabled(true);
-            aMap.setMyLocationEnabled(true);
             result.success(null);
         } else if ("calculateRoute".equals(call.method)) {
             String start = null;
