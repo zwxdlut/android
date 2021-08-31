@@ -1,4 +1,0 @@
-include ':app'
-include ':wuw_sample_engine'
-project(':wuw_sample_engine').projectDir = new File(settingsDir, '../')
-rootProject.name = "voice_recognition"
