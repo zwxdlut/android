@@ -13,10 +13,15 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.ParcelFileDescriptor;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
 import android.provider.MediaStore;
 import android.util.Log;
 
 import androidx.exifinterface.media.ExifInterface;
+
+import com.storage.util.Constant;
+import com.storage.util.DateComparator;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,18 +33,22 @@ import java.io.OutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 public class MediaProviderHelper {
     private static final String TAG = "DVR-" + MediaProviderHelper.class.getSimpleName();
+    private Uri REMOVABLE_IMAGE_CONTENT_URI = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+    private Uri REMOVABLE_VIDEO_CONTENT_URI = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
     private Context context = null;
     private File imageDir = null;
     private File videoDir = null;
+    private Uri imageContentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+    private Uri videoContentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
     private ContentResolver resolver = null;
     private SimpleDateFormat exifDateFormat = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss", Locale.getDefault());
     private SimpleDateFormat queryDateFormat = new SimpleDateFormat("yyyyMMdd", Locale.getDefault());
@@ -53,9 +62,9 @@ public class MediaProviderHelper {
             if (null != mediaCallback) {
                 String type = uri.toString();
 
-                if (type.startsWith(MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString())) {
+                if (type.startsWith(imageContentUri.toString())) {
                     mediaCallback.onChanged(MediaBean.Type.IMAGE, uri);
-                } else if (type.startsWith(MediaStore.Video.Media.EXTERNAL_CONTENT_URI.toString())) {
+                } else if (type.startsWith(videoContentUri.toString())) {
                     mediaCallback.onChanged(MediaBean.Type.VIDEO, uri);
                 }
             }
@@ -64,13 +73,6 @@ public class MediaProviderHelper {
 
     public interface IMediaCallback {
         void onChanged(int type, Uri uri);
-    }
-
-    public static class DateComparator implements Comparator<String> {
-        @Override
-        public int compare(String o1, String o2) {
-            return o2.compareTo(o1);
-        }
     }
 
     public static String copyFile(String srcPath, String dstDir) {
@@ -154,7 +156,7 @@ public class MediaProviderHelper {
     }
 
     public MediaProviderHelper(Context context) {
-        // image directory
+        // initialize the image directory
         imageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
         if (!imageDir.exists()) {
             if (imageDir.mkdir()) {
@@ -165,7 +167,7 @@ public class MediaProviderHelper {
         }
 
 
-        // video directory
+        // initialize the video directory
         videoDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES);
         if (!videoDir.exists()) {
             if (videoDir.mkdir()) {
@@ -175,10 +177,27 @@ public class MediaProviderHelper {
             }
         }
 
+        // initialize the removable media content uris
+        StorageManager sm = context.getSystemService(StorageManager.class);
+        Set<String> volumeNames = MediaStore.getExternalVolumeNames(context);
+        for (String volumeName : volumeNames) {
+            Uri uri = MediaStore.Images.Media.getContentUri(volumeName);
+            StorageVolume volume = sm.getStorageVolume(uri);
+            if (volume.isRemovable()) {
+                REMOVABLE_IMAGE_CONTENT_URI = uri;
+            }
+
+            uri = MediaStore.Video.Media.getContentUri(volumeName);
+            volume = sm.getStorageVolume(uri);
+            if (volume.isRemovable()) {
+                REMOVABLE_VIDEO_CONTENT_URI = uri;
+            }
+        }
+
         this.context = context;
         resolver = context.getContentResolver();
-        resolver.registerContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, true, contentObserver);
-        resolver.registerContentObserver(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, true, contentObserver);
+        resolver.registerContentObserver(imageContentUri, true, contentObserver);
+        resolver.registerContentObserver(videoContentUri, true, contentObserver);
     }
 
     public void destroy() {
@@ -202,12 +221,21 @@ public class MediaProviderHelper {
 
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
                         || (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q && Environment.isExternalStorageLegacy())) {
+                    Log.e(TAG, "setVideoDir: Build.VERSION.SDK_INT " + Build.VERSION.SDK_INT);
                     return false;
                 }
             }
         }
 
         imageDir = path;
+
+        StorageManager sm = context.getSystemService(StorageManager.class);
+        StorageVolume volume = sm.getStorageVolume(path);
+
+        if (volume.isRemovable()) {
+            imageContentUri = REMOVABLE_IMAGE_CONTENT_URI;
+            resolver.registerContentObserver(imageContentUri, true, contentObserver);
+        }
 
         return true;
     }
@@ -226,15 +254,24 @@ public class MediaProviderHelper {
                 Log.e(TAG, "setVideoDir: make directory " + path);
             } else {
                 Log.e(TAG, "setVideoDir: make directory " + path + " failed!");
-                
+
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
                         || (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q && Environment.isExternalStorageLegacy())) {
+                    Log.e(TAG, "setVideoDir: Build.VERSION.SDK_INT =  " + Build.VERSION.SDK_INT);
                     return false;
                 }
             }
         }
 
         videoDir = path;
+
+        StorageManager sm = context.getSystemService(StorageManager.class);
+        StorageVolume volume = sm.getStorageVolume(path);
+
+        if (volume.isRemovable()) {
+            videoContentUri = REMOVABLE_VIDEO_CONTENT_URI;
+            resolver.registerContentObserver(videoContentUri, true, contentObserver);
+        }
 
         return true;
     }
@@ -260,10 +297,10 @@ public class MediaProviderHelper {
 
         if (MediaBean.Type.IMAGE == type) {
             dir = imageDir.getAbsolutePath();
-            uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+            uri = imageContentUri;
         } else if (MediaBean.Type.VIDEO == type) {
             dir = videoDir.getAbsolutePath();
-            uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+            uri = videoContentUri;
         } else {
             return null;
         }
@@ -517,7 +554,7 @@ public class MediaProviderHelper {
         int ret = 0;
 
         for (int i = beans.size() - 1; i >= 0; i--) {
-            Log.e(TAG, "delete: i = " + i);
+            Log.i(TAG, "delete: i = " + i);
             ret += delete(beans.get(i));
         }
 
@@ -549,8 +586,8 @@ public class MediaProviderHelper {
         return ret;
     }
 
-    public List<MediaBean> query(int type, String pathCondition) {
-        Cursor cursor = prepare(type, pathCondition);
+    public List<MediaBean> query(int type, String pathFilter, int order) {
+        Cursor cursor = prepare(type, pathFilter, order);
         if (null == cursor) {
             Log.e(TAG, "query: The cursor is null!");
             return null;
@@ -591,7 +628,7 @@ public class MediaProviderHelper {
             if (MediaBean.Type.IMAGE == type) {
                 double latitude = cursor.getDouble(latitudeColumn);
                 double longitude = cursor.getDouble(longitudeColumn);
-                Uri uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cursor.getLong(idColumn));
+                Uri uri = ContentUris.withAppendedId(imageContentUri, cursor.getLong(idColumn));
 
                 if (0 == latitude && 0 == longitude) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -625,7 +662,7 @@ public class MediaProviderHelper {
                 long id = cursor.getLong(idColumn);
 
                 bean.setDuration(cursor.getLong(durationColumn));
-                bean.setUri(ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id));
+                bean.setUri(ContentUris.withAppendedId(videoContentUri, id));
 
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                     Cursor thumbnailCursor = resolver.query(
@@ -650,8 +687,8 @@ public class MediaProviderHelper {
         return beans;
     }
 
-    public Map<String, List<MediaBean>> queryDateMap(int type, String pathCondition) {
-        Cursor cursor = prepare(type, pathCondition);
+    public Map<String, List<MediaBean>> queryDateMap(int type, String pathFilter, int order) {
+        Cursor cursor = prepare(type, pathFilter, order);
         if (null == cursor) {
             Log.e(TAG, "queryDateMap: The cursor is null!");
             return null;
@@ -668,7 +705,13 @@ public class MediaProviderHelper {
         int latitudeColumn = 0;
         int longitudeColumn = 0;
         int durationColumn = 0;
-        Map<String, List<MediaBean>> beansMap = new TreeMap<>(new DateComparator());
+        Map<String, List<MediaBean>> beansMap = null;
+
+        if (Constant.OrderType.ASCENDING == order || Constant.OrderType.DESCENDING == order) {
+            beansMap = new TreeMap<>(new DateComparator(queryDateFormat, order));
+        } else {
+            beansMap = new TreeMap<>();
+        }
 
         if (MediaBean.Type.IMAGE == type) {
             latitudeColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.LATITUDE);
@@ -693,7 +736,7 @@ public class MediaProviderHelper {
             if (MediaBean.Type.IMAGE == type) {
                 double latitude = cursor.getDouble(latitudeColumn);
                 double longitude = cursor.getDouble(longitudeColumn);
-                Uri uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cursor.getLong(idColumn));
+                Uri uri = ContentUris.withAppendedId(imageContentUri, cursor.getLong(idColumn));
 
                 if (0 == latitude && 0 == longitude) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -727,7 +770,7 @@ public class MediaProviderHelper {
                 long id = cursor.getLong(idColumn);
 
                 bean.setDuration(cursor.getLong(durationColumn));
-                bean.setUri(ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id));
+                bean.setUri(ContentUris.withAppendedId(videoContentUri, id));
 
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                     Cursor thumbnailCursor = resolver.query(
@@ -758,17 +801,18 @@ public class MediaProviderHelper {
         return beansMap;
     }
 
-    private Cursor prepare(int type, String pathCondition) {
+    private Cursor prepare(int type, String pathFilter, int order) {
         String selection = null;
+        String sortOrder = null;
         Uri uri = null;
         List<String> projection = new ArrayList<>();
 
         if (MediaBean.Type.IMAGE == type) {
-            uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+            uri = imageContentUri;
             projection.add(MediaStore.Images.Media.LATITUDE);
             projection.add(MediaStore.Images.Media.LONGITUDE);
         } else if (MediaBean.Type.VIDEO == type) {
-            uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+            uri = videoContentUri;
             projection.add(MediaStore.Video.Media.DURATION);
         } else {
             return null;
@@ -782,13 +826,19 @@ public class MediaProviderHelper {
         projection.add(MediaStore.MediaColumns.HEIGHT);
         projection.add(MediaStore.MediaColumns.SIZE);
         projection.add(MediaStore.MediaColumns.DATE_TAKEN);
-        selection = (null == pathCondition ? null : MediaStore.MediaColumns.DATA + " LIKE '%" + pathCondition + "%'");
+        selection = (null == pathFilter ? null : MediaStore.MediaColumns.DATA + " LIKE '%" + pathFilter + "%'");
+
+        if (Constant.OrderType.ASCENDING == order) {
+            sortOrder = MediaStore.MediaColumns.DATE_TAKEN;
+        } else if (Constant.OrderType.DESCENDING == order) {
+            sortOrder = MediaStore.MediaColumns.DATE_TAKEN + " DESC";
+        }
 
         return resolver.query(
                 uri,
                 projection.toArray(new String[0]),
                 selection,
                 null,
-                MediaStore.MediaColumns.DATE_TAKEN + " DESC");
+                sortOrder);
     }
 }

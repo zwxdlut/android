@@ -31,6 +31,8 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.ParcelFileDescriptor;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
 import android.provider.MediaStore;
 import android.util.ArrayMap;
 import android.util.Log;
@@ -43,6 +45,10 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.exifinterface.media.ExifInterface;
 
+import com.camera.util.CompareSizesByArea;
+import com.camera.util.CoordinateConvert;
+import com.camera.util.StorageUtil;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -54,11 +60,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The CameraController class provides control and operation of the cameras.
@@ -87,18 +93,28 @@ public class CameraController {
         INVERSE_ORIENTATIONS.append(Surface.ROTATION_270, 0);
     }
 
+    private Uri REMOVABLE_IMAGE_CONTENT_URI = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+    private Uri REMOVABLE_VIDEO_CONTENT_URI = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
     private String publicDir = null;
     private String privateDir = null;
+    private String removablePublicDir = null;
+    private String removablePrivateDir = null;
     private Context context = null;
     private CameraManager cameraManager = null;
     private Map<String, Integer> sensorOrientations = new ArrayMap<>();
     private Map<String, Boolean> isCapturePublicDirs = new ArrayMap<>();
     private Map<String, Boolean> isRecordPublicDirs = new ArrayMap<>();
+    private Map<String, Boolean> isCaptureRemovableDirs = new ArrayMap<>();
+    private Map<String, Boolean> isRecordRemovableDirs = new ArrayMap<>();
+    private Map<String, String> captureRootDirs = new ArrayMap<>();
+    private Map<String, String> recordRootDirs = new ArrayMap<>();
     private Map<String, String> captureRelativeDirs = new ArrayMap<>();
     private Map<String, String> recordRelativeDirs = new ArrayMap<>();
     private Map<String, String> capturePaths = new ArrayMap<>();
     private Map<String, String> recordPaths = new ArrayMap<>();
-    private Map<String, Uri> recorddUri = new ArrayMap<>();
+    private Map<String, Uri> imageContentUris = new ArrayMap<>();
+    private Map<String, Uri> videoContentUris = new ArrayMap<>();
+    private Map<String, Uri> recordUris = new ArrayMap<>();
     private Map<String, Size> captureSizes = new ArrayMap<>();
     private Map<String, Size> recordSizes = new ArrayMap<>();
     private Map<String, Location> captureLocations = new ArrayMap<>();
@@ -199,11 +215,11 @@ public class CameraController {
                     releaseRecorder(cameraId);
 
                     if ((Build.VERSION.SDK_INT > Build.VERSION_CODES.Q
-                            || (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q && !Environment.isExternalStorageLegacy()))
+                            || (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q && (!Environment.isExternalStorageLegacy() || isRecordRemovableDirs.get(cameraId))))
                             && isRecordPublicDirs.get(cameraId)) {
                         ContentResolver resolver = context.getContentResolver();
                         ContentValues values = new ContentValues();
-                        Uri uri = recorddUri.get(cameraId);
+                        Uri uri = recordUris.get(cameraId);
 
                         if (null != uri) {
                             try {
@@ -270,7 +286,7 @@ public class CameraController {
                         values.put(MediaStore.Video.Media.SIZE, file.length());
                         values.put(MediaStore.Video.Media.DATE_TAKEN, recordTimes.get(cameraId));
                         values.put(MediaStore.Video.Media.DURATION, mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
-                        uri = resolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
+                        uri = resolver.insert(videoContentUris.get(cameraId), values);
                         Log.i(TAG, "onCaptureSequenceCompleted.SaveRecordThread: insert the video to database, uri = " + uri);
 
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
@@ -376,7 +392,7 @@ public class CameraController {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                             values.put(MediaStore.Images.Media.RELATIVE_PATH, captureRelativeDirs.get(cameraId));
                         }
-                        
+
                         if (null != location) {
                             values.put(MediaStore.Images.Media.LATITUDE, location.getLatitude());
                             values.put(MediaStore.Images.Media.LONGITUDE, location.getLongitude());
@@ -388,7 +404,7 @@ public class CameraController {
                         values.put(MediaStore.Images.Media.SIZE, bytes.length);
                         values.put(MediaStore.Images.Media.WIDTH, reader.getWidth());
                         values.put(MediaStore.Images.Media.HEIGHT, reader.getHeight());
-                        uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                        uri = resolver.insert(imageContentUris.get(cameraId), values);
                         Log.i(TAG, "onImageAvailable.SaveImageThread: insert the image to database, uri = " + uri);
 
                         if (null != uri) {
@@ -678,136 +694,6 @@ public class CameraController {
         void onError(String cameraId, String path, int what, int extra);
     }
 
-    /**
-     * The comparator for sizes by area.
-     */
-    public static class CompareSizesByArea implements Comparator<Size> {
-        @Override
-        public int compare(Size lhs, Size rhs) {
-            // We cast here to ensure the multiplications won't overflow
-            return Long.signum((long) lhs.getWidth() * lhs.getHeight() -
-                    (long) rhs.getWidth() * rhs.getHeight());
-        }
-    }
-
-    /**
-     * The tool for coordinate conversation.
-     */
-    public static class ConvertUtil {
-        public static String coordinateToDMS(double coordinate) {
-            return Location.convert(coordinate, Location.FORMAT_SECONDS);
-        }
-
-        public static double DMSToCoordinate(String stringDMS) {
-            if (stringDMS == null) return 0;
-            String[] split = stringDMS.split(":", 3);
-            return Double.parseDouble(split[0]) + Double.parseDouble(split[1]) / 60 + Double.parseDouble(split[2]) / 3600;
-        }
-
-        /**
-         * 浮点型经纬度值转成度分秒格式
-         *
-         * @param coord
-         * @return
-         */
-        public static String decimalToDMS(double coord) {
-            String output,degrees,minutes,seconds;
-
-            // gets the modulus the coordinate divided by one (MOD1).
-            // in other words gets all the numbers after the decimal point.
-            // e.g. mod := -79.982195 % 1 == 0.982195
-            //
-            // next get the integer part of the coord. On other words the whole
-            // number part.
-            // e.g. intPart := -79
-
-            double mod = coord % 1;
-            int intPart = (int) coord;
-
-            // set degrees to the value of intPart
-            // e.g. degrees := "-79"
-
-            degrees = String.valueOf(intPart);
-
-            // next times the MOD1 of degrees by 60 so we can find the integer part
-            // for minutes.
-            // get the MOD1 of the new coord to find the numbers after the decimal
-            // point.
-            // e.g. coord := 0.982195 * 60 == 58.9317
-            // mod := 58.9317 % 1 == 0.9317
-            //
-            // next get the value of the integer part of the coord.
-            // e.g. intPart := 58
-
-            coord = mod * 60;
-            mod = coord % 1;
-            intPart = (int) coord;
-            if (intPart < 0) {
-                // Convert number to positive if it's negative.
-                intPart *= -1;
-            }
-
-            // set minutes to the value of intPart.
-            // e.g. minutes = "58"
-            minutes = String.valueOf(intPart);
-
-            // do the same again for minutes
-            // e.g. coord := 0.9317 * 60 == 55.902
-            // e.g. intPart := 55
-            coord = mod * 60;
-            intPart = (int) coord;
-            if (intPart < 0) {
-                // Convert number to positive if it's negative.
-                intPart *= -1;
-            }
-
-            // set seconds to the value of intPart.
-            // e.g. seconds = "55"
-            seconds = String.valueOf(intPart);
-
-            // I used this format for android but you can change it
-            // to return in whatever format you like
-            // e.g. output = "-79/1,58/1,56/1"
-            output = degrees + "/1," + minutes + "/1," + seconds + "/1";
-
-            // Standard output of D°M′S″
-            // output = degrees + "°" + minutes + "'" + seconds + "\"";
-            return output;
-        }
-
-        public static double convertRationalLatLonToDouble(String rationalString, String ref) {
-            try {
-                String [] parts = rationalString.split(",", -1);
-
-                String [] pair;
-                pair = parts[0].split("/", -1);
-                double degrees = Double.parseDouble(pair[0].trim())
-                        / Double.parseDouble(pair[1].trim());
-
-                pair = parts[1].split("/", -1);
-                double minutes = Double.parseDouble(pair[0].trim())
-                        / Double.parseDouble(pair[1].trim());
-
-                pair = parts[2].split("/", -1);
-                double seconds = Double.parseDouble(pair[0].trim())
-                        / Double.parseDouble(pair[1].trim());
-
-                double result = degrees + (minutes / 60.0) + (seconds / 3600.0);
-                if ((ref.equals("S") || ref.equals("W"))) {
-                    return -result;
-                } else if (ref.equals("N") || ref.equals("E")) {
-                    return result;
-                } else {
-                    // Not valid
-                    throw new IllegalArgumentException();
-                }
-            } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
-                // Not valid
-                throw new IllegalArgumentException();
-            }
-        }
-    }
-
     private static class Builder {
         private static final CameraController instance = new CameraController();
     }
@@ -833,36 +719,41 @@ public class CameraController {
             e.printStackTrace();
         }
 
+        // initialize the storage directories
         cameraManager = (CameraManager)context.getSystemService(Context.CAMERA_SERVICE);
         publicDir = Environment.getExternalStorageDirectory().getAbsolutePath();
         privateDir = context.getExternalFilesDir(null).getAbsolutePath();
 
         File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        if (!dir.exists()) {
+        if (null == dir) {
+            Log.e(TAG, "CameraController: no external storage public pictures directory!");
+        } else if(!dir.exists()) {
             if (dir.mkdirs()) {
-                Log.e(TAG, "CameraController: make external storage public pictures directory!");
+                Log.e(TAG, "CameraController: make external storage public pictures directory " + dir.getAbsolutePath());
             } else {
-                Log.e(TAG, "CameraController: make external storage public pictures directory failed!");
+                Log.e(TAG, "CameraController: make external storage public pictures directory " + dir.getAbsolutePath() + " failed!");
             }
         }
 
         dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES);
-        if (!dir.exists()) {
+        if (null == dir) {
+            Log.e(TAG, "CameraController: no external storage public movies directory!");
+        } else if (!dir.exists()) {
             if (dir.mkdirs()) {
-                Log.e(TAG, "CameraController: make external storage public movies directory!");
+                Log.e(TAG, "CameraController: make external storage public movies directory " + dir.getAbsolutePath());
             } else {
-                Log.e(TAG, "CameraController: make external storage public movies directory failed!");
+                Log.e(TAG, "CameraController: make external storage public movies directory " + dir.getAbsolutePath() + " failed!");
             }
         }
-
+        
         dir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         if (null == dir) {
             Log.e(TAG, "CameraController: no external storage private pictures directory!");
         } else if (!dir.exists()) {
             if (dir.mkdirs()) {
-                Log.e(TAG, "CameraController: make external storage private pictures directory!");
+                Log.e(TAG, "CameraController: make external storage private pictures directory " + dir.getAbsolutePath());
             } else {
-                Log.e(TAG, "CameraController: make external storage private pictures directory failed!");
+                Log.e(TAG, "CameraController: make external storage private pictures directory " + dir.getAbsolutePath() + " failed!");
             }
         }
 
@@ -871,9 +762,96 @@ public class CameraController {
             Log.e(TAG, "CameraController: no external storage private movies directory!");
         } else if (!dir.exists()) {
             if (dir.mkdirs()) {
-                Log.e(TAG, "CameraController: make external storage private movies directory!");
+                Log.e(TAG, "CameraController: make external storage private movies directory " + dir.getAbsolutePath());
             } else {
-                Log.e(TAG, "CameraController: make external storage private movies directory failed!");
+                Log.e(TAG, "CameraController: make external storage private movies directory " + dir.getAbsolutePath() + " failed!");
+            }
+        }
+
+        String[] dirs = StorageUtil.getRemovableStorageDirs(context);
+        if (null != dirs && 0 < dirs.length) {
+            Log.i(TAG, "CameraController: external removable storage directory " + Arrays.toString(dirs));
+            removablePublicDir = dirs[0];
+
+            dir = new File(removablePublicDir, Environment.DIRECTORY_PICTURES);
+            if (!dir.exists()) {
+                if (dir.mkdirs()) {
+                    Log.e(TAG, "CameraController: make external removable storage public picture directory " + dir.getAbsolutePath());
+                } else {
+                    Log.e(TAG, "CameraController: make external removable storage public picture directory " + dir.getAbsolutePath() + " failed!");
+                }
+            }
+
+            dir = new File(removablePublicDir, Environment.DIRECTORY_MOVIES);
+            if (!dir.exists()) {
+                if (dir.mkdirs()) {
+                    Log.e(TAG, "CameraController: make external removable storage public movies directory " + dir.getAbsolutePath());
+                } else {
+                    Log.e(TAG, "CameraController: make external removable storage public movies directory " + dir.getAbsolutePath() + " failed!");
+                }
+            }
+        } else {
+            Log.e(TAG, "CameraController: no external removable storage directory!");
+            removablePublicDir = publicDir;
+        }
+
+        File[] files = context.getExternalFilesDirs(null);
+        if (null != files && 0 < files.length) {
+            Log.i(TAG, "CameraController: external storage private directory " + Arrays.toString(files));
+
+            StorageManager sm = context.getSystemService(StorageManager.class);
+            StorageVolume volume = null;
+
+            for (File file : files) {
+                volume = sm.getStorageVolume(file);
+                if (null != volume && volume.isRemovable()) {
+                    removablePrivateDir = file.getAbsolutePath();
+                    break;
+                }
+            }
+
+            if (null != removablePrivateDir) {
+                Log.i(TAG, "CameraController: external removable storage private directory " + removablePrivateDir);
+
+                dir = new File(removablePrivateDir, Environment.DIRECTORY_PICTURES);
+                if (!dir.exists()) {
+                    if (dir.mkdirs()) {
+                        Log.e(TAG, "CameraController: make external removable storage private picture directory " + dir.getAbsolutePath());
+                    } else {
+                        Log.e(TAG, "CameraController: make external removable storage private picture directory " + dir.getAbsolutePath() + " failed!");
+                    }
+                }
+
+                dir = new File(removablePrivateDir, Environment.DIRECTORY_MOVIES);
+                if (!dir.exists()) {
+                    if (dir.mkdirs()) {
+                        Log.e(TAG, "CameraController: make external removable storage private movies directory " + dir.getAbsolutePath());
+                    } else {
+                        Log.e(TAG, "CameraController: make external removable storage private movies directory " + dir.getAbsolutePath() + " failed!");
+                    }
+                }
+            } else {
+                Log.e(TAG, "CameraController: no external removable storage private directory!");
+                removablePrivateDir = privateDir;
+            }
+        } else {
+            Log.e(TAG, "CameraController: no external storage private directory!");
+        }
+
+        // initialize the removable media content uris
+        StorageManager sm = context.getSystemService(StorageManager.class);
+        Set<String> volumeNames = MediaStore.getExternalVolumeNames(context);
+        for (String volumeName : volumeNames) {
+            Uri uri = MediaStore.Images.Media.getContentUri(volumeName);
+            StorageVolume volume = sm.getStorageVolume(uri);
+            if (volume.isRemovable()) {
+                REMOVABLE_IMAGE_CONTENT_URI = uri;
+            }
+
+            uri = MediaStore.Video.Media.getContentUri(volumeName);
+            volume = sm.getStorageVolume(uri);
+            if (volume.isRemovable()) {
+                REMOVABLE_VIDEO_CONTENT_URI = uri;
             }
         }
 
@@ -912,8 +890,14 @@ public class CameraController {
             
             isCapturePublicDirs.put(cameraId, true);
             isRecordPublicDirs.put(cameraId, true);
+            isCaptureRemovableDirs.put(cameraId, false);
+            isRecordRemovableDirs.put(cameraId, false);
+            captureRootDirs.put(cameraId, publicDir);
+            recordRootDirs.put(cameraId, publicDir);
             captureRelativeDirs.put(cameraId, Environment.DIRECTORY_PICTURES);
             recordRelativeDirs.put(cameraId, Environment.DIRECTORY_MOVIES);
+            imageContentUris.put(cameraId, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            videoContentUris.put(cameraId, MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
             audioMutes.put(cameraId, false);
             videoEncodingRates.put(cameraId, 3000000);
             isRecordings.put(cameraId, false);
@@ -1050,16 +1034,39 @@ public class CameraController {
      *                 For public, the root directory is
      *                 {@link Environment#getExternalStorageDirectory()},
      *                 and for private, it is {@link Context#getExternalFilesDir(String)}.
+     * @param isRemovable Indicate if the directory is under removable storage volume.
      * @return true if successful or false
      */
-    public boolean setCaptureRelativeDir(String cameraId, String dir, boolean isPublic) {
-        Log.i(TAG, "setCaptureRelativeDir: cameraId = " + cameraId + ", dir = " + dir + ", isPublic = " + isPublic);
+    public boolean setCaptureRelativeDir(String cameraId, String dir, boolean isPublic, boolean isRemovable) {
+        Log.i(TAG, "setCaptureRelativeDir: cameraId = " + cameraId + ", dir = " + dir
+                + ", isPublic = " + isPublic + ", isRemovable = " + isRemovable);
 
         if (null == dir) {
             return false;
         }
 
-        File path = new File(isPublic ? publicDir : privateDir, dir);
+        String rootDir = null;
+        Uri uri = null;
+
+        if (isPublic) {
+            if (isRemovable) {
+                rootDir = removablePublicDir;
+                uri = REMOVABLE_IMAGE_CONTENT_URI;
+            } else {
+                rootDir = publicDir;
+                uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+            }
+        } else {
+            if (isRemovable) {
+                rootDir = removablePrivateDir;
+                uri = REMOVABLE_IMAGE_CONTENT_URI;
+            } else {
+                rootDir = privateDir;
+                uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+            }
+        }
+
+        File path = new File(rootDir, dir);
 
         if (!path.exists()) {
             if (path.mkdirs()) {
@@ -1068,15 +1075,19 @@ public class CameraController {
                 Log.e(TAG, "setCaptureRelativeDir: make directory " + path.getAbsolutePath() + " failed!");
 
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
-                        || (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q && Environment.isExternalStorageLegacy())
+                        || (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q && Environment.isExternalStorageLegacy() && !isRemovable)
                         || !isPublic) {
+                    Log.e(TAG, "setVideoDir: Build.VERSION.SDK_INT " + Build.VERSION.SDK_INT);
                     return false;
                 }
             }
         }
 
         isCapturePublicDirs.put(cameraId, isPublic);
+        isCaptureRemovableDirs.put(cameraId, isRemovable);
+        captureRootDirs.put(cameraId, rootDir);
         captureRelativeDirs.put(cameraId, dir);
+        imageContentUris.put(cameraId, uri);
 
         return true;
     }
@@ -1124,16 +1135,39 @@ public class CameraController {
      *                 For public, the root directory is
      *                 {@link Environment#getExternalStorageDirectory()},
      *                 and for private, it is {@link Context#getExternalFilesDir(String)}.
+     * @param isRemovable Indicate if the directory is under removable storage volume.
      * @return true if successful or false
      */
-    public boolean setRecordRelativeDir(String cameraId, String dir, boolean isPublic) {
-        Log.i(TAG, "setRecordRelativeDir: cameraId = " + cameraId + ", dir = " + dir + ", isPublic = " + isPublic);
+    public boolean setRecordRelativeDir(String cameraId, String dir, boolean isPublic, boolean isRemovable) {
+        Log.i(TAG, "setRecordRelativeDir: cameraId = " + cameraId + ", dir = " + dir
+                + ", isPublic = " + isPublic + ", isRemovable = " + isRemovable);
 
         if (null == dir) {
             return false;
         }
 
-        File path = new File(isPublic ? publicDir : privateDir, dir);
+        String rootDir = null;
+        Uri uri = null;
+
+        if (isPublic) {
+            if (isRemovable) {
+                rootDir = removablePublicDir;
+                uri = REMOVABLE_VIDEO_CONTENT_URI;
+            } else {
+                rootDir = publicDir;
+                uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+            }
+        } else {
+            if (isRemovable) {
+                rootDir = removablePrivateDir;
+                uri = REMOVABLE_VIDEO_CONTENT_URI;
+            } else {
+                rootDir = privateDir;
+                uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+            }
+        }
+
+        File path = new File(rootDir, dir);
 
         if (!path.exists()) {
             if (path.mkdirs()) {
@@ -1142,15 +1176,19 @@ public class CameraController {
                 Log.e(TAG, "setRecordRelativeDir: make directory " + path.getAbsolutePath() + " failed!");
 
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
-                        || (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q && Environment.isExternalStorageLegacy())
+                        || (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q && Environment.isExternalStorageLegacy() && !isRemovable)
                         || !isPublic) {
+                    Log.e(TAG, "setVideoDir: Build.VERSION.SDK_INT " + Build.VERSION.SDK_INT);
                     return false;
                 }
             }
         }
 
         isRecordPublicDirs.put(cameraId, isPublic);
+        isRecordRemovableDirs.put(cameraId, isRemovable);
+        recordRootDirs.put(cameraId, rootDir);
         recordRelativeDirs.put(cameraId, dir);
+        videoContentUris.put(cameraId, uri);
 
         return true;
     }
@@ -1735,7 +1773,7 @@ public class CameraController {
                 captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(sensorOrientations.get(cameraId), windowManager.getDefaultDisplay().getRotation()));
             }
 
-            capturePaths.put(cameraId, (isCapturePublicDirs.get(cameraId) ? publicDir : privateDir)
+            capturePaths.put(cameraId, captureRootDirs.get(cameraId)
                     + File.separator + captureRelativeDirs.get(cameraId) + File.separator
                     + (null != name && !name.isEmpty() ? name : nameDateFormat.format(new Date()) + ".jpg"));
             captureLocations.put(cameraId, location);
@@ -1758,9 +1796,7 @@ public class CameraController {
 
         long time = System.currentTimeMillis();
         String displayName = (null != name && !name.isEmpty() ? name : nameDateFormat.format(new Date(time)) + ".mp4");
-        String path = (isRecordPublicDirs.get(cameraId) ? publicDir : privateDir)
-                + File.separator + recordRelativeDirs.get(cameraId)
-                + File.separator + displayName;
+        String path = recordRootDirs.get(cameraId) + File.separator + recordRelativeDirs.get(cameraId) + File.separator + displayName;
         Size size = recordSizes.get(cameraId);
         Integer sensorOrientation = sensorOrientations.get(cameraId);
         WindowManager windowManager = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE));
@@ -1769,7 +1805,7 @@ public class CameraController {
         Log.i(TAG, "prepareRecorder: path = " + path);
 
         if ((Build.VERSION.SDK_INT > Build.VERSION_CODES.Q
-                || (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q && !Environment.isExternalStorageLegacy()))
+                || (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q && (!Environment.isExternalStorageLegacy() || isCaptureRemovableDirs.get(cameraId))))
                 && isRecordPublicDirs.get(cameraId)) {
             ContentResolver resolver = context.getContentResolver();
             ContentValues values = new ContentValues();
@@ -1782,7 +1818,7 @@ public class CameraController {
             values.put(MediaStore.Video.Media.HEIGHT, size.getHeight());
             values.put(MediaStore.Video.Media.DATE_TAKEN, time);
             values.put(MediaStore.Video.Media.RELATIVE_PATH, recordRelativeDirs.get(cameraId));
-            uri = resolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
+            uri = resolver.insert(videoContentUris.get(cameraId), values);
             Log.i(TAG, "prepareRecorder: insert the video to database, uri = " + uri);
 
             if (null == uri) {
@@ -1833,7 +1869,7 @@ public class CameraController {
 
                 mediaRecorder.prepare();
                 pfd.close();
-                recorddUri.put(cameraId, uri);
+                recordUris.put(cameraId, uri);
             } catch (IOException e) {
                 e.printStackTrace();
                 return false;
@@ -1881,7 +1917,7 @@ public class CameraController {
                 return false;
             }
 
-            recorddUri.put(cameraId, null);
+            recordUris.put(cameraId, null);
         }
 
         recordTimes.put(cameraId, time);
@@ -1979,9 +2015,9 @@ public class CameraController {
             double longitude = location.getLongitude();
 
             Log.e(TAG, "writeImageLocation: save the coordinate to image!");
-            exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE, ConvertUtil.decimalToDMS(latitude));
+            exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE, CoordinateConvert.decimalToDMS(latitude));
             exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE_REF, latitude > 0 ? "N" : "S");
-            exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE, ConvertUtil.decimalToDMS(longitude));
+            exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE, CoordinateConvert.decimalToDMS(longitude));
             exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF, longitude > 0 ? "E" : "W");
 
             try {

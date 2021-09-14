@@ -19,10 +19,10 @@ interface IMediaProviderManager {
     void deleteBatch(in List<MediaBean> beans);
     void update(in MediaBean bean);
     void updateBatch(in List<MediaBean> beans);
-    void query(int type, String pathCondition);
-    void queryAll(String pathCondition);
-    void queryDateMap(int type, String pathCondition);
-    void queryDateMapAll(String pathCondition);
+    void query(int type, String pathFilter, int order);
+    void queryAll(String pathFilter, int order);
+    void queryDateMap(int type, String pathFilter, int order);
+    void queryDateMapAll(String pathFilter, int order);
 
     /**
      * Cloud media operation.

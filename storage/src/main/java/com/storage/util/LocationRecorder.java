@@ -18,6 +18,7 @@ package com.storage.util;
 
 import android.app.Application;
 import android.content.Context;
+import android.os.Environment;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
@@ -303,10 +304,10 @@ public class LocationRecorder {
         File path = new File(dir);
 
         if (!path.exists()) {
-            if (!path.mkdirs()) {
-                Log.e(TAG, "setDirectory: make directory " + dir);
+            if (path.mkdirs()) {
+                Log.e(TAG, "setDir: make directory " + dir);
             } else {
-                Log.e(TAG, "setDirectory: make directory " + dir + " failed!");
+                Log.e(TAG, "setDir: make directory " + dir + " failed!");
                 return false;
             }
         }

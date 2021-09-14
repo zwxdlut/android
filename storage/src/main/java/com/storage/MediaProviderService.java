@@ -25,6 +25,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.storage.util.Constant;
 import com.storage.util.ToastUtil;
 import com.storage.util.NetworkUtil;
 
@@ -127,32 +128,36 @@ public class MediaProviderService extends Service {
         }
 
         @Override
-        public void query(int type, String pathCondition) throws RemoteException {
+        public void query(int type, String pathFilter, int order) throws RemoteException {
             Bundle bundle = new Bundle();
             bundle.putInt("type", type);
-            bundle.putString("pathCondition", pathCondition);
+            bundle.putString("pathFilter", pathFilter);
+            bundle.putInt("order", order);
             handler.sendMessage(handler.obtainMessage(MSG_QUERY, bundle));
         }
 
         @Override
-        public void queryAll(String pathCondition) throws RemoteException {
+        public void queryAll(String pathFilter, int order) throws RemoteException {
             Bundle bundle = new Bundle();
-            bundle.putString("pathCondition", pathCondition);
+            bundle.putString("pathFilter", pathFilter);
+            bundle.putInt("order", order);
             handler.sendMessage(handler.obtainMessage(MSG_QUERY_ALL, bundle));
         }
 
         @Override
-        public void queryDateMap(int type, String pathCondition) throws RemoteException {
+        public void queryDateMap(int type, String pathFilter, int order) throws RemoteException {
             Bundle bundle = new Bundle();
             bundle.putInt("type", type);
-            bundle.putString("pathCondition", pathCondition);
+            bundle.putString("pathFilter", pathFilter);
+            bundle.putInt("order", order);
             handler.sendMessage(handler.obtainMessage(MSG_QUERY_DATE_MAP, bundle));
         }
 
         @Override
-        public void queryDateMapAll(String pathCondition) throws RemoteException {
+        public void queryDateMapAll(String pathFilter, int order) throws RemoteException {
             Bundle bundle = new Bundle();
-            bundle.putString("pathCondition", pathCondition);
+            bundle.putString("pathFilter", pathFilter);
+            bundle.putInt("order", order);
             handler.sendMessage(handler.obtainMessage(MSG_QUERY_DATE_MAP_ALL, bundle));
         }
 
@@ -286,7 +291,7 @@ public class MediaProviderService extends Service {
                     if (null != deleteBean) {
                         SharedPreferences.Editor editor = service.sharedPreferences.edit();
                         editor.remove(deleteBean.getName());
-                        editor.commit();
+                        editor.apply();
                     }
 
                     for (IMediaProviderCallback callback : service.mediaProviderCallbacks) {
@@ -307,7 +312,7 @@ public class MediaProviderService extends Service {
                         for (MediaBean bean : deleteBeans) {
                             SharedPreferences.Editor editor = service.sharedPreferences.edit();
                             editor.remove(bean.getName());
-                            editor.commit();
+                            editor.apply();
                         }
                     }
 
@@ -348,8 +353,10 @@ public class MediaProviderService extends Service {
                     break;
 
                 case MSG_QUERY:
-                    int type = ((Bundle) msg.obj).getInt("type");
-                    List<MediaBean> beans = service.mediaProviderHelper.query(type, ((Bundle) msg.obj).getString("pathCondition"));
+                    int queryType = ((Bundle) msg.obj).getInt("type");
+                    List<MediaBean> beans = service.mediaProviderHelper.query(queryType,
+                            ((Bundle) msg.obj).getString("pathFilter"),
+                            ((Bundle) msg.obj).getInt("order", Constant.OrderType.DESCENDING));
 
                     if (null != beans) {
                         for (MediaBean bean : beans) {
@@ -359,7 +366,7 @@ public class MediaProviderService extends Service {
 
                     for (IMediaProviderCallback callback : service.mediaProviderCallbacks) {
                         try {
-                            callback.onQueried(type, beans);
+                            callback.onQueried(queryType, beans);
                         } catch (RemoteException e) {
                             e.printStackTrace();
                         }
@@ -368,24 +375,23 @@ public class MediaProviderService extends Service {
                     break;
 
                 case MSG_QUERY_ALL:
-                    String pathCondition = ((Bundle) msg.obj).getString("pathCondition");
+                    int order = ((Bundle) msg.obj).getInt("order", Constant.OrderType.DESCENDING);
+                    String queryAllPathFilter = ((Bundle) msg.obj).getString("pathFilter");
                     List<MediaBean> tempBeans = null;
                     List<MediaBean> allBeans = new ArrayList<>();
 
-                    tempBeans = service.mediaProviderHelper.query(MediaBean.Type.IMAGE, pathCondition);
+                    tempBeans = service.mediaProviderHelper.query(MediaBean.Type.IMAGE, queryAllPathFilter, order);
                     if (null != tempBeans && !tempBeans.isEmpty()) {
                         allBeans.addAll(tempBeans);
                     }
 
-                    tempBeans = service.mediaProviderHelper.query(MediaBean.Type.VIDEO, pathCondition);
+                    tempBeans = service.mediaProviderHelper.query(MediaBean.Type.VIDEO, queryAllPathFilter, order);
                     if (null != tempBeans && !tempBeans.isEmpty()) {
                         allBeans.addAll(tempBeans);
                     }
 
-                    if (null != allBeans) {
-                        for (MediaBean bean : allBeans) {
-                            bean.setUrl(service.sharedPreferences.getString(bean.getName(),""));
-                        }
+                    for (MediaBean bean : allBeans) {
+                        bean.setUrl(service.sharedPreferences.getString(bean.getName(),""));
                     }
 
                     for (IMediaProviderCallback callback : service.mediaProviderCallbacks) {
@@ -401,14 +407,18 @@ public class MediaProviderService extends Service {
                 case MSG_QUERY_DATE_MAP:
                     Map<String, List<MediaBean>> dateMapBeans = service.mediaProviderHelper.queryDateMap(
                             ((Bundle) msg.obj).getInt("type"),
-                            ((Bundle) msg.obj).getString("pathCondition"));
+                            ((Bundle) msg.obj).getString("pathFilter"),
+                            ((Bundle) msg.obj).getInt("order", Constant.OrderType.DESCENDING));
                     // TODO: map parameter for aidl
                     break;
 
                 case MSG_QUERY_DATE_MAP_ALL:
-                    String pathConditionMap = ((Bundle) msg.obj).getString("pathCondition");
-                    Map<String, List<MediaBean>> images = service.mediaProviderHelper.queryDateMap(MediaBean.Type.IMAGE, pathConditionMap);
-                    Map<String, List<MediaBean>> videos = service.mediaProviderHelper.queryDateMap(MediaBean.Type.VIDEO, pathConditionMap);
+                    int queryDateMapAllOrder = ((Bundle) msg.obj).getInt("order", Constant.OrderType.DESCENDING);
+                    String queryDateMapAllPathFilter = ((Bundle) msg.obj).getString("pathFilter");
+                    Map<String, List<MediaBean>> images = service.mediaProviderHelper.queryDateMap(
+                            MediaBean.Type.IMAGE, queryDateMapAllPathFilter, queryDateMapAllOrder);
+                    Map<String, List<MediaBean>> videos = service.mediaProviderHelper.queryDateMap(
+                            MediaBean.Type.VIDEO, queryDateMapAllPathFilter, queryDateMapAllOrder);
                     // TODO: combine the two maps
                     break;
 
@@ -465,12 +475,20 @@ public class MediaProviderService extends Service {
     @Override
     public boolean onUnbind(Intent intent) {
         Log.i(TAG, "onUnbind: intent = " + intent);
-        return super.onUnbind(intent);
+        //return super.onUnbind(intent);
+        return true;
+    }
+
+    @Override
+    public void onRebind(Intent intent) {
+        super.onRebind(intent);
+        Log.i(TAG, "onRebind: intent = " + intent);
     }
 
     @Override
     public void onDestroy() {
         Log.i(TAG, "onDestroy");
+
         handlerThread.quitSafely();
 
         try {
@@ -522,6 +540,14 @@ public class MediaProviderService extends Service {
                 e.printStackTrace();
             }
 
+            for (IUploadCallback callback : uploadCallbacks) {
+                try {
+                    callback.onProgress(bean, 100);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+            }
+
             Log.i(TAG, "upload: url = " + url);
 
             for (IUploadCallback callback : uploadCallbacks) {
@@ -561,12 +587,12 @@ public class MediaProviderService extends Service {
 
                 if (isSuccess) {
                     String url = DOWN_LOAD_DOMAIN + bean.getPath();
-                    SharedPreferences.Editor editor = sharedPreferences.edit();
-
                     bean.setUrl(url);
-                    editor.putString(bean.getName(), url);
-                    editor.commit();
                     Log.i(TAG, "upload: url = " + url);
+
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putString(bean.getName(), url);
+                    editor.apply();
                 }
 
                 for (IUploadCallback callback : uploadCallbacks) {

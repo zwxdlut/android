@@ -274,9 +274,10 @@ public interface ICamera {
      *                 For public, the root directory is
      *                 {@link Environment#getExternalStorageDirectory()},
      *                 and for private, it is {@link Context#getExternalFilesDir(String)}.
+     * @param isRemovable Indicate if the directory is under removable storage volume.
      * @return true if successful or false
      */
-    boolean setCaptureRelativeDir(String cameraId, String dir, boolean isPublic);
+    boolean setCaptureRelativeDir(String cameraId, String dir, boolean isPublic, boolean isRemovable);
 
     /**
      * Set the capture size.
@@ -308,9 +309,10 @@ public interface ICamera {
      *                 For public, the root directory is
      *                 {@link Environment#getExternalStorageDirectory()},
      *                 and for private, it is {@link Context#getExternalFilesDir(String)}.
+     * @param isRemovable Indicate if the directory is under removable storage volume.
      * @return true if successful or false
      */
-    boolean setRecordRelativeDir(String cameraId, String dir, boolean isPublic);
+    boolean setRecordRelativeDir(String cameraId, String dir, boolean isPublic, boolean isRemovable);
 
     /**
      * Set the record video size.

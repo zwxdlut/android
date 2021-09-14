@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MediaProviderManager {
-    private static final String TAG = "DVR-" + MediaProviderService.class.getSimpleName();
+    private static final String TAG = "DVR-" + MediaProviderManager.class.getSimpleName();
     private Context context = null;
     private IMediaProviderManager manager = null;
     private List<MediaProviderCallback> mediaProviderCallbacks = new ArrayList<>();
@@ -70,8 +70,8 @@ public class MediaProviderManager {
         @Override
         public void binderDied() {
             Log.e(TAG, "binderDied");
-            destroy();
-            context.bindService(new Intent(context, MediaProviderService.class), connection, Context.BIND_AUTO_CREATE);
+            unbind();
+            bind();
         }
     };
 
@@ -116,7 +116,7 @@ public class MediaProviderManager {
         public void onQueriedAll(List<MediaBean> beans) throws RemoteException {
             for (MediaProviderCallback callback : mediaProviderCallbacks) {
                 if (null != callback) {
-                    callback.onQueried(beans);
+                    callback.onQueriedAll(beans);
                 }
             }
         }
@@ -173,7 +173,7 @@ public class MediaProviderManager {
 
         public void onQueried(int type, List<MediaBean> beans) {}
 
-        public void onQueried(List<MediaBean> beans) {}
+        public void onQueriedAll(List<MediaBean> beans) {}
 
         public void onQueriedDateMap(int type, Map<String, List<MediaBean>> beans) {}
 
@@ -211,8 +211,6 @@ public class MediaProviderManager {
         } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | ClassNotFoundException e) {
             e.printStackTrace();
         }
-
-        context.bindService(new Intent(context, MediaProviderService.class), connection, Context.BIND_AUTO_CREATE);
     }
 
     public void setImageDir(String dir) {
@@ -245,6 +243,31 @@ public class MediaProviderManager {
 
     public void removeMediaProviderCallback(MediaProviderCallback callback) {
         mediaProviderCallbacks.remove(callback);
+    }
+
+    public void bind() {
+        context.bindService(new Intent(context, MediaProviderService.class), connection, Context.BIND_AUTO_CREATE);
+    }
+
+    public void unbind(){
+        if (null != manager) {
+            try {
+                manager.removeMediaProviderCallback(mediaProviderCallbackStub);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                manager.removeUploadCallback(uploadCallbackStub);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+
+            manager.asBinder().unlinkToDeath(deathRecipient, 0);
+            manager = null;
+
+            context.unbindService(connection);
+        }
     }
 
     public void insert(int type, String path, String url) {
@@ -307,49 +330,49 @@ public class MediaProviderManager {
         }
     }
 
-    public void query(int type, String pathCondition) {
+    public void query(int type, String pathFilter, int order) {
         if (null == manager) {
             return;
         }
 
         try {
-            manager.query(type, pathCondition);
+            manager.query(type, pathFilter, order);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
     }
 
-    public void query(String pathCondition) {
+    public void queryAll(String pathFilter, int order) {
         if (null == manager) {
             return;
         }
 
         try {
-            manager.queryAll(pathCondition);
+            manager.queryAll(pathFilter, order);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
     }
 
-    public void queryDateMap(int type, String pathCondition) {
+    public void queryDateMap(int type, String pathFilter, int order) {
         if (null == manager) {
             return;
         }
 
         try {
-            manager.queryDateMap(type, pathCondition);
+            manager.queryDateMap(type, pathFilter, order);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
     }
 
-    public void queryDateMap(String pathCondition) {
+    public void queryDateMap(String pathFilter, int order) {
         if (null == manager) {
             return;
         }
 
         try {
-            manager.queryDateMapAll(pathCondition);
+            manager.queryDateMapAll(pathFilter, order);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -399,26 +422,5 @@ public class MediaProviderManager {
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-    }
-
-    private void destroy(){
-        if (null != manager) {
-            try {
-                manager.removeMediaProviderCallback(mediaProviderCallbackStub);
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
-
-            try {
-                manager.removeUploadCallback(uploadCallbackStub);
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
-
-            manager.asBinder().unlinkToDeath(deathRecipient, 0);
-            manager = null;
-        }
-
-        context.unbindService(connection);
     }
 }

@@ -121,6 +121,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void onCompleted(String cameraId, String path) {
             Log.i(TAG, "onCompleted: cameraId = " + cameraId + ", path = " + path);
+
+            Cursor cursor = getContentResolver().query(
+                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                    new String[] {MediaStore.Video.Media._ID, MediaStore.Video.Media.DATE_TAKEN},
+                    MediaStore.Video.Media.DATA + " LIKE '%" + path + "%'",
+                    null,
+                    null);
+
+            if (null != cursor) {
+                if (cursor.moveToNext()) {
+                    Uri uri = ContentUris.withAppendedId(
+                            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                            cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)));
+
+                    Log.i(TAG, "onCompleted: the video uri = " + uri);
+                } else {
+                    Log.e(TAG, "onCompleted: no items!");
+                }
+
+                cursor.close();
+            } else {
+                Log.e(TAG, "onCompleted: The cursor is null!");
+                binding.ivCapture.setImageBitmap(BitmapFactory.decodeFile(path));
+            }
         }
 
         @Override
@@ -275,8 +299,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         camera.setCameraCallback(cameraCallback);
         camera.setCaptureCallback(captureCallback);
         camera.setRecordCallback(recordCallback);
-//        camera.setCaptureRelativeDir(cameraIds[0], "Pictures", false);
-//        camera.setRecordRelativeDir(cameraIds[0], "Movies", false);
+//        camera.setCaptureRelativeDir(cameraIds[0], "Pictures", false, false);
+//        camera.setRecordRelativeDir(cameraIds[0], "Movies", false, false);
         // This is important because not all available sizes are supported by the camera.
         // We set 1280×720 just for test.
         camera.setCaptureSize(cameraIds[0], 1280, 720);
