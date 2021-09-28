@@ -287,9 +287,9 @@ public class LocationRecorder {
         directory = new File(context.getExternalFilesDir(null), "Locations");
         if (!directory.exists()) {
             if (directory.mkdirs()) {
-                Log.e(TAG, "LocationRecorder: make directory " + directory.getPath());
+                Log.e(TAG, "LocationRecorder: make directory " + directory);
             } else {
-                Log.e(TAG, "LocationRecorder: make directory " + directory.getPath() + " failed!");
+                Log.e(TAG, "LocationRecorder: make directory " + directory + " failed!");
             }
         }
     }

@@ -25,6 +25,9 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.storage.dao.CloudDatabase;
+import com.storage.dao.CloudInfo;
+import com.storage.dao.CloudInfoDao;
 import com.storage.util.Constant;
 import com.storage.util.ToastUtil;
 import com.storage.util.NetworkUtil;
@@ -61,7 +64,8 @@ public class MediaProviderService extends Service {
     private static final int MSG_UPLOAD = 9;
 
     private MediaProviderHelper mediaProviderHelper = null;
-    private SharedPreferences sharedPreferences = null;
+    //private SharedPreferences sharedPreferences = null;
+    private CloudInfoDao cloudInfoDao = null;
     private HandlerThread handlerThread = null;
     private Handler handler = null;
     private SerialUploader serialUploader = null;
@@ -289,9 +293,10 @@ public class MediaProviderService extends Service {
                     int deleteCount = service.mediaProviderHelper.delete(deleteBean);
 
                     if (null != deleteBean) {
-                        SharedPreferences.Editor editor = service.sharedPreferences.edit();
-                        editor.remove(deleteBean.getName());
-                        editor.apply();
+//                        SharedPreferences.Editor editor = service.sharedPreferences.edit();
+//                        editor.remove(deleteBean.getName());
+//                        editor.apply();
+                        service.cloudInfoDao.delete(deleteBean.getName());
                     }
 
                     for (IMediaProviderCallback callback : service.mediaProviderCallbacks) {
@@ -310,9 +315,10 @@ public class MediaProviderService extends Service {
 
                     if (null != deleteBeans) {
                         for (MediaBean bean : deleteBeans) {
-                            SharedPreferences.Editor editor = service.sharedPreferences.edit();
-                            editor.remove(bean.getName());
-                            editor.apply();
+//                            SharedPreferences.Editor editor = service.sharedPreferences.edit();
+//                            editor.remove(bean.getName());
+//                            editor.apply();
+                            service.cloudInfoDao.delete(bean.getName());
                         }
                     }
 
@@ -360,7 +366,8 @@ public class MediaProviderService extends Service {
 
                     if (null != beans) {
                         for (MediaBean bean : beans) {
-                            bean.setUrl(service.sharedPreferences.getString(bean.getName(),""));
+                            //bean.setUrl(service.sharedPreferences.getString(bean.getName(),""));
+                            bean.setUrl(service.cloudInfoDao.query(bean.getName()));
                         }
                     }
 
@@ -391,7 +398,8 @@ public class MediaProviderService extends Service {
                     }
 
                     for (MediaBean bean : allBeans) {
-                        bean.setUrl(service.sharedPreferences.getString(bean.getName(),""));
+                        //bean.setUrl(service.sharedPreferences.getString(bean.getName(),""));
+                        bean.setUrl(service.cloudInfoDao.query(bean.getName()));
                     }
 
                     for (IMediaProviderCallback callback : service.mediaProviderCallbacks) {
@@ -447,7 +455,8 @@ public class MediaProviderService extends Service {
                 networkCallback);
         mediaProviderHelper = new MediaProviderHelper(this);
         mediaProviderHelper.setMediaCallback(mediaCallback);
-        sharedPreferences = getSharedPreferences("clouds", MODE_PRIVATE);
+        //sharedPreferences = getSharedPreferences("clouds", MODE_PRIVATE);
+        cloudInfoDao = CloudDatabase.getInstance(this).cloudInfoDao();
         handlerThread = new HandlerThread("MediaProviderHandlerThread");
         handlerThread.start();
         handler = new MediaProviderHandler(this);
@@ -586,13 +595,20 @@ public class MediaProviderService extends Service {
                 Log.i(TAG, "upload: isSuccess = " + isSuccess + ", response = " + response + ", error = " + error);
 
                 if (isSuccess) {
-                    String url = DOWN_LOAD_DOMAIN + bean.getPath();
+                    final String url = DOWN_LOAD_DOMAIN + bean.getPath();
                     bean.setUrl(url);
                     Log.i(TAG, "upload: url = " + url);
 
-                    SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.putString(bean.getName(), url);
-                    editor.apply();
+//                    SharedPreferences.Editor editor = sharedPreferences.edit();
+//                    editor.putString(bean.getName(), url);
+//                    editor.apply();
+
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            cloudInfoDao.insert(new CloudInfo(bean.getName(), url));
+                        }
+                    }).start();
                 }
 
                 for (IUploadCallback callback : uploadCallbacks) {

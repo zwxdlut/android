@@ -198,7 +198,7 @@ public class MediaProviderManager {
         return MediaProviderManager.Builder.instance;
     }
 
-    public MediaProviderManager() {
+    private MediaProviderManager() {
         try {
             //Application application = (Application) Class.forName("android.app.ActivityThread").getMethod("currentApplication").invoke(null, (Object[]) null);
             Application application = (Application) Class.forName("android.app.AppGlobals").getMethod("getInitialApplication").invoke(null, (Object[]) null);
