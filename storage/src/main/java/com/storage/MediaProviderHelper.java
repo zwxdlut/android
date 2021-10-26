@@ -1,5 +1,6 @@
 package com.storage;
 
+import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -30,6 +31,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -155,6 +158,40 @@ public class MediaProviderHelper {
         return true;
     }
 
+    @SuppressLint("DiscouragedPrivateApi")
+    public static String[] getRemovableStorageDirs(Context context) {
+        List<String> dirs = new ArrayList<>();
+
+        /* scan removable storage */
+        try {
+            StorageManager sm = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
+            if (null == sm) {
+                return null;
+            }
+
+            Method getVolumeList = sm.getClass().getDeclaredMethod("getVolumeList");
+            Object[] volumeList = (Object[]) getVolumeList.invoke(sm);
+            if (null == volumeList) {
+                return null;
+            }
+
+            for (Object volume : volumeList) {
+                Method getPath = volume.getClass().getDeclaredMethod("getPath");
+                Method isRemovable = volume.getClass().getDeclaredMethod("isRemovable");
+                String dir = (String) getPath.invoke(volume);
+                boolean removable = (Boolean) isRemovable.invoke(volume);
+
+                if (removable) {
+                    dirs.add(dir);
+                }
+            }
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+
+        return dirs.toArray(new String[0]);
+    }
+
     public MediaProviderHelper(Context context) {
         // initialize the image directory
         imageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
@@ -178,18 +215,30 @@ public class MediaProviderHelper {
         }
 
         // initialize the removable media content uris
-        StorageManager sm = context.getSystemService(StorageManager.class);
-        Set<String> volumeNames = MediaStore.getExternalVolumeNames(context);
-        for (String volumeName : volumeNames) {
-            Uri uri = MediaStore.Images.Media.getContentUri(volumeName);
-            StorageVolume volume = sm.getStorageVolume(uri);
-            if (volume.isRemovable()) {
-                REMOVABLE_IMAGE_CONTENT_URI = uri;
-            }
+        String[] dirs = getRemovableStorageDirs(context);
+        if (null != dirs && 0 < dirs.length) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                StorageManager sm = context.getSystemService(StorageManager.class);
+                Set<String> volumeNames = MediaStore.getExternalVolumeNames(context);
+                for (String volumeName : volumeNames) {
+                    Uri uri = MediaStore.Images.Media.getContentUri(volumeName);
+                    StorageVolume volume = sm.getStorageVolume(uri);
+                    if (volume.isRemovable()) {
+                        REMOVABLE_IMAGE_CONTENT_URI = uri;
+                    }
 
-            uri = MediaStore.Video.Media.getContentUri(volumeName);
-            volume = sm.getStorageVolume(uri);
-            if (volume.isRemovable()) {
+                    uri = MediaStore.Video.Media.getContentUri(volumeName);
+                    volume = sm.getStorageVolume(uri);
+                    if (volume.isRemovable()) {
+                        REMOVABLE_VIDEO_CONTENT_URI = uri;
+                    }
+                }
+            } else {
+                String volumeName = dirs[0].substring(dirs[0].lastIndexOf('/') + 1);
+                volumeName = volumeName.toLowerCase();
+                Uri uri = MediaStore.Images.Media.getContentUri(volumeName);
+                REMOVABLE_IMAGE_CONTENT_URI = uri;
+                uri = MediaStore.Video.Media.getContentUri(volumeName);
                 REMOVABLE_VIDEO_CONTENT_URI = uri;
             }
         }
@@ -232,7 +281,7 @@ public class MediaProviderHelper {
         StorageManager sm = context.getSystemService(StorageManager.class);
         StorageVolume volume = sm.getStorageVolume(path);
 
-        if (volume.isRemovable()) {
+        if (null != volume && volume.isRemovable()) {
             imageContentUri = REMOVABLE_IMAGE_CONTENT_URI;
             resolver.registerContentObserver(imageContentUri, true, contentObserver);
         }
@@ -268,7 +317,7 @@ public class MediaProviderHelper {
         StorageManager sm = context.getSystemService(StorageManager.class);
         StorageVolume volume = sm.getStorageVolume(path);
 
-        if (volume.isRemovable()) {
+        if (null != volume && volume.isRemovable()) {
             videoContentUri = REMOVABLE_VIDEO_CONTENT_URI;
             resolver.registerContentObserver(videoContentUri, true, contentObserver);
         }
