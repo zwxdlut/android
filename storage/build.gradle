@@ -43,8 +43,6 @@ dependencies {
     // misc
     implementation 'com.alibaba:fastjson:1.2.70'
     implementation 'com.upyun:upyun-android-sdk:2.1.4'
-
-    implementation project(path: ':camera')
     implementation 'androidx.exifinterface:exifinterface:1.2.0'
 
     // room

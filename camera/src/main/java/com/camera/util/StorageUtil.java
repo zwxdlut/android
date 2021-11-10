@@ -2,17 +2,13 @@ package com.camera.util;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.net.Uri;
 import android.os.Environment;
 import android.os.storage.StorageManager;
-import android.os.storage.StorageVolume;
-import android.provider.MediaStore;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class StorageUtil {
     public static String[] getStorageDirs(Context context) {
@@ -87,37 +83,5 @@ public class StorageUtil {
         }
 
         return false;
-    }
-
-    public static Uri getRemovableImageContentUri(Context context) {
-        StorageManager sm = context.getSystemService(StorageManager.class);
-        Set<String> volumeNames = MediaStore.getExternalVolumeNames(context);
-
-        for (String volumeName : volumeNames) {
-            Uri uri = MediaStore.Images.Media.getContentUri(volumeName);
-            StorageVolume volume = sm.getStorageVolume(uri);
-
-            if (volume.isRemovable()) {
-               return uri;
-            }
-        }
-
-        return MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-    }
-
-    public static Uri getRemovableVideoContentUri(Context context) {
-        StorageManager sm = context.getSystemService(StorageManager.class);
-        Set<String> volumeNames = MediaStore.getExternalVolumeNames(context);
-
-        for (String volumeName : volumeNames) {
-            Uri uri = MediaStore.Video.Media.getContentUri(volumeName);
-            StorageVolume volume = sm.getStorageVolume(uri);
-
-            if (volume.isRemovable()) {
-                return uri;
-            }
-        }
-
-        return MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
     }
 }
