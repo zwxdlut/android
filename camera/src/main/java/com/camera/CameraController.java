@@ -67,7 +67,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The CameraController class provides control and operation of the cameras.
+ * This class provides control and operation for the camera.
  */
 public class CameraController {
     private static final String TAG = CameraController.class.getSimpleName();
@@ -144,7 +144,7 @@ public class CameraController {
 
             String cameraId = findCameraId(session);
             if(null == cameraId) {
-                Log.e(TAG, "onCaptureStarted: don't find camera id!");
+                Log.e(TAG, "onCaptureStarted: not found camera id!");
                 return;
             }
 
@@ -162,7 +162,7 @@ public class CameraController {
 
             String cameraId = findCameraId(session);
             if(null == cameraId) {
-                Log.e(TAG, "onCaptureCompleted: don't find camera id!");
+                Log.e(TAG, "onCaptureCompleted: not found camera id!");
                 return;
             }
 
@@ -175,7 +175,7 @@ public class CameraController {
 
             String cameraId = findCameraId(session);
             if(null == cameraId) {
-                Log.e(TAG, "onCaptureFailed: don't find camera id!");
+                Log.e(TAG, "onCaptureFailed: not found camera id!");
                 return;
             }
 
@@ -195,7 +195,7 @@ public class CameraController {
 
             final String cameraId = findCameraId(session);
             if(null == cameraId) {
-                Log.e(TAG, "onCaptureSequenceCompleted: don't find camera id!");
+                Log.e(TAG, "onCaptureSequenceCompleted: not found camera id!");
                 return;
             }
 
@@ -349,7 +349,7 @@ public class CameraController {
 
             final String cameraId = findCameraId(reader);
             if(null == cameraId) {
-                Log.e(TAG, "onImageAvailable: don't find camera id!");
+                Log.e(TAG, "onImageAvailable: not found camera id!");
                 return;
             }
 
@@ -505,91 +505,91 @@ public class CameraController {
      */
     public static class ResultCode {
         /**
-         * The constant SUCCESS.
+         * Success.
          */
         public static final int SUCCESS = 0;
 
         /**
-         * The constant NO_PERMISSION.
+         * No permission.
          */
         public static final int NO_PERMISSION = -1;
 
         /**
-         * The constant CAMERA_EXCEPTION.
+         * Camera exception.
          */
         public static final int CAMERA_EXCEPTION = -2;
 
         /**
-         * The constant NO_CAMERA_DEVICE.
+         * No camera device.
          */
         public static final int NO_CAMERA_DEVICE = -3;
 
         /**
-         * The constant NO_PREVIEW_SURFACE.
+         * No preview surface.
          */
         public static final int NO_PREVIEW_SURFACE = -4;
 
         /**
-         * The constant FAILED_WHILE_RECORDING.
+         * Failed because of recording.
          */
         public static final int FAILED_WHILE_RECORDING = -5;
 
         /**
-         * The constant RECORDER_ERROR.
+         * Recorder error.
          */
         public static final int RECORDER_ERROR = -6;
     }
 
     /**
-     * The interface camera callback.
+     * Camera callback.
      */
     public interface ICameraCallback {
         /**
-         * The camera state.
+         * Camera state.
          */
         class State {
             /**
-             * The constant CAMERA_CLOSED.
+             * Camera closed.
              */
             public static final int CAMERA_CLOSED = 0;
 
             /**
-             * The constant CAMERA_OPENED.
+             * Camera opened.
              */
             public static final int CAMERA_OPENED = 1;
 
             /**
-             * The constant CAMERA_DISCONNECTED.
+             * Camera disconnected.
              */
             public static final int CAMERA_DISCONNECTED = 2;
         }
 
         /**
-         * The camera error code.
+         * Camera error code.
          */
         class ErrorCode {
             /**
-             * The constant CAMERA_IN_USE.
+             * Camera in use.
              */
             public static final int CAMERA_IN_USE = CameraDevice.StateCallback.ERROR_CAMERA_IN_USE;
 
             /**
-             * The constant MAX_CAMERAS_IN_USE.
+             * Max camera in use.
              */
             public static final int MAX_CAMERAS_IN_USE = CameraDevice.StateCallback.ERROR_MAX_CAMERAS_IN_USE;
 
             /**
-             * The constant CAMERA_DISABLED.
+             * Camera disabled.
              */
             public static final int CAMERA_DISABLED = CameraDevice.StateCallback.ERROR_CAMERA_DISABLED;
 
             /**
-             * The constant CAMERA_DEVICE.
+             * Camera device error.
              */
             public static final int CAMERA_DEVICE = CameraDevice.StateCallback.ERROR_CAMERA_DEVICE;
 
             /**
-             * The constant CAMERA_SERVICE.
+             * Camera service error.
              */
             public static final int CAMERA_SERVICE = CameraDevice.StateCallback.ERROR_CAMERA_SERVICE;
         }
@@ -624,7 +624,7 @@ public class CameraController {
     }
 
     /**
-     * The interface capture callback.
+     * Camera capture callback.
      */
     public interface ICaptureCallback {
         /**
@@ -653,20 +653,20 @@ public class CameraController {
     }
 
     /**
-     * The interface record callback.
+     * Camera record callback.
      */
     public interface IRecordCallback {
         /**
-         * The error code while recording.
+         * Recorder error code.
          */
         class ErrorCode {
             /**
-             * The constant ERROR_UNKNOWN.
+             * Unknown recorder error.
              */
             public static final int UNKNOWN = MediaRecorder.MEDIA_RECORDER_ERROR_UNKNOWN;
 
             /**
-             * The constant ERROR_SERVER_DIED.
+             * Recorder server died.
              */
             public static final int SERVER_DIED = MediaRecorder.MEDIA_ERROR_SERVER_DIED;
         }
@@ -1248,10 +1248,10 @@ public class CameraController {
     }
 
     /**
-     * Open the camera by id.
+     * Open the camera.
      *
      * @param cameraId the camera id
-     * @return {@link ICamera.ResultCode}
+     * @return {@link ResultCode}
      */
     public int open(final String cameraId) {
         Log.i(TAG, "open: cameraId = " + cameraId);
@@ -1348,10 +1348,10 @@ public class CameraController {
     }
 
     /**
-     * Close the camera by id.
+     * Close the camera.
      *
      * @param cameraId the camera id
-     * @return {@link ICamera.ResultCode}
+     * @return {@link ResultCode}
      */
     public int close(String cameraId) {
         Log.i(TAG, "close: cameraId = " + cameraId);
@@ -1435,7 +1435,7 @@ public class CameraController {
      * Start preview.
      *
      * @param cameraId the camera id
-     * @return {@link ICamera.ResultCode}
+     * @return {@link ResultCode}
      */
     public int startPreview(String cameraId) {
         Log.i(TAG, "startPreview: cameraId = " + cameraId);
@@ -1501,7 +1501,7 @@ public class CameraController {
      * Stop preview.
      *
      * @param cameraId the camera id
-     * @return {@link ICamera.ResultCode}
+     * @return {@link ResultCode}
      */
     public int stopPreview(String cameraId) {
         Log.i(TAG, "stopPreview: cameraId = " + cameraId);
@@ -1527,7 +1527,7 @@ public class CameraController {
      * Capture a picture.
      *
      * @param cameraId the camera id
-     * @return {@link ICamera.ResultCode}
+     * @return {@link ResultCode}
      */
     public int capture(String cameraId) {
         return capture(cameraId, null, null);
@@ -1538,7 +1538,7 @@ public class CameraController {
      *
      * @param cameraId the camera id
      * @param name the capture file name
-     * @return {@link ICamera.ResultCode}
+     * @return {@link ResultCode}
      */
     public int capture(String cameraId, String name) {
         return capture(cameraId, name, null);
@@ -1549,7 +1549,7 @@ public class CameraController {
      *
      * @param cameraId the camera id
      * @param location the location
-     * @return {@link ICamera.ResultCode}
+     * @return {@link ResultCode}
      */
     public int capture(String cameraId, Location location) {
         return capture(cameraId, null, location);
@@ -1561,7 +1561,7 @@ public class CameraController {
      * @param cameraId the camera id
      * @param name the capture file name
      * @param location the location
-     * @return {@link ICamera.ResultCode}
+     * @return {@link ResultCode}
      */
     public int capture(String cameraId, final String name, final Location location) {
         Log.i(TAG, "capture: cameraId = " + cameraId + ", name = " + name + ", location = " + location);
@@ -1622,7 +1622,7 @@ public class CameraController {
      * Start record.
      *
      * @param cameraId the camera id
-     * @return {@link ICamera.ResultCode}
+     * @return {@link ResultCode}
      */
     public int startRecord(String cameraId) {
         return startRecord(cameraId, null, 0);
@@ -1633,7 +1633,7 @@ public class CameraController {
      *
      * @param cameraId the camera id
      * @param name the record file name
-     * @return {@link ICamera.ResultCode}
+     * @return {@link ResultCode}
      */
     public int startRecord(String cameraId, String name) {
         return startRecord(cameraId, name, 0);
@@ -1644,7 +1644,7 @@ public class CameraController {
      *
      * @param cameraId the camera id
      * @param duration the record max duration in ms (if zero or negative, disables the duration limit)
-     * @return {@link ICamera.ResultCode}
+     * @return {@link ResultCode}
      */
     public int startRecord(String cameraId, int duration) {
         return startRecord(cameraId, null, duration);
@@ -1656,7 +1656,7 @@ public class CameraController {
      * @param cameraId the camera id
      * @param name the record file name
      * @param duration the record max duration in ms (if zero or negative, disables the duration limit)
-     * @return {@link ICamera.ResultCode}
+     * @return {@link ResultCode}
      */
     public int startRecord(String cameraId, String name, int duration) {
         Log.i(TAG, "startRecord: cameraId = " + cameraId + ", name = " + name + ", duration = " + duration);
@@ -1737,7 +1737,7 @@ public class CameraController {
      * Stop record.
      *
      * @param cameraId the camera id
-     * @return {@link ICamera.ResultCode}
+     * @return {@link ResultCode}
      */
     public int stopRecord(String cameraId) {
         Log.i(TAG, "stopRecord: cameraId = " + cameraId);

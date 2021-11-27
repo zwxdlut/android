@@ -67,7 +67,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The CameraNative class provides control and operation of the native cameras.
+ * This class provides control and operation for the native camera.
  */
 public class CameraNative implements ICamera {
     private static final String TAG = CameraNative.class.getSimpleName();
@@ -144,7 +144,7 @@ public class CameraNative implements ICamera {
 
             String cameraId = findCameraId(session);
             if(null == cameraId) {
-                Log.e(TAG, "onCaptureStarted: don't find camera id!");
+                Log.e(TAG, "onCaptureStarted: not found camera id!");
                 return;
             }
 
@@ -162,7 +162,7 @@ public class CameraNative implements ICamera {
 
             String cameraId = findCameraId(session);
             if(null == cameraId) {
-                Log.e(TAG, "onCaptureCompleted: don't find camera id!");
+                Log.e(TAG, "onCaptureCompleted: not found camera id!");
                 return;
             }
 
@@ -175,7 +175,7 @@ public class CameraNative implements ICamera {
 
             String cameraId = findCameraId(session);
             if(null == cameraId) {
-                Log.e(TAG, "onCaptureFailed: don't find camera id!");
+                Log.e(TAG, "onCaptureFailed: not found camera id!");
                 return;
             }
 
@@ -195,7 +195,7 @@ public class CameraNative implements ICamera {
 
             final String cameraId = findCameraId(session);
             if(null == cameraId) {
-                Log.e(TAG, "onCaptureSequenceCompleted: don't find camera id!");
+                Log.e(TAG, "onCaptureSequenceCompleted: not found camera id!");
                 return;
             }
 
@@ -349,7 +349,7 @@ public class CameraNative implements ICamera {
 
             final String cameraId = findCameraId(reader);
             if(null == cameraId) {
-                Log.e(TAG, "onImageAvailable: don't find camera id!");
+                Log.e(TAG, "onImageAvailable: not found camera id!");
                 return;
             }
 

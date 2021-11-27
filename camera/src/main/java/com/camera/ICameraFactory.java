@@ -1,13 +1,13 @@
 package com.camera;
 
 /**
- * The ICameraFactory interface creates camera instance.
+ * This interface creates native camera instance.
  */
 public interface ICameraFactory {
     /**
-     * Get the camera instance.
+     * Get a camera instance.
      *
-     * @return the camera instance
+     * @return a camera instance
      */
     ICamera getCamera();
 }

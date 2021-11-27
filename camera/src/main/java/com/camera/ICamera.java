@@ -9,7 +9,7 @@ import android.util.Size;
 import android.view.Surface;
 
 /**
- * The ICamera interface provides control and operation of the cameras.
+ * This interface provides control and operation for the camera.
  */
 public interface ICamera {
     /**
@@ -17,91 +17,91 @@ public interface ICamera {
      */
     class ResultCode {
         /**
-         * The constant SUCCESS.
+         * Success.
          */
         public static final int SUCCESS = 0;
 
         /**
-         * The constant NO_PERMISSION.
+         * No permission.
          */
         public static final int NO_PERMISSION = -1;
 
         /**
-         * The constant CAMERA_EXCEPTION.
+         * Camera exception.
          */
         public static final int CAMERA_EXCEPTION = -2;
 
         /**
-         * The constant NO_CAMERA_DEVICE.
+         * No camera device.
          */
         public static final int NO_CAMERA_DEVICE = -3;
 
         /**
-         * The constant NO_PREVIEW_SURFACE.
+         * No preview surface.
          */
         public static final int NO_PREVIEW_SURFACE = -4;
 
         /**
-         * The constant FAILED_WHILE_RECORDING.
+         * Failed because of recording.
          */
         public static final int FAILED_WHILE_RECORDING = -5;
-        
+
         /**
-         * The constant RECORDER_ERROR.
+         * Recorder error.
          */
         public static final int RECORDER_ERROR = -6;
     }
 
     /**
-     * The interface camera callback.
+     * Camera callback.
      */
     interface ICameraCallback {
         /**
-         * The camera state.
+         * Camera state.
          */
         class State {
             /**
-             * The constant CAMERA_CLOSED.
+             * Camera closed.
              */
             public static final int CAMERA_CLOSED = 0;
 
             /**
-             * The constant CAMERA_OPENED.
+             * Camera opened.
              */
             public static final int CAMERA_OPENED = 1;
 
             /**
-             * The constant CAMERA_DISCONNECTED.
+             * Camera disconnected.
              */
             public static final int CAMERA_DISCONNECTED = 2;
         }
 
         /**
-         * The camera error code.
+         * Camera error code.
          */
         class ErrorCode {
             /**
-             * The constant CAMERA_IN_USE.
+             * Camera in use.
              */
             public static final int CAMERA_IN_USE = CameraDevice.StateCallback.ERROR_CAMERA_IN_USE;
 
             /**
-             * The constant MAX_CAMERAS_IN_USE.
+             * Max camera in use.
              */
             public static final int MAX_CAMERAS_IN_USE = CameraDevice.StateCallback.ERROR_MAX_CAMERAS_IN_USE;
 
             /**
-             * The constant CAMERA_DISABLED.
+             * Camera disabled.
              */
             public static final int CAMERA_DISABLED = CameraDevice.StateCallback.ERROR_CAMERA_DISABLED;
 
             /**
-             * The constant CAMERA_DEVICE.
+             * Camera device error.
              */
             public static final int CAMERA_DEVICE = CameraDevice.StateCallback.ERROR_CAMERA_DEVICE;
 
             /**
-             * The constant CAMERA_SERVICE.
+             * Camera service error.
              */
             public static final int CAMERA_SERVICE = CameraDevice.StateCallback.ERROR_CAMERA_SERVICE;
         }
@@ -136,14 +136,14 @@ public interface ICamera {
     }
 
     /**
-     * The interface capture callback.
+     * Camera capture callback.
      */
     interface ICaptureCallback {
         /**
          * Called when the capture started.
          *
          * @param cameraId the camera id
-         * @param path the capture file full path
+         * @param path the captured file full path
          */
         void onStarted(String cameraId, String path);
 
@@ -151,7 +151,7 @@ public interface ICamera {
          * Called when the capture completed.
          *
          * @param cameraId the camera id
-         * @param path the capture file full path
+         * @param path the captured file full path
          */
         void onCompleted(String cameraId, String path);
 
@@ -159,26 +159,26 @@ public interface ICamera {
          * Called when the capture failed.
          *
          * @param cameraId the camera id
-         * @param path the capture file full path
+         * @param path the captured file full path
          */
         void onFailed(String cameraId, String path);
     }
 
     /**
-     * The interface record callback.
+     * Camera record callback.
      */
     interface IRecordCallback {
         /**
-         * The error code while recording.
+         * Recorder error code.
          */
         class ErrorCode {
             /**
-             * The constant ERROR_UNKNOWN.
+             * Unknown recorder error.
              */
             public static final int UNKNOWN = MediaRecorder.MEDIA_RECORDER_ERROR_UNKNOWN;
 
             /**
-             * The constant ERROR_SERVER_DIED.
+             * Recorder server died.
              */
             public static final int SERVER_DIED = MediaRecorder.MEDIA_ERROR_SERVER_DIED;
         }
@@ -347,7 +347,7 @@ public interface ICamera {
     void setRecordCallback(IRecordCallback callback);
 
     /**
-     * Open the camera by id.
+     * Open the camera.
      *
      * @param cameraId the camera id
      * @return {@link ResultCode}
@@ -355,7 +355,7 @@ public interface ICamera {
     int open(String cameraId);
 
     /**
-     * Close the camera by id.
+     * Close the camera.
      *
      * @param cameraId the camera id
      * @return {@link ResultCode}
