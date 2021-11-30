@@ -1,6 +1,5 @@
 package com.storage;
 
-import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -23,6 +22,7 @@ import androidx.exifinterface.media.ExifInterface;
 
 import com.storage.util.Constant;
 import com.storage.util.DateComparator;
+import com.storage.util.StorageUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,8 +31,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -80,7 +78,7 @@ public class MediaProviderHelper {
 
     public static String copyFile(String srcPath, String dstDir) {
         if (null == srcPath ||  null == dstDir) {
-            Log.e(TAG, "copyFile: The source or destination path is null!");
+            Log.e(TAG, "copyFile: The source/destination path is null!");
             return null;
         }
 
@@ -128,7 +126,7 @@ public class MediaProviderHelper {
 
     public static Boolean copyFile(String path, OutputStream os) {
         if (null == path || null == os) {
-            Log.e(TAG, "copyFile: The source or destination path is null!");
+            Log.e(TAG, "copyFile: The source/destination path is null!");
             return false;
         }
 
@@ -158,40 +156,6 @@ public class MediaProviderHelper {
         return true;
     }
 
-    @SuppressLint("DiscouragedPrivateApi")
-    public static String[] getRemovableStorageDirs(Context context) {
-        List<String> dirs = new ArrayList<>();
-
-        /* scan removable storage */
-        try {
-            StorageManager sm = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
-            if (null == sm) {
-                return null;
-            }
-
-            Method getVolumeList = sm.getClass().getDeclaredMethod("getVolumeList");
-            Object[] volumeList = (Object[]) getVolumeList.invoke(sm);
-            if (null == volumeList) {
-                return null;
-            }
-
-            for (Object volume : volumeList) {
-                Method getPath = volume.getClass().getDeclaredMethod("getPath");
-                Method isRemovable = volume.getClass().getDeclaredMethod("isRemovable");
-                String dir = (String) getPath.invoke(volume);
-                boolean removable = (Boolean) isRemovable.invoke(volume);
-
-                if (removable) {
-                    dirs.add(dir);
-                }
-            }
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace();
-        }
-
-        return dirs.toArray(new String[0]);
-    }
-
     public MediaProviderHelper(Context context) {
         // initialize the image directory
         imageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
@@ -215,7 +179,7 @@ public class MediaProviderHelper {
         }
 
         // initialize the removable media content uris
-        String[] dirs = getRemovableStorageDirs(context);
+        String[] dirs = StorageUtil.getRemovableStorageDirs(context);
         if (null != dirs && 0 < dirs.length) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 StorageManager sm = context.getSystemService(StorageManager.class);
@@ -331,7 +295,7 @@ public class MediaProviderHelper {
 
     public MediaBean insert(int type, String path, String url) {
         if (null == path) {
-            Log.e(TAG, "insert: The path is null!");
+            Log.e(TAG, "insert: Path is null!");
             return null;
         }
 
@@ -539,13 +503,13 @@ public class MediaProviderHelper {
 
     public int delete(MediaBean bean) {
         if (null == bean) {
-            Log.e(TAG, "delete: The bean is null!");
+            Log.e(TAG, "delete: Bean is null!");
             return 0;
         }
 
         String path = bean.getPath();
         if (null == path) {
-            Log.e(TAG, "delete: The path is null!");
+            Log.e(TAG, "delete: Path is null!");
             return 0;
         }
 
@@ -596,7 +560,7 @@ public class MediaProviderHelper {
 
     public int delete(List<MediaBean> beans) {
         if (null == beans) {
-            Log.e(TAG, "delete: The beans is null!");
+            Log.e(TAG, "delete: Beans are empty!");
             return 0;
         }
 
@@ -613,7 +577,7 @@ public class MediaProviderHelper {
     // TODO:
     public int update(MediaBean bean) {
         if (null == bean) {
-            Log.e(TAG, "update: The bean is null!");
+            Log.e(TAG, "update: Bean is null!");
             return 0;
         }
 
@@ -622,7 +586,7 @@ public class MediaProviderHelper {
 
     public int update(List<MediaBean> beans) {
         if (null == beans) {
-            Log.e(TAG, "update: The beans is null!");
+            Log.e(TAG, "update: Beans are null!");
             return 0;
         }
 
@@ -638,7 +602,7 @@ public class MediaProviderHelper {
     public List<MediaBean> query(int type, String pathFilter, int order) {
         Cursor cursor = prepare(type, pathFilter, order);
         if (null == cursor) {
-            Log.e(TAG, "query: The cursor is null!");
+            Log.e(TAG, "query: Cursor is null!");
             return null;
         }
 
@@ -739,7 +703,7 @@ public class MediaProviderHelper {
     public Map<String, List<MediaBean>> queryDateMap(int type, String pathFilter, int order) {
         Cursor cursor = prepare(type, pathFilter, order);
         if (null == cursor) {
-            Log.e(TAG, "queryDateMap: The cursor is null!");
+            Log.e(TAG, "queryDateMap: Cursor is null!");
             return null;
         }
 

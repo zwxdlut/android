@@ -7,7 +7,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
@@ -29,9 +28,8 @@ import com.storage.dao.CloudDatabase;
 import com.storage.dao.CloudInfo;
 import com.storage.dao.CloudInfoDao;
 import com.storage.util.Constant;
-import com.storage.util.ToastUtil;
 import com.storage.util.NetworkUtil;
-
+import com.storage.util.ToastUtil;
 import com.upyun.library.common.SerialUploader;
 import com.upyun.library.listener.UpCompleteListener;
 import com.upyun.library.listener.UpProgressListener;
@@ -267,7 +265,7 @@ public class MediaProviderService extends Service {
             MediaProviderService service = ref.get();
 
             if (null == service) {
-                Log.e(TAG, "handleMessage: The MediaProviderService is null!");
+                Log.e(TAG, "handleMessage: MediaProviderService is null!");
                 return;
             }
 

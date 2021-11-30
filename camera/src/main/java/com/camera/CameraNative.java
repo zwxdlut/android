@@ -693,7 +693,7 @@ public class CameraNative implements ICamera {
                 } else {
                     captureSizes.put(cameraId, new Size(1280, 720));
                     recordSizes.put(cameraId, new Size(1280, 720));
-                    Log.e(TAG, "CameraNative: cameraId = " + cameraId + ", the StreamConfigurationMap is null, use 1280 * 720 as default!");
+                    Log.e(TAG, "CameraNative: cameraId = " + cameraId + ", StreamConfigurationMap is null, use 1280 * 720 as default!");
                 }
                 
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);

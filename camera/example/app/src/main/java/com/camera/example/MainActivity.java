@@ -103,7 +103,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                         cursor.close();
                     } else {
-                        Log.e(TAG, "onCompleted: The cursor is null!");
+                        Log.e(TAG, "onCompleted: Cursor is null!");
                         binding.ivCapture.setImageBitmap(BitmapFactory.decodeFile(path));
                     }
                 }
@@ -142,7 +142,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 cursor.close();
             } else {
-                Log.e(TAG, "onCompleted: The cursor is null!");
+                Log.e(TAG, "onCompleted: Cursor is null!");
                 binding.ivCapture.setImageBitmap(BitmapFactory.decodeFile(path));
             }
         }
