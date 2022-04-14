@@ -1,5 +1,5 @@
-# Android examples
-Android examples.
+# Android
+Android examples, modules and so on.
 
 ## Author
 * Wenxing Zhang zwxdlut@163.com
