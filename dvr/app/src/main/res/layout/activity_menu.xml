@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:keepScreenOn="true">
+
+    <data>
+        <import type="android.view.View" />
+
+        <variable
+            name="enable"
+            type="boolean" />
+
+        <variable
+            name="uploading"
+            type="boolean" />
+
+        <variable
+            name="deleting"
+            type="boolean" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/actionbar">
+
+            <ImageButton
+                android:id="@+id/btn_back"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:padding="10dp"
+                android:layout_centerVertical="true"
+                android:scaleType="fitCenter"
+                android:background="@android:color/transparent"
+                android:src="@drawable/selector_back"
+                android:enabled="@{enable}"
+                tools:ignore="ContentDescription" />
+
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@+id/btn_back"
+                android:layout_centerVertical="true"
+                android:textSize="@dimen/actionbar_text_size"
+                android:text="菜单"
+                android:textColor="@drawable/selector_text_color"
+                android:enabled="@{enable}"/>
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:context=".activity.MenuActivity"
+            android:orientation="horizontal"
+            android:background="@color/background">
+
+            <RelativeLayout
+                android:id="@+id/rl_playback"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="20dp"
+                android:background="@mipmap/bg_content">
+
+                <Button
+                    android:id="@+id/btn_playback"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:background="@android:color/transparent"
+                    android:text="行程回放"
+                    android:textSize="@dimen/menu_text_size"
+                    android:enabled="@{!deleting}"/>
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/rl_upload"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="20dp"
+                android:background="@mipmap/bg_content">
+
+                <Button
+                    android:id="@+id/btn_upload"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:background="@android:color/transparent"
+                    android:text="上传"
+                    android:textSize="@dimen/menu_text_size"
+                    android:textColor="@drawable/selector_text_color"
+                    android:enabled="@{enable}"/>
+
+                <com.cloud.progressbar.CircleProgressBar
+                    android:id="@+id/pb_uploading"
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:layout_centerInParent="true"
+                    android:gravity="center"
+                    android:textColor="@color/white_90"
+                    android:textSize="23sp"
+                    android:visibility="@{uploading ? View.VISIBLE : View.GONE}"
+                    app:progressBackColor="@color/white"
+                    app:progressColor="#00ae9d"
+                    app:progressWidth="10dp"/>
+
+                <TextView
+                    android:id="@+id/tv_progress"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:background="@android:color/transparent"
+                    android:textSize="@dimen/menu_text_size"
+                    android:textColor="@color/white_90"
+                    android:visibility="@{uploading ? View.VISIBLE : View.GONE}"/>
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/rl_delete"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="20dp"
+                android:background="@mipmap/bg_content">
+
+                <Button
+                    android:id="@+id/btn_delete"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:background="@android:color/transparent"
+                    android:text="删除"
+                    android:textSize="@dimen/menu_text_size"
+                    android:textColor="@drawable/selector_text_color"
+                    android:enabled="@{enable}"/>
+
+                <ProgressBar
+                    android:layout_width="130dp"
+                    android:layout_height="130dp"
+                    android:layout_centerInParent="true"
+                    android:visibility="@{deleting ? View.VISIBLE : View.GONE}"
+                    android:indeterminateTint="#00ae9d"/>
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/rl_logout"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="20dp"
+                android:background="@mipmap/bg_content">
+
+                <Button
+                    android:id="@+id/btn_logout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:background="@android:color/transparent"
+                    android:text="退出登录"
+                    android:textSize="@dimen/menu_text_size"
+                    android:textColor="@drawable/selector_text_color"
+                    android:enabled="@{enable}"/>
+            </RelativeLayout>
+        </LinearLayout>
+    </LinearLayout>
+</layout>

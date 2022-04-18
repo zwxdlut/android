@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Camera</string>
+    <string name="view_capture">Capture View</string>
+    <string name="btn_open_camera">Open</string>
+    <string name="btn_close_camera">Close</string>
+    <string name="btn_start_preview">Start Preview</string>
+    <string name="btn_stop_preview">Stop Preview</string>
+    <string name="btn_capture">Capture</string>
+    <string name="btn_set_preview_surface">Set Preview</string>
+    <string name="btn_start_record">Start Record</string>
+    <string name="btn_stop_record">Stop Record</string>
+</resources>

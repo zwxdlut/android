@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:keepScreenOn="true">
+
+    <data>
+        <import type="android.view.View" />
+        <import type="com.mxnavi.dvr.activity.MediaActivity" />
+
+        <variable
+            name="type"
+            type="int" />
+
+        <variable
+            name="all"
+            type="boolean" />
+
+        <variable
+            name="enable"
+            type="boolean" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/actionbar"
+            tools:ignore="UselessParent">
+
+            <ImageButton
+                android:id="@+id/btn_back"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:padding="12dp"
+                android:layout_centerVertical="true"
+                android:scaleType="fitCenter"
+                android:background="@android:color/transparent"
+                android:src="@drawable/selector_back"
+                tools:ignore="ContentDescription"
+                android:enabled="@{enable}"/>
+
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tab_layout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                app:tabIndicatorColor="@color/tab_indicator"
+                app:tabSelectedTextColor="@color/tab_indicator"
+                app:tabTextColor="@color/white"
+                app:tabTextAppearance="@style/tab_text"/>
+
+            <Button
+                android:id="@+id/btn_opt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="10dp"
+                android:layout_centerVertical="true"
+                android:background="@android:color/transparent"
+                android:textSize="@dimen/btn_text_size"
+                android:text="@{MediaActivity.TYPE_PLAYBACK == type ? `排序` : (MediaActivity.TYPE_UPLOAD == type ? `上传` : `删除`)}"
+                android:textColor="@drawable/selector_text_color"
+                android:enabled="@{enable}"/>
+
+            <Button
+                android:id="@+id/btn_all"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toStartOf="@+id/btn_opt"
+                android:layout_centerVertical="true"
+                android:background="@android:color/transparent"
+                android:textSize="@dimen/btn_text_size"
+                android:text="@{all ? `取消全选` : `全选`}"
+                android:textColor="@drawable/selector_text_color"
+                android:visibility="@{MediaActivity.TYPE_PLAYBACK == type ? View.GONE : View.VISIBLE}"
+                android:enabled="@{enable}"/>
+
+            <ImageView
+                android:id="@+id/iv_arrow_order"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_centerVertical="true"
+                android:layout_alignStart="@+id/btn_opt"
+                android:src="@drawable/selector_arrow_order"
+                android:visibility="@{MediaActivity.TYPE_PLAYBACK == type ? View.VISIBLE : View.GONE}"/>
+        </RelativeLayout>
+
+        <androidx.viewpager.widget.ViewPager
+            android:id="@+id/view_pager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </LinearLayout>
+</layout>

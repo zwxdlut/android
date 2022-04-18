@@ -1,0 +1,7 @@
+include ':storage'
+include ':app'
+include ':camera'
+project(':camera').projectDir = new File(settingsDir, 'camera')
+include ':storage'
+project(':storage').projectDir = new File(settingsDir, 'storage')
+rootProject.name = "dvr"

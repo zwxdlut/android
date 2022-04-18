@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:keepScreenOn="true">
+
+    <data>
+        <variable
+            name="recording"
+            type="boolean" />
+    </data>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextureView
+            android:id="@+id/tv_preview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="5dp">
+
+            <ImageView
+                android:id="@+id/iv_altitude"
+                android:layout_width="@android:dimen/app_icon_size"
+                android:layout_height="@android:dimen/app_icon_size"
+                android:layout_centerHorizontal="true"
+                android:scaleType="fitCenter"
+                android:src="@mipmap/icon_altitude"
+                android:background="@drawable/shape_circle_bg"/>
+
+            <TextView
+                android:id="@+id/tv_altitude"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_below="@+id/iv_altitude"
+                android:text="0M"
+                android:fontFamily="@font/msyh"/>
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="5dp"
+            android:layout_centerHorizontal="true">
+
+            <ImageView
+                android:id="@+id/iv_shape"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:src="@{recording ? @drawable/shape_red_circle : @drawable/shape_gray_circle}"
+                tools:ignore="ContentDescription" />
+
+            <TextView
+                android:id="@+id/tv_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@id/iv_shape"
+                android:layout_marginStart="4dp"
+                android:layout_centerHorizontal="true"
+                android:text="2021-05-01 00:00:00"
+                android:textSize="20sp"
+                android:fontFamily="@font/msyh"/>
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true">
+
+            <RelativeLayout
+                android:id="@+id/rv_record"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_alignParentStart="true"
+                android:paddingStart="20dp"
+                android:paddingTop="10dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="10dp"
+                android:clickable="true"
+                tools:ignore="RtlSymmetry">
+
+                <ImageView
+                    android:layout_width="@android:dimen/app_icon_size"
+                    android:layout_height="@android:dimen/app_icon_size"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/selector_record"
+                    android:background="@drawable/shape_circle_bg"
+                    tools:ignore="ContentDescription" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/rv_capture"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_toEndOf="@id/rv_record"
+                android:padding="10dp"
+                android:clickable="true"
+                tools:ignore="RtlSymmetry">
+
+                <ImageView
+                    android:layout_width="@android:dimen/app_icon_size"
+                    android:layout_height="@android:dimen/app_icon_size"
+                    android:scaleType="fitCenter"
+                    android:src="@mipmap/icon_shutter"
+                    android:background="@drawable/shape_circle_bg"
+                    tools:ignore="ContentDescription" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/rv_menu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_alignParentEnd="true"
+                android:paddingStart="10dp"
+                android:paddingTop="10dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="10dp"
+                android:clickable="true"
+                tools:ignore="RtlSymmetry">
+
+                <ImageView
+                    android:layout_width="@android:dimen/app_icon_size"
+                    android:layout_height="@android:dimen/app_icon_size"
+                    android:scaleType="fitCenter"
+                    android:src="@mipmap/icon_menu"
+                    android:background="@drawable/shape_circle_bg"
+                    tools:ignore="ContentDescription" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/rv_mute"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_toStartOf="@+id/rv_menu"
+                android:padding="10dp"
+                android:clickable="true"
+                tools:ignore="RtlSymmetry">
+
+                <ImageView
+                    android:layout_width="@android:dimen/app_icon_size"
+                    android:layout_height="@android:dimen/app_icon_size"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/selector_mute"
+                    android:background="@drawable/shape_circle_bg"
+                    tools:ignore="ContentDescription" />
+            </RelativeLayout>
+        </RelativeLayout>
+    </RelativeLayout>
+</layout>
+

@@ -1,0 +1,4 @@
+include ':app'
+include ':camera'
+project(':camera').projectDir = new File(settingsDir, '../')
+rootProject.name = "camera.example"

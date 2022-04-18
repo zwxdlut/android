@@ -1,0 +1,98 @@
+apply plugin: 'com.android.application'
+
+android {
+    signingConfigs {
+        debug {
+            storeFile file('D:\\code\\datacollectiontool\\debug.jks')
+            storePassword '123456'
+            keyAlias 'key0'
+            keyPassword '123456'
+        }
+    }
+    compileSdkVersion 29
+    buildToolsVersion "30.0.0"
+
+    defaultConfig {
+        applicationId "com.mxnavi.dvr"
+        minSdkVersion 26
+        targetSdkVersion 29
+        versionCode 4
+        versionName "4.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            //设置支持的SO库架构（开发者可以根据需要，选择一个或多个平台的so）
+            abiFilters "armeabi", "armeabi-v7a", "arm64-v8a", "x86","arm64-v8a","x86_64"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    dataBinding {
+        enabled = true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+
+    // RxJava
+    implementation 'com.github.tbruyelle:rxpermissions:0.10.2'
+    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
+    implementation 'io.reactivex.rxjava2:rxjava:2.2.19'
+
+    // retrofit
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:adapter-rxjava2:2.8.2'
+    implementation 'com.squareup.retrofit2:converter-gson:2.8.2'
+
+    // okhttp
+    implementation 'com.squareup.okhttp3:okhttp:4.7.1'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.7.1'
+
+    // 高德SDK
+//    //3D地图so及jar
+//    implementation 'com.amap.api:3dmap:latest.integration'
+//    //定位功能
+//    implementation 'com.amap.api:location:latest.integration'
+//    //搜索功能
+//    implementation 'com.amap.api:search:latest.integration'
+
+    //3D地图so及jar
+    implementation 'com.amap.api:3dmap:8.0.1'
+    //定位功能
+    implementation 'com.amap.api:location:5.5.1'
+    //搜索功能
+    implementation 'com.amap.api:search:7.9.0'
+
+    // misc
+    implementation 'com.google.android.material:material:1.2.1'
+    implementation 'com.github.bumptech.glide:glide:3.7.0'
+    implementation 'com.alibaba:fastjson:1.2.70'
+    implementation 'org.eclipse.birt.runtime.3_7_1:org.apache.xerces:2.9.0'
+    implementation group: 'com.tencentcloudapi', name: 'tencentcloud-sdk-java', version: '4.0.11'
+    implementation 'com.github.imcloudfloating:ProgressBar:1.1'
+    implementation 'com.google.android.exoplayer:exoplayer:2.13.3'
+
+    implementation project(path: ':camera')
+    implementation project(path: ':storage')
+    
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+
+}

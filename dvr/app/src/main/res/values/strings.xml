@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">DVR</string>
+    <string name="app_in_background">DVR在后台运行</string>
+    <string name="start_record">开始录像</string>
+    <string name="stop_record">停止录像</string>
+    <string name="capture_success">抓拍成功，请到抓拍回放中查看</string>
+    <string name="capture_failed">抓拍失败！</string>
+    <string name="mute">已静音</string>
+    <string name="not_mute">已关闭静音</string>
+    <string name="media_tab_title_video">视频</string>
+    <string name="media_tab_title_image">照片</string>
+    <string name="upload_success">上传成功！</string>
+    <string name="upload_failed">上传失败， 请重新操作！</string>
+    <string name="upload_completed">已全部上传！</string>
+    <string name="delete_success">删除成功！</string>
+    <string name="delete_failed">删除失败, 请重新操作！</string>
+    <string name="delete_completed">已全部删除！</string>
+    <string name="indicate_storage_limit1">空间不足，请及时上传和删除！</string>
+    <string name="indicate_storage_limit2">空间严重不足，停止录制！</string>
+    <string name="exit_app">是否退出程序？</string>
+
+    <!-- login-->
+    <string name="user_name">用户名</string>
+    <string name="phone_number">手机号</string>
+    <string name="verify_code">验证码</string>
+    <string name="login">登录</string>
+    <string name="phone_error">手机号码错误</string>
+    <string name="sms_first">请发送验证码</string>
+    <string name="sms_error">验证码错误</string>
+    <string name="sms_success">验证码已发送</string>
+</resources>
